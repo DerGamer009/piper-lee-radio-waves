@@ -8,11 +8,11 @@ interface StreamInfo {
   show_host?: string;
 }
 
-const API_URL = "https://backend.piper-lee.net/docs/api/";
+const API_URL = "https://backend.piper-lee.net/api/";
 
 export const fetchStreamInfo = async (): Promise<StreamInfo> => {
   try {
-    const response = await fetch(`${API_URL}now-playing`);
+    const response = await fetch(`${API_URL}nowplaying/1`);
     if (!response.ok) {
       throw new Error(`Fehler beim Abrufen der Stream-Informationen: ${response.status}`);
     }
