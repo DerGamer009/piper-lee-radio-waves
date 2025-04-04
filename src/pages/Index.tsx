@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import RadioPlayer from "@/components/RadioPlayer";
 import { Button } from "@/components/ui/button";
@@ -145,16 +146,19 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="flex gap-6">
-              <a href="#" className="text-radio-light/70 hover:text-white transition-colors">
+            <div className="flex flex-wrap gap-6 justify-center">
+              <Link to="/datenschutz" className="text-radio-light/70 hover:text-white transition-colors">
                 Datenschutz
-              </a>
-              <a href="#" className="text-radio-light/70 hover:text-white transition-colors">
+              </Link>
+              <Link to="/nutzungsbedingungen" className="text-radio-light/70 hover:text-white transition-colors">
                 Nutzungsbedingungen
-              </a>
-              <a href="#" className="text-radio-light/70 hover:text-white transition-colors">
+              </Link>
+              <Link to="/impressum" className="text-radio-light/70 hover:text-white transition-colors">
+                Impressum
+              </Link>
+              <Link to="/kontakt" className="text-radio-light/70 hover:text-white transition-colors">
                 Kontakt
-              </a>
+              </Link>
             </div>
           </div>
         </div>
