@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import RadioPlayer from "@/components/RadioPlayer";
 import { Button } from "@/components/ui/button";
+import { Radio } from "lucide-react";
 
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 const STATION_NAME = "Piper Lee Radio";
