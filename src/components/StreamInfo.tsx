@@ -62,7 +62,7 @@ const StreamInfo = () => {
             </div>
           )}
           
-          {streamInfo.listeners !== undefined && (
+          {typeof streamInfo.listeners === 'number' && (
             <div className="flex items-center gap-2 text-sm text-radio-light/70 mt-2">
               <Users className="h-4 w-4" />
               <span>{streamInfo.listeners} Hörer</span>
