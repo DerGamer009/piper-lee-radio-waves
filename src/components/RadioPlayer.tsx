@@ -92,7 +92,7 @@ const RadioPlayer = ({ streamUrl, stationName }: RadioPlayerProps) => {
           </div>
         ) : (
           <div className="h-12 flex items-center justify-center">
-            <p className="text-muted-foreground">Click Play to Listen</p>
+            <p className="text-muted-foreground">Klicken Sie Play zum Hören</p>
           </div>
         )}
       </div>

@@ -37,19 +37,19 @@ const Header = () => {
             href="#" 
             className="text-radio-light hover:text-white transition-colors"
           >
-            Home
+            Startseite
           </a>
           <a 
             href="#about" 
             className="text-radio-light hover:text-white transition-colors"
           >
-            About
+            Über Uns
           </a>
           <a 
             href="#schedule" 
             className="text-radio-light hover:text-white transition-colors"
           >
-            Schedule
+            Programmplan
           </a>
         </nav>
       </div>
