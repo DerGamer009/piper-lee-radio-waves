@@ -1,9 +1,9 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import AudioVisualizer from "./AudioVisualizer";
+import StreamInfo from "./StreamInfo";
 
 interface RadioPlayerProps {
   streamUrl: string;
@@ -17,12 +17,10 @@ const RadioPlayer = ({ streamUrl, stationName }: RadioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize audio on component mount
   useEffect(() => {
     audioRef.current = new Audio(streamUrl);
     audioRef.current.volume = volume;
     
-    // Handle audio loading state
     const handleWaiting = () => setIsLoading(true);
     const handlePlaying = () => setIsLoading(false);
     
@@ -84,7 +82,9 @@ const RadioPlayer = ({ streamUrl, stationName }: RadioPlayerProps) => {
         <p className="text-muted-foreground">Live Stream</p>
       </div>
       
-      <div className="flex justify-center mb-8">
+      <StreamInfo />
+      
+      <div className="flex justify-center mb-8 mt-6">
         {isPlaying ? (
           <div className="relative">
             <div className="absolute -inset-1 rounded-full opacity-75 bg-radio-purple animate-pulse-ring"></div>
