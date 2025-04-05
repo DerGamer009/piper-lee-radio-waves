@@ -46,15 +46,17 @@ const Index = () => {
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                   <Button 
+                    asChild
                     className="bg-radio-purple hover:bg-radio-purple/90 text-white rounded-full px-8"
                   >
-                    Unsere Programme
+                    <Link to="/sendeplan">Unser Sendeplan</Link>
                   </Button>
                   <Button 
                     variant="outline" 
                     className="border-radio-blue text-radio-blue hover:bg-radio-blue/10 rounded-full px-8"
+                    asChild
                   >
-                    Über Uns
+                    <Link to="/partner">Unsere Partner</Link>
                   </Button>
                 </div>
               </div>
@@ -140,7 +142,7 @@ const Index = () => {
                 asChild
                 className="bg-radio-purple hover:bg-radio-purple/90 text-white rounded-full px-8"
               >
-                <Link to="/partner">Unsere Partner</Link>
+                <Link to="/sendeplan">Vollständigen Sendeplan anzeigen</Link>
               </Button>
             </div>
           </div>
@@ -169,6 +171,9 @@ const Index = () => {
               </Link>
               <Link to="/kontakt" className="text-radio-light/70 hover:text-white transition-colors text-sm">
                 Kontakt
+              </Link>
+              <Link to="/sendeplan" className="text-radio-light/70 hover:text-white transition-colors text-sm">
+                Sendeplan
               </Link>
               <Link to="/partner" className="text-radio-light/70 hover:text-white transition-colors text-sm">
                 Partner
