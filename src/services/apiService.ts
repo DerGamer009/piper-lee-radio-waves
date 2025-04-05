@@ -1,8 +1,6 @@
-// This file contains the API service functions that interact with the backend
-import { 
-  getDbUsers, createDbUser, getDbShows, 
-  getDbSchedule, createDbScheduleItem 
-} from './dbService';
+
+// This file contains the API service functions that would interact with the backend
+// In a real implementation, these would make HTTP requests to your backend API
 
 interface User {
   id: number;
@@ -33,7 +31,7 @@ interface ScheduleItem {
   isRecurring: boolean;
 }
 
-// Mock data for development and fallback
+// Mock data for development
 const mockUsers: User[] = [
   {
     id: 1,
@@ -142,39 +140,26 @@ export const login = async (username: string, password: string): Promise<{ token
 };
 
 export const getUsers = async (): Promise<User[]> => {
-  // Try to get real users from database, fall back to mock data if fails
-  try {
-    return await getDbUsers();
-  } catch (error) {
-    console.error('Error fetching users from DB, using mock data:', error);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [...mockUsers];
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return [...mockUsers];
 };
 
 export const createUser = async (user: Omit<User, 'id'>): Promise<User | null> => {
   console.log('Create user:', user);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  try {
-    // Try to create the user in the database
-    return await createDbUser(user);
-  } catch (error) {
-    console.error('Error creating user in DB, using mock data:', error);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Fall back to mock implementation
-    const newUser = {
-      ...user,
-      id: mockUsers.length + 1,
-    };
-    
-    // Update mock data
-    mockUsers.push(newUser as User);
-    
-    return newUser as User;
-  }
+  // In a real app, this would be a POST request to your backend
+  const newUser = {
+    ...user,
+    id: mockUsers.length + 1,
+  };
+  
+  // Update mock data
+  mockUsers.push(newUser as User);
+  
+  return newUser as User;
 };
 
 export const updateUser = async (id: number, user: Partial<User>): Promise<User | null> => {
@@ -208,25 +193,15 @@ export const deleteUser = async (id: number): Promise<boolean> => {
 };
 
 export const getShows = async (): Promise<Show[]> => {
-  try {
-    return await getDbShows();
-  } catch (error) {
-    console.error('Error fetching shows from DB, using mock data:', error);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    return [...mockShows];
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
+  return [...mockShows];
 };
 
 export const getSchedule = async (): Promise<ScheduleItem[]> => {
-  try {
-    return await getDbSchedule();
-  } catch (error) {
-    console.error('Error fetching schedule from DB, using mock data:', error);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-    return [...mockSchedule];
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  return [...mockSchedule];
 };
 
 export const createShow = async (show: Omit<Show, 'id' | 'createdBy'>): Promise<Show | null> => {
@@ -294,37 +269,19 @@ export const updateSchedule = async (id: number, schedule: Partial<ScheduleItem>
 
 export const createScheduleItem = async (schedule: Omit<ScheduleItem, 'id'>): Promise<ScheduleItem | null> => {
   console.log('Create schedule item:', schedule);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  try {
-    // Ensure we have the required fields
-    if (!schedule.showId || !schedule.dayOfWeek || !schedule.startTime || !schedule.endTime) {
-      throw new Error('Missing required schedule fields');
-    }
-    
-    return await createDbScheduleItem({
-      showId: schedule.showId,
-      dayOfWeek: schedule.dayOfWeek,
-      startTime: schedule.startTime,
-      endTime: schedule.endTime,
-      hostId: schedule.hostId,
-      isRecurring: schedule.isRecurring
-    });
-  } catch (error) {
-    console.error('Error creating schedule in DB, using mock data:', error);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // In a real app, this would be a POST request to your backend
-    const newScheduleItem = {
-      ...schedule,
-      id: mockSchedule.length + 1,
-    };
-    
-    // Update mock data
-    mockSchedule.push(newScheduleItem);
-    
-    return newScheduleItem;
-  }
+  // In a real app, this would be a POST request to your backend
+  const newScheduleItem = {
+    ...schedule,
+    id: mockSchedule.length + 1,
+  };
+  
+  // Update mock data
+  mockSchedule.push(newScheduleItem);
+  
+  return newScheduleItem;
 };
 
 export const deleteScheduleItem = async (id: number): Promise<boolean> => {
