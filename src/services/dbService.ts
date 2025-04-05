@@ -1,10 +1,11 @@
+
 import mysql from 'mysql2/promise';
 
 // Database connection configuration
 const dbConfig = {
   host: '127.0.0.1',
-  user: 'radio_station',
-  password: 'xa@qG4KQ43/cXvov',
+  user: 'root',
+  password: 'Gamer09!!',
   database: 'radio_station'
 };
 
