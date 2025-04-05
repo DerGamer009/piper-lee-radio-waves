@@ -48,7 +48,16 @@ const UserForm: React.FC<UserFormProps> = ({ onCancel, onSuccess }) => {
 
   const onSubmit = async (data: UserFormValues) => {
     try {
-      await createUser(data);
+      // Ensure all required fields are present before submitting
+      const userData = {
+        username: data.username,
+        email: data.email,
+        fullName: data.fullName,
+        roles: data.roles,
+        isActive: data.isActive
+      };
+      
+      await createUser(userData);
       toast({
         title: "Erfolg!",
         description: "Benutzer wurde erfolgreich erstellt.",
