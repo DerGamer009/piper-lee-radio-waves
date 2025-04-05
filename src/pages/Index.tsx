@@ -5,12 +5,14 @@ import Header from "@/components/Header";
 import RadioPlayer from "@/components/RadioPlayer";
 import { Button } from "@/components/ui/button";
 import { Radio } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 const STATION_NAME = "Piper Lee Radio";
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const isMobile = useIsMobile();
 
   // Simple animation on load
   useEffect(() => {
@@ -57,7 +59,7 @@ const Index = () => {
                 </div>
               </div>
               
-              <div className="lg:w-1/2 flex justify-center">
+              <div className="lg:w-1/2 flex justify-center mt-8 lg:mt-0">
                 <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} />
               </div>
             </div>
@@ -74,7 +76,7 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
                   title: "Premium Inhalte",
@@ -120,17 +122,26 @@ const Index = () => {
               ].map((item, index) => (
                 <div 
                   key={index} 
-                  className={`flex items-center justify-between p-4 ${
+                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 ${
                     index % 2 === 0 ? "bg-card" : "bg-card/50"
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-radio-purple font-semibold w-24">{item.day}</div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2 sm:mb-0">
+                    <div className="text-radio-purple font-semibold">{item.day}</div>
                     <div className="font-medium">{item.show}</div>
                   </div>
                   <div className="text-radio-light/70">{item.time}</div>
                 </div>
               ))}
+            </div>
+            
+            <div className="mt-12 text-center">
+              <Button 
+                asChild
+                className="bg-radio-purple hover:bg-radio-purple/90 text-white rounded-full px-8"
+              >
+                <Link to="/partner">Unsere Partner</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -146,18 +157,21 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-6 justify-center">
-              <Link to="/datenschutz" className="text-radio-light/70 hover:text-white transition-colors">
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/datenschutz" className="text-radio-light/70 hover:text-white transition-colors text-sm">
                 Datenschutz
               </Link>
-              <Link to="/nutzungsbedingungen" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/nutzungsbedingungen" className="text-radio-light/70 hover:text-white transition-colors text-sm">
                 Nutzungsbedingungen
               </Link>
-              <Link to="/impressum" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/impressum" className="text-radio-light/70 hover:text-white transition-colors text-sm">
                 Impressum
               </Link>
-              <Link to="/kontakt" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/kontakt" className="text-radio-light/70 hover:text-white transition-colors text-sm">
                 Kontakt
+              </Link>
+              <Link to="/partner" className="text-radio-light/70 hover:text-white transition-colors text-sm">
+                Partner
               </Link>
             </div>
           </div>

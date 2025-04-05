@@ -1,9 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Radio } from "lucide-react";
+import { Radio, Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +17,10 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
 
   return (
     <header 
@@ -32,26 +40,79 @@ const Header = () => {
           </h1>
         </div>
         
-        <nav className="hidden md:flex items-center gap-8">
-          <a 
-            href="#" 
-            className="text-radio-light hover:text-white transition-colors"
-          >
-            Startseite
-          </a>
-          <a 
-            href="#about" 
-            className="text-radio-light hover:text-white transition-colors"
-          >
-            Über Uns
-          </a>
-          <a 
-            href="#schedule" 
-            className="text-radio-light hover:text-white transition-colors"
-          >
-            Programmplan
-          </a>
-        </nav>
+        {isMobile ? (
+          <>
+            <button 
+              className="text-white p-2" 
+              onClick={toggleMenu}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+            
+            {menuOpen && (
+              <div className="absolute top-full left-0 right-0 bg-radio-dark/95 backdrop-blur-md py-4 shadow-lg">
+                <nav className="flex flex-col items-center gap-6">
+                  <Link 
+                    to="/" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Startseite
+                  </Link>
+                  <a 
+                    href="#about" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Über Uns
+                  </a>
+                  <a 
+                    href="#schedule" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Programmplan
+                  </a>
+                  <Link 
+                    to="/partner" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Partner
+                  </Link>
+                </nav>
+              </div>
+            )}
+          </>
+        ) : (
+          <nav className="flex items-center gap-8">
+            <Link 
+              to="/" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              Startseite
+            </Link>
+            <a 
+              href="#about" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              Über Uns
+            </a>
+            <a 
+              href="#schedule" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              Programmplan
+            </a>
+            <Link 
+              to="/partner" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              Partner
+            </Link>
+          </nav>
+        )}
       </div>
     </header>
   );

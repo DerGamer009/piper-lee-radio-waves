@@ -10,6 +10,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Imprint from "./pages/Imprint";
 import Contact from "./pages/Contact";
+import Partner from "./pages/Partner";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/nutzungsbedingungen" element={<Terms />} />
           <Route path="/impressum" element={<Imprint />} />
           <Route path="/kontakt" element={<Contact />} />
+          <Route path="/partner" element={<Partner />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
