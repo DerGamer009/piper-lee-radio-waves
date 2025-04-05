@@ -12,6 +12,8 @@ import Imprint from "./pages/Imprint";
 import Contact from "./pages/Contact";
 import Partner from "./pages/Partner";
 import Schedule from "./pages/Schedule";
+import Admin from "./pages/Admin";
+import Moderator from "./pages/Moderator";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/kontakt" element={<Contact />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/sendeplan" element={<Schedule />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/moderator" element={<Moderator />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
