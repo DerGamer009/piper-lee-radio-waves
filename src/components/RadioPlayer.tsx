@@ -1,51 +1,87 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import AudioVisualizer from "./AudioVisualizer";
 import StreamInfo from "./StreamInfo";
+import { useToast } from "@/components/ui/use-toast";
 
 interface RadioPlayerProps {
   streamUrl: string;
   stationName: string;
+  compact?: boolean;
 }
 
-const RadioPlayer = ({ streamUrl, stationName }: RadioPlayerProps) => {
+const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    audioRef.current = new Audio(streamUrl);
+    // Create a new audio element or reset the existing one
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    
+    // Set proper properties
+    audioRef.current.src = streamUrl;
     audioRef.current.volume = volume;
+    audioRef.current.crossOrigin = "anonymous";
+    audioRef.current.preload = "auto";
     
     const handleWaiting = () => setIsLoading(true);
     const handlePlaying = () => setIsLoading(false);
+    const handleError = (e: ErrorEvent) => {
+      console.error("Audio playback error:", e);
+      setIsPlaying(false);
+      setIsLoading(false);
+      toast({
+        title: "Fehler beim Abspielen",
+        description: "Der Stream konnte nicht geladen werden. Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+      });
+    };
     
     audioRef.current.addEventListener("waiting", handleWaiting);
     audioRef.current.addEventListener("playing", handlePlaying);
+    audioRef.current.addEventListener("error", handleError as EventListener);
     
+    // Clean up
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeEventListener("waiting", handleWaiting);
         audioRef.current.removeEventListener("playing", handlePlaying);
+        audioRef.current.removeEventListener("error", handleError as EventListener);
       }
     };
-  }, [streamUrl]);
+  }, [streamUrl, toast]);
 
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play().catch(error => {
-          console.error("Audio playback failed:", error);
-        });
+        setIsLoading(true);
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            console.error("Audio playback failed:", error);
+            setIsLoading(false);
+            toast({
+              title: "Fehler beim Abspielen",
+              description: "Der Stream konnte nicht abgespielt werden. Bitte versuchen Sie es später erneut.",
+              variant: "destructive",
+            });
+          });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -75,6 +111,54 @@ const RadioPlayer = ({ streamUrl, stationName }: RadioPlayerProps) => {
     }
   };
 
+  // Compact version for admin/moderator pages
+  if (compact) {
+    return (
+      <div className="bg-card rounded-lg p-4 flex flex-col gap-2 w-full max-w-xs shadow-sm">
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium text-sm">{stationName}</h3>
+          <Button
+            onClick={togglePlay}
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 rounded-full p-0"
+          >
+            {isLoading ? (
+              <div className="h-3 w-3 rounded-full border-2 border-radio-purple border-t-transparent animate-spin"></div>
+            ) : isPlaying ? (
+              <Pause className="h-4 w-4 text-radio-purple" />
+            ) : (
+              <Play className="h-4 w-4 text-radio-purple" />
+            )}
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2 w-full">
+          <Button
+            onClick={toggleMute}
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-white p-0 h-6 w-6"
+          >
+            {isMuted ? (
+              <VolumeX className="h-3 w-3" />
+            ) : (
+              <Volume2 className="h-3 w-3" />
+            )}
+          </Button>
+          <Slider
+            value={[isMuted ? 0 : volume]}
+            max={1}
+            step={0.01}
+            onValueChange={handleVolumeChange}
+            className="w-full"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Full version (original)
   return (
     <div className="bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-auto">
       <div className="text-center mb-6">
