@@ -32,11 +32,13 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(result.user));
         
         // Safely get user roles as an array regardless of how they're stored
-        const userRoles = Array.isArray(result.user.roles) 
-          ? result.user.roles 
-          : typeof result.user.roles === 'string' && result.user.roles.trim() !== ''
-            ? result.user.roles.split(',') 
-            : [];
+        let userRoles: string[] = [];
+        
+        if (Array.isArray(result.user.roles)) {
+          userRoles = result.user.roles;
+        } else if (typeof result.user.roles === 'string') {
+          userRoles = result.user.roles.trim() !== '' ? result.user.roles.split(',') : [];
+        }
             
         if (userRoles.includes("admin")) {
           navigate("/admin");
@@ -73,11 +75,13 @@ const Login = () => {
   // If user is already logged in, redirect based on role
   if (isLoggedIn && userData) {
     // Safely handle user roles as an array
-    const userRoles = Array.isArray(userData.roles) 
-      ? userData.roles 
-      : typeof userData.roles === 'string' && userData.roles.trim() !== ''
-        ? userData.roles.split(',') 
-        : [];
+    let userRoles: string[] = [];
+        
+    if (Array.isArray(userData.roles)) {
+      userRoles = userData.roles;
+    } else if (typeof userData.roles === 'string') {
+      userRoles = userData.roles.trim() !== '' ? userData.roles.split(',') : [];
+    }
         
     if (userRoles.includes("admin")) {
       return <Navigate to="/admin" replace />;

@@ -9,6 +9,7 @@ import { Mic, Calendar, Plus, Edit, Trash, LogOut } from "lucide-react";
 import { getSchedule, getShows, deleteScheduleItem, Show as ApiShow, ScheduleItem } from "@/services/apiService";
 import ScheduleForm from "@/components/ScheduleForm";
 import { useToast } from "@/hooks/use-toast";
+import RadioPlayer from "@/components/RadioPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,10 @@ interface Show {
   imageUrl?: string;
   createdBy: number;
 }
+
+// Constants for radio stream
+const STREAM_URL = "https://stream.piper-lee.net/radio.mp3";
+const STATION_NAME = "Piper Lee Radio";
 
 const Moderator = () => {
   const navigate = useNavigate();
@@ -152,19 +157,22 @@ const Moderator = () => {
           <Mic className="h-8 w-8" />
           Moderatoren-Bereich
         </h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsAddingSchedule(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Neuer Sendeplan
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleLogout}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            Abmelden
-          </Button>
+        <div className="flex gap-4 items-center">
+          <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
+          <div className="flex gap-2">
+            <Button onClick={() => setIsAddingSchedule(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Neuer Sendeplan
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Abmelden
+            </Button>
+          </div>
         </div>
       </div>
 

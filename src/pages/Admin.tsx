@@ -9,6 +9,7 @@ import { getUsers, deleteUser, updateUser, User } from "@/services/apiService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import UserForm from "@/components/UserForm";
 import { useToast } from "@/hooks/use-toast";
+import RadioPlayer from "@/components/RadioPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// Constants for radio stream
+const STREAM_URL = "https://stream.piper-lee.net/radio.mp3";
+const STATION_NAME = "Piper Lee Radio";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -111,19 +116,22 @@ const Admin = () => {
           <Shield className="h-8 w-8" />
           Admin-Bereich
         </h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Neuer Benutzer
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleLogout}
-            className="flex items-center gap-2"
-          >
-            <LogOut className="h-4 w-4" />
-            Abmelden
-          </Button>
+        <div className="flex gap-4 items-center">
+          <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
+          <div className="flex gap-2">
+            <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Neuer Benutzer
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Abmelden
+            </Button>
+          </div>
         </div>
       </div>
 
