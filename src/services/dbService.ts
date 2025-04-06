@@ -1,14 +1,15 @@
-
 // This file provides mock database services for frontend development
 // In a real application, these would be API calls to a backend server
 
 /**
- * Mock database users
+ * Mock database users with password credentials
+ * Note: In a real application, passwords would be hashed and never stored in plain text
  */
 const mockDbUsers = [
   {
     id: 1,
     username: "admin",
+    password: "admin123", // In real app, this would be hashed
     email: "admin@radiostation.de",
     fullName: "Admin User",
     roles: ["admin"],
@@ -17,6 +18,7 @@ const mockDbUsers = [
   {
     id: 2,
     username: "moderator1",
+    password: "mod123", // In real app, this would be hashed
     email: "mod1@radiostation.de",
     fullName: "Moderator Eins",
     roles: ["moderator"],
@@ -25,12 +27,24 @@ const mockDbUsers = [
   {
     id: 3,
     username: "user1",
+    password: "user123", // In real app, this would be hashed
     email: "user1@example.com",
     fullName: "Regular User",
     roles: ["user"],
     isActive: false
   }
 ];
+
+/**
+ * Mock database connection info 
+ * This is just for demonstration - in a real app this would be server-side only
+ */
+const dbConfig = {
+  host: "127.0.0.1",
+  user: "radio_station",
+  password: "Gamer09!!",
+  database: "radio_station"
+};
 
 /**
  * Mock database shows
@@ -138,11 +152,32 @@ const mockDbSchedule = [
 const simulateDelay = () => new Promise(resolve => setTimeout(resolve, 500));
 
 /**
+ * Verify username and password against mock DB
+ */
+export async function verifyUserCredentials(username: string, password: string) {
+  await simulateDelay();
+  // In a real application, this would query the database and check password hash
+  const user = mockDbUsers.find(u => 
+    u.username === username && 
+    u.password === password && 
+    u.isActive === true
+  );
+  
+  if (user) {
+    // Don't return the password in the response
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+  return null;
+}
+
+/**
  * Get all users from the mock database
  */
 export async function getDbUsers() {
   await simulateDelay();
-  return [...mockDbUsers];
+  // Return users without passwords
+  return mockDbUsers.map(({ password, ...user }) => user);
 }
 
 /**
@@ -158,10 +193,14 @@ export async function createDbUser(user: {
   await simulateDelay();
   const newUser = {
     ...user,
-    id: mockDbUsers.length + 1
+    id: mockDbUsers.length + 1,
+    password: "default123" // This would be hashed in a real app
   };
   mockDbUsers.push(newUser);
-  return newUser;
+  
+  // Return user without password
+  const { password, ...userWithoutPassword } = newUser;
+  return userWithoutPassword;
 }
 
 /**
@@ -223,4 +262,3 @@ export async function createDbScheduleItem(schedule: {
   mockDbSchedule.push(newSchedule);
   return newSchedule;
 }
-

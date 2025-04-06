@@ -14,6 +14,8 @@ import Partner from "./pages/Partner";
 import Schedule from "./pages/Schedule";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -25,14 +27,21 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/datenschutz" element={<Privacy />} />
           <Route path="/nutzungsbedingungen" element={<Terms />} />
           <Route path="/impressum" element={<Imprint />} />
           <Route path="/kontakt" element={<Contact />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/sendeplan" element={<Schedule />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/moderator" element={<Moderator />} />
+          <Route 
+            path="/admin" 
+            element={<ProtectedRoute element={<Admin />} requiredRoles={["admin"]} />} 
+          />
+          <Route 
+            path="/moderator" 
+            element={<ProtectedRoute element={<Moderator />} requiredRoles={["admin", "moderator"]} />} 
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

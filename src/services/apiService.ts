@@ -1,8 +1,7 @@
-
 // This file contains the API service functions that interact with the backend
 import { 
   getDbUsers, createDbUser, getDbShows, 
-  getDbSchedule, createDbScheduleItem 
+  getDbSchedule, createDbScheduleItem, verifyUserCredentials 
 } from './dbService';
 
 // Define types
@@ -38,20 +37,22 @@ export interface ScheduleItem {
 // User APIs
 export const login = async (username: string, password: string): Promise<{ token: string; user: User } | null> => {
   console.log('Login attempt:', username);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
   
-  // Get users from mock DB
-  const users = await getDbUsers();
-  const user = users.find(u => u.username === username);
-  
-  if (user) {
-    return {
-      token: "mock-jwt-token",
-      user
-    };
+  try {
+    // Verify credentials against our mock database
+    const user = await verifyUserCredentials(username, password);
+    
+    if (user) {
+      return {
+        token: "mock-jwt-token-" + Date.now(),
+        user
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Login error:', error);
+    return null;
   }
-  return null;
 };
 
 export const getUsers = async (): Promise<User[]> => {

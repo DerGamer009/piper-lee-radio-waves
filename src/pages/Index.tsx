@@ -1,27 +1,24 @@
-
-import { useState, useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import Header from "@/components/Header";
-import RadioPlayer from "@/components/RadioPlayer";
 import { Button } from "@/components/ui/button";
-import { Radio } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
-const STATION_NAME = "Piper Lee Radio";
+import { Lock } from "lucide-react";
 
 const Index = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const isMobile = useIsMobile();
-
-  // Simple animation on load
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    <div className="container mx-auto px-4 py-8">
+      <header className="mb-12 text-center">
+        <h1 className="text-4xl font-bold mb-4">Willkommen beim Radiosender</h1>
+        <p className="text-xl text-gray-500">Die beste Musik und Unterhaltung online</p>
+      </header>
+      
+      <div className="my-8 text-center">
+        <Link to="/login">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Zum Administrationsbereich
+          </Button>
+        </Link>
+      </div>
       
       <main className="flex-1 pt-24 pb-12">
         <section 

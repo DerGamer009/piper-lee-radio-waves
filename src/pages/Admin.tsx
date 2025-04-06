@@ -1,14 +1,19 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Shield, UserPlus, Trash, Edit } from "lucide-react";
+import { Shield, UserPlus, Trash, Edit, LogOut } from "lucide-react";
 import { getUsers } from "@/services/apiService";
 import { useQuery } from "@tanstack/react-query";
 import UserForm from "@/components/UserForm";
+import { useToast } from "@/hooks/use-toast";
 
 const Admin = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   // Fetch users from the API
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -16,6 +21,16 @@ const Admin = () => {
   });
 
   const [isAddingUser, setIsAddingUser] = React.useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    toast({
+      title: "Abgemeldet",
+      description: "Sie wurden erfolgreich abgemeldet.",
+    });
+    navigate("/login");
+  };
 
   if (isLoading) return <div className="p-4">Loading users...</div>;
   if (error) return <div className="p-4 text-red-500">Error loading users: {error.toString()}</div>;
@@ -27,10 +42,20 @@ const Admin = () => {
           <Shield className="h-8 w-8" />
           Admin-Bereich
         </h1>
-        <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Neuer Benutzer
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            Neuer Benutzer
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Abmelden
+          </Button>
+        </div>
       </div>
 
       {isAddingUser && (

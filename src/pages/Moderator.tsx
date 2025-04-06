@@ -1,14 +1,19 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Mic, Calendar, Plus, Edit, Trash } from "lucide-react";
+import { Mic, Calendar, Plus, Edit, Trash, LogOut } from "lucide-react";
 import { getSchedule, getShows } from "@/services/apiService";
 import ScheduleForm from "@/components/ScheduleForm";
+import { useToast } from "@/hooks/use-toast";
 
 const Moderator = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   // Fetch schedule and shows
   const { data: scheduleItems, isLoading: scheduleLoading } = useQuery({
     queryKey: ['schedule'],
@@ -21,6 +26,16 @@ const Moderator = () => {
   });
 
   const [isAddingSchedule, setIsAddingSchedule] = React.useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    toast({
+      title: "Abgemeldet",
+      description: "Sie wurden erfolgreich abgemeldet.",
+    });
+    navigate("/login");
+  };
 
   const isLoading = scheduleLoading || showsLoading;
 
@@ -55,10 +70,20 @@ const Moderator = () => {
           <Mic className="h-8 w-8" />
           Moderatoren-Bereich
         </h1>
-        <Button onClick={() => setIsAddingSchedule(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Neuer Sendeplan
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddingSchedule(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Neuer Sendeplan
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Abmelden
+          </Button>
+        </div>
       </div>
 
       {isAddingSchedule && (
