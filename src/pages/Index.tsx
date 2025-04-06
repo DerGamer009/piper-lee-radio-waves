@@ -1,9 +1,22 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
+import { Lock, Radio } from "lucide-react";
+import RadioPlayer from "@/components/RadioPlayer";
+
+// Constants for radio stream
+const STREAM_URL = "https://stream.piper-lee.net/radio.mp3";
+const STATION_NAME = "Piper Lee Radio";
 
 const Index = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  useEffect(() => {
+    // Set isLoaded to true after component mounts
+    setIsLoaded(true);
+  }, []);
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-12 text-center">
