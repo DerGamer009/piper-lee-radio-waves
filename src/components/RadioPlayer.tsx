@@ -1,8 +1,7 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import AudioVisualizer from "./AudioVisualizer";
 import StreamInfo from "./StreamInfo";
 import { useToast } from "@/components/ui/use-toast";
@@ -19,6 +18,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,12 +33,21 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
     audioRef.current.crossOrigin = "anonymous";
     audioRef.current.preload = "auto";
     
-    const handleWaiting = () => setIsLoading(true);
-    const handlePlaying = () => setIsLoading(false);
+    const handleWaiting = () => {
+      setIsLoading(true);
+      setStreamError(null);
+    };
+    
+    const handlePlaying = () => {
+      setIsLoading(false);
+      setStreamError(null);
+    };
+    
     const handleError = (e: ErrorEvent) => {
       console.error("Audio playback error:", e);
       setIsPlaying(false);
       setIsLoading(false);
+      setStreamError("Der Stream konnte nicht geladen werden");
       toast({
         title: "Fehler beim Abspielen",
         description: "Der Stream konnte nicht geladen werden. Bitte versuchen Sie es später erneut.",
@@ -46,9 +55,21 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
       });
     };
     
+    const handleStalled = () => {
+      setIsLoading(true);
+      setStreamError("Stream wird geladen...");
+    };
+    
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setStreamError("Stream wurde beendet");
+    };
+    
     audioRef.current.addEventListener("waiting", handleWaiting);
     audioRef.current.addEventListener("playing", handlePlaying);
     audioRef.current.addEventListener("error", handleError as EventListener);
+    audioRef.current.addEventListener("stalled", handleStalled);
+    audioRef.current.addEventListener("ended", handleEnded);
     
     // Clean up
     return () => {
@@ -57,6 +78,8 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
         audioRef.current.removeEventListener("waiting", handleWaiting);
         audioRef.current.removeEventListener("playing", handlePlaying);
         audioRef.current.removeEventListener("error", handleError as EventListener);
+        audioRef.current.removeEventListener("stalled", handleStalled);
+        audioRef.current.removeEventListener("ended", handleEnded);
       }
     };
   }, [streamUrl, toast]);
@@ -68,13 +91,16 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
         setIsPlaying(false);
       } else {
         setIsLoading(true);
+        setStreamError(null);
         audioRef.current.play()
           .then(() => {
             setIsPlaying(true);
+            setIsLoading(false);
           })
           .catch(error => {
             console.error("Audio playback failed:", error);
             setIsLoading(false);
+            setStreamError("Fehler beim Abspielen");
             toast({
               title: "Fehler beim Abspielen",
               description: "Der Stream konnte nicht abgespielt werden. Bitte versuchen Sie es später erneut.",
@@ -122,9 +148,12 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
             variant="ghost"
             size="sm"
             className="h-8 w-8 rounded-full p-0"
+            disabled={!!streamError}
           >
             {isLoading ? (
               <div className="h-3 w-3 rounded-full border-2 border-radio-purple border-t-transparent animate-spin"></div>
+            ) : streamError ? (
+              <AlertCircle className="h-4 w-4 text-red-500" />
             ) : isPlaying ? (
               <Pause className="h-4 w-4 text-radio-purple" />
             ) : (
@@ -133,12 +162,17 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
           </Button>
         </div>
         
+        {streamError && (
+          <p className="text-xs text-red-500">{streamError}</p>
+        )}
+        
         <div className="flex items-center gap-2 w-full">
           <Button
             onClick={toggleMute}
             variant="ghost"
             size="sm"
             className="text-muted-foreground hover:text-white p-0 h-6 w-6"
+            disabled={!!streamError}
           >
             {isMuted ? (
               <VolumeX className="h-3 w-3" />
@@ -152,6 +186,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
             step={0.01}
             onValueChange={handleVolumeChange}
             className="w-full"
+            disabled={!!streamError}
           />
         </div>
       </div>
@@ -169,7 +204,12 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
       <StreamInfo />
       
       <div className="flex justify-center mb-8 mt-6">
-        {isPlaying ? (
+        {streamError ? (
+          <div className="flex flex-col items-center gap-2">
+            <AlertCircle className="h-8 w-8 text-red-500" />
+            <p className="text-red-500">{streamError}</p>
+          </div>
+        ) : isPlaying ? (
           <div className="relative">
             <div className="absolute -inset-1 rounded-full opacity-75 bg-radio-purple animate-pulse-ring"></div>
             <AudioVisualizer isActive={isPlaying && !isLoading} />
@@ -181,15 +221,18 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
         )}
       </div>
       
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col items-center gap-4">
         <Button
           onClick={togglePlay}
           variant="outline"
           size="icon"
           className="h-12 w-12 rounded-full border-radio-purple hover:bg-radio-purple/20 transition-all duration-300"
+          disabled={!!streamError}
         >
           {isLoading ? (
             <div className="h-4 w-4 rounded-full border-2 border-radio-purple border-t-transparent animate-spin"></div>
+          ) : streamError ? (
+            <AlertCircle className="h-6 w-6 text-red-500" />
           ) : isPlaying ? (
             <Pause className="h-6 w-6 text-radio-purple" />
           ) : (
@@ -203,6 +246,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-white"
+            disabled={!!streamError}
           >
             {isMuted ? (
               <VolumeX className="h-5 w-5" />
@@ -216,6 +260,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
             step={0.01}
             onValueChange={handleVolumeChange}
             className="w-full"
+            disabled={!!streamError}
           />
         </div>
       </div>

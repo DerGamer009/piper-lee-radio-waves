@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -31,7 +30,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   
   // Fetch users from the API
-  const { data: users, isLoading, error } = useQuery({
+  const { data: users, isLoading, error } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: getUsers
   });
@@ -71,6 +70,7 @@ const Admin = () => {
           description: "Der Benutzer wurde erfolgreich gelöscht.",
         });
       } catch (error) {
+        console.error('Error deleting user:', error);
         toast({
           title: "Fehler",
           description: "Der Benutzer konnte nicht gelöscht werden.",
@@ -96,18 +96,19 @@ const Admin = () => {
         description: `Benutzer ist jetzt ${!isCurrentlyActive ? 'aktiv' : 'inaktiv'}.`,
       });
     } catch (error) {
+      console.error('Error updating user status:', error);
       toast({
         title: "Fehler",
-        description: "Der Status konnte nicht geändert werden.",
+        description: "Der Status konnte nicht geändert werden. Bitte versuchen Sie es später erneut.",
         variant: "destructive",
       });
     }
   };
 
   if (isLoading) return <div className="p-4">Loading users...</div>;
-  if (error) return <div className="p-4 text-red-500">Error loading users: {error.toString()}</div>;
+  if (error) return <div className="p-4 text-red-500">Error loading users: {error instanceof Error ? error.message : 'Unknown error'}</div>;
 
-  const selectedUser = users && Array.isArray(users) ? users.find(user => user.id === selectedUserId) : undefined;
+  const selectedUser = users?.find(user => user.id === selectedUserId);
 
   return (
     <div className="container mx-auto p-4">
@@ -179,7 +180,7 @@ const Admin = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users && Array.isArray(users) && users.length > 0 ? (
+              {users && users.length > 0 ? (
                 users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>{user.username}</TableCell>
