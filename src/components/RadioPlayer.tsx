@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import AudioVisualizer from "./AudioVisualizer";
 import StreamInfo from "./StreamInfo";
+import { useToast } from "@/components/ui/use-toast";
 
 interface RadioPlayerProps {
   streamUrl: string;
@@ -18,36 +19,69 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    audioRef.current = new Audio(streamUrl);
+    // Create a new audio element or reset the existing one
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    
+    // Set proper properties
+    audioRef.current.src = streamUrl;
     audioRef.current.volume = volume;
+    audioRef.current.crossOrigin = "anonymous";
+    audioRef.current.preload = "auto";
     
     const handleWaiting = () => setIsLoading(true);
     const handlePlaying = () => setIsLoading(false);
+    const handleError = (e: ErrorEvent) => {
+      console.error("Audio playback error:", e);
+      setIsPlaying(false);
+      setIsLoading(false);
+      toast({
+        title: "Fehler beim Abspielen",
+        description: "Der Stream konnte nicht geladen werden. Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+      });
+    };
     
     audioRef.current.addEventListener("waiting", handleWaiting);
     audioRef.current.addEventListener("playing", handlePlaying);
+    audioRef.current.addEventListener("error", handleError as EventListener);
     
+    // Clean up
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeEventListener("waiting", handleWaiting);
         audioRef.current.removeEventListener("playing", handlePlaying);
+        audioRef.current.removeEventListener("error", handleError as EventListener);
       }
     };
-  }, [streamUrl]);
+  }, [streamUrl, toast]);
 
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play().catch(error => {
-          console.error("Audio playback failed:", error);
-        });
+        setIsLoading(true);
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            console.error("Audio playback failed:", error);
+            setIsLoading(false);
+            toast({
+              title: "Fehler beim Abspielen",
+              description: "Der Stream konnte nicht abgespielt werden. Bitte versuchen Sie es später erneut.",
+              variant: "destructive",
+            });
+          });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 

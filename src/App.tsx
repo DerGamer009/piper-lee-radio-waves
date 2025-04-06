@@ -13,6 +13,8 @@ import Imprint from "./pages/Imprint";
 import Contact from "./pages/Contact";
 import Partner from "./pages/Partner";
 import Schedule from "./pages/Schedule";
+import Podcasts from "./pages/Podcasts";
+import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import Login from "./pages/Login";
@@ -35,6 +37,8 @@ const App = () => (
           <Route path="/kontakt" element={<Layout><Contact /></Layout>} />
           <Route path="/partner" element={<Layout><Partner /></Layout>} />
           <Route path="/sendeplan" element={<Layout><Schedule /></Layout>} />
+          <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
+          <Route path="/charts" element={<Layout><Charts /></Layout>} />
           <Route 
             path="/admin" 
             element={<ProtectedRoute element={<Layout><Admin /></Layout>} requiredRoles={["admin"]} />} 
