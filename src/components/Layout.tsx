@@ -1,11 +1,10 @@
-
 import { ReactNode } from "react";
 import Header from "./Header";
 import RadioPlayer from "./RadioPlayer";
 import { useLocation } from "react-router-dom";
 
 // Constants for radio stream
-const STREAM_URL = "https://stream.piper-lee.net/radio.mp3";
+const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 const STATION_NAME = "Piper Lee Radio";
 
 interface LayoutProps {

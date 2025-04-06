@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import RadioPlayer from "@/components/RadioPlayer";
 import PollWidget from "@/components/PollWidget";
 
 // Constants for radio stream
-const STREAM_URL = "https://stream.piper-lee.net/radio.mp3";
+const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 const STATION_NAME = "Piper Lee Radio";
 
 const Index = () => {
