@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,8 @@ const Login = () => {
         
         if (Array.isArray(result.user.roles)) {
           userRoles = result.user.roles;
-        } else if (typeof result.user.roles === 'string' && result.user.roles) {
-          userRoles = result.user.roles.split(',');
+        } else if (typeof result.user.roles === 'string' && result.user.roles.trim() !== '') {
+          userRoles = result.user.roles.trim().split(',');
         }
             
         if (userRoles.includes("admin")) {
@@ -78,8 +79,8 @@ const Login = () => {
         
     if (Array.isArray(userData.roles)) {
       userRoles = userData.roles;
-    } else if (typeof userData.roles === 'string' && userData.roles) {
-      userRoles = userData.roles.split(',');
+    } else if (typeof userData.roles === 'string' && userData.roles.trim() !== '') {
+      userRoles = userData.roles.trim().split(',');
     }
         
     if (userRoles.includes("admin")) {
