@@ -1,217 +1,299 @@
-// This file contains the API service functions that interact with the backend
-import { 
-  getDbUsers, createDbUser, getDbShows, 
-  getDbSchedule, createDbScheduleItem, verifyUserCredentials 
-} from './dbService';
 
-// Define types
+import { executeQuery, getUsers, getUserById, createUser, updateUser, deleteUser,
+         getShows, getShowById, createShow, updateShow, deleteShow,
+         getSchedule, getScheduleById, createScheduleItem as dbCreateScheduleItem, 
+         updateScheduleItem, deleteScheduleItem, authenticateUser } from './dbService';
+
+// Types
 export interface User {
   id: number;
   username: string;
   email: string;
-  fullName: string;
-  roles: string[];
-  isActive: boolean;
+  full_name: string;
+  is_active: boolean;
+  roles: string;
 }
 
 export interface Show {
   id: number;
   title: string;
   description: string;
-  imageUrl?: string;
-  createdBy: number;
+  image_url?: string;
+  created_by?: number;
+  created_at?: string;
+  updated_at?: string;
+  creator_name?: string;
 }
 
 export interface ScheduleItem {
   id: number;
-  showId: number;
-  showTitle: string;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
+  show_id: number;
+  showId?: number;
+  day_of_week: string;
+  dayOfWeek?: string;
+  start_time: string;
+  startTime?: string;
+  end_time: string;
+  endTime?: string;
+  host_id?: number;
   hostId?: number;
+  host_name?: string;
   hostName?: string;
-  isRecurring: boolean;
+  is_recurring: boolean;
+  isRecurring?: boolean;
+  show_title?: string;
+  show_description?: string;
 }
 
-// User APIs
-export const login = async (username: string, password: string): Promise<{ token: string; user: User } | null> => {
-  console.log('Login attempt:', username);
-  
+// Mock authentication service
+// In a real app, this would verify with the backend
+// For now, we mock authentication with hardcoded credentials
+export const login = async (username: string, password: string) => {
   try {
-    // Verify credentials against our mock database
-    const user = await verifyUserCredentials(username, password);
+    // In production, the password should be hashed on the client side before sending
+    // or the authentication should happen via a secure protocol
+    const passwordHash = '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2'; // This is "admin123" for demo
     
-    if (user) {
-      return {
-        token: "mock-jwt-token-" + Date.now(),
-        user
-      };
+    if (username === 'admin' && password === 'admin123') {
+      const user = await authenticateUser(username, passwordHash);
+      if (user) {
+        // Store user info in localStorage (in a real app, use secure HTTP-only cookies)
+        localStorage.setItem('user', JSON.stringify(user));
+        return { success: true, user };
+      }
     }
-    return null;
+    
+    throw new Error('Falscher Benutzername oder Passwort');
   } catch (error) {
     console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const logout = () => {
+  localStorage.removeItem('user');
+};
+
+export const getCurrentUser = () => {
+  const userStr = localStorage.getItem('user');
+  if (!userStr) return null;
+  
+  try {
+    return JSON.parse(userStr);
+  } catch (e) {
+    console.error('Error parsing user from localStorage:', e);
     return null;
   }
 };
 
-export const getUsers = async (): Promise<User[]> => {
+export const hasRole = (requiredRoles: string[]) => {
+  const user = getCurrentUser();
+  if (!user) return false;
+  
+  const userRoles = user.roles.split(',');
+  return requiredRoles.some(role => userRoles.includes(role));
+};
+
+// User API functions
+export const fetchUsers = async (): Promise<User[]> => {
   try {
-    return await getDbUsers();
+    return await getUsers() as User[];
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
   }
 };
 
-export const createUser = async (user: Omit<User, 'id'>): Promise<User | null> => {
-  console.log('Create user:', user);
-  
+export const fetchUserById = async (id: number): Promise<User> => {
   try {
-    return await createDbUser(user);
+    return await getUserById(id) as User;
+  } catch (error) {
+    console.error(`Error fetching user ${id}:`, error);
+    throw error;
+  }
+};
+
+export const createNewUser = async (userData: Partial<User>): Promise<number> => {
+  try {
+    return await createUser(userData);
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;
   }
 };
 
-export const updateUser = async (id: number, user: Partial<User>): Promise<User | null> => {
-  console.log('Update user:', id, user);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Get users and update
-  const users = await getDbUsers();
-  const userIndex = users.findIndex(u => u.id === id);
-  
-  if (userIndex !== -1) {
-    const updatedUser = { ...users[userIndex], ...user };
-    // In a real app, we would call an update API here
-    // For our mock, we'll just return the updated user
-    return updatedUser;
-  }
-  
-  return null;
-};
-
-export const deleteUser = async (id: number): Promise<boolean> => {
-  console.log('Delete user:', id);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would call a backend API to delete the user
-  // For now we'll just simulate success
-  return true;
-};
-
-// Show APIs
-export const getShows = async (): Promise<Show[]> => {
+export const updateUserData = async (id: number, userData: Partial<User>): Promise<boolean> => {
   try {
-    return await getDbShows();
+    return await updateUser(id, userData);
+  } catch (error) {
+    console.error(`Error updating user ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteUserById = async (id: number): Promise<boolean> => {
+  try {
+    await deleteUser(id);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting user ${id}:`, error);
+    throw error;
+  }
+};
+
+// Show API functions
+export const fetchShows = async (): Promise<Show[]> => {
+  try {
+    return await getShows() as Show[];
   } catch (error) {
     console.error('Error fetching shows:', error);
     throw error;
   }
 };
 
-export const createShow = async (show: Omit<Show, 'id' | 'createdBy'>): Promise<Show | null> => {
-  console.log('Create show:', show);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would be an API call to the backend
-  // For now, we'll just return a mock show
-  return {
-    ...show,
-    id: Math.floor(Math.random() * 1000),
-    createdBy: 1,
-  };
-};
-
-export const updateShow = async (id: number, show: Partial<Show>): Promise<Show | null> => {
-  console.log('Update show:', id, show);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would update the show in the database
-  // For now, we'll just return the updated show
-  return {
-    id,
-    title: show.title || 'Unknown',
-    description: show.description || '',
-    imageUrl: show.imageUrl,
-    createdBy: 1,
-  };
-};
-
-export const deleteShow = async (id: number): Promise<boolean> => {
-  console.log('Delete show:', id);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would delete the show from the database
-  // For now, we'll just return success
-  return true;
-};
-
-// Schedule APIs
-export const getSchedule = async (): Promise<ScheduleItem[]> => {
+export const fetchShowById = async (id: number): Promise<Show> => {
   try {
-    return await getDbSchedule();
+    return await getShowById(id) as Show;
+  } catch (error) {
+    console.error(`Error fetching show ${id}:`, error);
+    throw error;
+  }
+};
+
+export const createNewShow = async (showData: Partial<Show>): Promise<number> => {
+  try {
+    const user = getCurrentUser();
+    showData.created_by = user ? user.id : null;
+    
+    return await createShow(showData);
+  } catch (error) {
+    console.error('Error creating show:', error);
+    throw error;
+  }
+};
+
+export const updateShowData = async (id: number, showData: Partial<Show>): Promise<boolean> => {
+  try {
+    return await updateShow(id, showData);
+  } catch (error) {
+    console.error(`Error updating show ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteShowById = async (id: number): Promise<boolean> => {
+  try {
+    await deleteShow(id);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting show ${id}:`, error);
+    throw error;
+  }
+};
+
+// Schedule API functions
+export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
+  try {
+    const scheduleData = await getSchedule() as any[];
+    
+    // Transform data to match the expected format
+    return scheduleData.map(item => ({
+      id: item.id,
+      show_id: item.show_id,
+      showId: item.show_id,
+      day_of_week: item.day_of_week,
+      dayOfWeek: item.day_of_week,
+      start_time: item.start_time,
+      startTime: item.start_time,
+      end_time: item.end_time,
+      endTime: item.end_time,
+      host_id: item.host_id,
+      hostId: item.host_id,
+      host_name: item.host_name,
+      hostName: item.host_name,
+      is_recurring: item.is_recurring === 1,
+      isRecurring: item.is_recurring === 1,
+      show_title: item.show_title,
+      show_description: item.show_description
+    }));
   } catch (error) {
     console.error('Error fetching schedule:', error);
     throw error;
   }
 };
 
-export const createScheduleItem = async (schedule: Omit<ScheduleItem, 'id' | 'showTitle'>): Promise<ScheduleItem | null> => {
-  console.log('Create schedule item:', schedule);
-  
+export const fetchScheduleById = async (id: number): Promise<ScheduleItem> => {
   try {
-    // Ensure we have the required fields
-    if (!schedule.showId || !schedule.dayOfWeek || !schedule.startTime || !schedule.endTime) {
-      throw new Error('Missing required schedule fields');
-    }
+    const item = await getScheduleById(id) as any;
     
-    return await createDbScheduleItem({
-      showId: schedule.showId,
-      dayOfWeek: schedule.dayOfWeek,
-      startTime: schedule.startTime,
-      endTime: schedule.endTime,
-      hostId: schedule.hostId,
-      isRecurring: schedule.isRecurring
-    });
+    return {
+      id: item.id,
+      show_id: item.show_id,
+      showId: item.show_id,
+      day_of_week: item.day_of_week,
+      dayOfWeek: item.day_of_week,
+      start_time: item.start_time,
+      startTime: item.start_time,
+      end_time: item.end_time,
+      endTime: item.end_time,
+      host_id: item.host_id,
+      hostId: item.host_id,
+      host_name: item.host_name,
+      hostName: item.host_name,
+      is_recurring: item.is_recurring === 1,
+      isRecurring: item.is_recurring === 1,
+      show_title: item.show_title
+    };
   } catch (error) {
-    console.error('Error creating schedule:', error);
+    console.error(`Error fetching schedule item ${id}:`, error);
     throw error;
   }
 };
 
-export const updateSchedule = async (id: number, schedule: Partial<ScheduleItem>): Promise<ScheduleItem | null> => {
-  console.log('Update schedule:', id, schedule);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would update the schedule in the database
-  // For now, we'll just return the updated schedule
-  return {
-    id,
-    showId: schedule.showId || 1,
-    showTitle: schedule.showTitle || 'Unknown',
-    dayOfWeek: schedule.dayOfWeek || 'Montag',
-    startTime: schedule.startTime || '00:00:00',
-    endTime: schedule.endTime || '00:00:00',
-    hostName: schedule.hostName,
-    isRecurring: schedule.isRecurring !== undefined ? schedule.isRecurring : true,
-  };
+export const createScheduleItem = async (scheduleData: Partial<ScheduleItem>): Promise<number> => {
+  try {
+    // Transform data to match the database schema
+    const dbData = {
+      showId: scheduleData.showId || scheduleData.show_id,
+      dayOfWeek: scheduleData.dayOfWeek || scheduleData.day_of_week,
+      startTime: scheduleData.startTime || scheduleData.start_time,
+      endTime: scheduleData.endTime || scheduleData.end_time,
+      hostId: scheduleData.hostId || scheduleData.host_id,
+      isRecurring: scheduleData.isRecurring !== undefined ? scheduleData.isRecurring : scheduleData.is_recurring
+    };
+    
+    return await dbCreateScheduleItem(dbData);
+  } catch (error) {
+    console.error('Error creating schedule item:', error);
+    throw error;
+  }
 };
 
-export const deleteScheduleItem = async (id: number): Promise<boolean> => {
-  console.log('Delete schedule item:', id);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real app, this would delete the schedule from the database
-  // For now, we'll just return success
-  return true;
+export const updateSchedule = async (id: number, scheduleData: Partial<ScheduleItem>): Promise<boolean> => {
+  try {
+    // Transform data to match the database schema
+    const dbData = {
+      showId: scheduleData.showId || scheduleData.show_id,
+      dayOfWeek: scheduleData.dayOfWeek || scheduleData.day_of_week,
+      startTime: scheduleData.startTime || scheduleData.start_time,
+      endTime: scheduleData.endTime || scheduleData.end_time,
+      hostId: scheduleData.hostId || scheduleData.host_id,
+      isRecurring: scheduleData.isRecurring !== undefined ? scheduleData.isRecurring : scheduleData.is_recurring
+    };
+    
+    return await updateScheduleItem(id, dbData);
+  } catch (error) {
+    console.error(`Error updating schedule item ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteSchedule = async (id: number): Promise<boolean> => {
+  try {
+    await deleteScheduleItem(id);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting schedule item ${id}:`, error);
+    throw error;
+  }
 };
