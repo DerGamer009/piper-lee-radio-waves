@@ -3,113 +3,83 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createScheduleItem, updateSchedule, ScheduleItem } from '@/services/apiService';
+import { createScheduleItem } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+interface Show {
+  id: number;
+  title: string;
+}
 
 // Define form schema
 const formSchema = z.object({
-  showId: z.coerce.number().positive({ message: 'Bitte wählen Sie eine Sendung' }),
-  dayOfWeek: z.string().min(1, { message: 'Bitte wählen Sie einen Tag' }),
-  startTime: z.string().min(1, { message: 'Bitte geben Sie eine Startzeit ein' }),
-  endTime: z.string().min(1, { message: 'Bitte geben Sie eine Endzeit ein' }),
+  showId: z.number({
+    required_error: "Bitte wählen Sie eine Show aus",
+  }),
+  dayOfWeek: z.string({
+    required_error: "Bitte wählen Sie einen Tag aus",
+  }),
+  startTime: z.string().min(1, { message: 'Startzeit ist erforderlich' }),
+  endTime: z.string().min(1, { message: 'Endzeit ist erforderlich' }),
   hostName: z.string().optional(),
   isRecurring: z.boolean().default(true),
 });
 
 type ScheduleFormValues = z.infer<typeof formSchema>;
 
-interface Show {
-  id: number;
-  title: string;
-  description: string;
-  imageUrl?: string;
-  createdBy: number;
-}
-
 interface ScheduleFormProps {
   shows: Show[];
-  scheduleItem?: ScheduleItem; // Make this optional for create mode
   onCancel: () => void;
   onSuccess: () => void;
-  isEditing?: boolean; // Make this optional with default false
 }
 
-const ScheduleForm: React.FC<ScheduleFormProps> = ({ 
-  shows, 
-  scheduleItem, 
-  onCancel, 
-  onSuccess, 
-  isEditing = false 
-}) => {
+const ScheduleForm: React.FC<ScheduleFormProps> = ({ shows, onCancel, onSuccess }) => {
   const { toast } = useToast();
   
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      showId: scheduleItem?.showId || scheduleItem?.show_id || 0,
-      dayOfWeek: scheduleItem?.dayOfWeek || scheduleItem?.day_of_week || '',
-      startTime: scheduleItem?.startTime || scheduleItem?.start_time || '',
-      endTime: scheduleItem?.endTime || scheduleItem?.end_time || '',
-      hostName: scheduleItem?.hostName || scheduleItem?.host_name || '',
-      isRecurring: scheduleItem?.isRecurring !== undefined ? scheduleItem.isRecurring : 
-                  scheduleItem?.is_recurring !== undefined ? scheduleItem.is_recurring : true,
+      dayOfWeek: '',
+      startTime: '',
+      endTime: '',
+      hostName: '',
+      isRecurring: true,
     },
   });
 
-  const weekdays = [
-    'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'
+  const days = [
+    "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"
   ];
 
   const onSubmit = async (data: ScheduleFormValues) => {
     try {
-      // Find the show title
+      // Get the show title for the selected show ID
       const selectedShow = shows.find(show => show.id === data.showId);
-      
-      // Ensure required fields are present
-      const scheduleData = {
-        showId: data.showId,
-        show_id: data.showId,
-        showTitle: selectedShow?.title || '',
-        dayOfWeek: data.dayOfWeek,
-        day_of_week: data.dayOfWeek,
-        startTime: data.startTime,
-        start_time: data.startTime,
-        endTime: data.endTime,
-        end_time: data.endTime,
-        hostName: data.hostName,
-        host_name: data.hostName,
-        isRecurring: data.isRecurring,
-        is_recurring: data.isRecurring
-      };
-      
-      if (isEditing && scheduleItem) {
-        // Update existing schedule
-        await updateSchedule(scheduleItem.id, scheduleData);
-        toast({
-          title: "Erfolg!",
-          description: "Sendeplan wurde erfolgreich aktualisiert.",
-        });
-      } else {
-        // Create new schedule
-        await createScheduleItem(scheduleData);
-        toast({
-          title: "Erfolg!",
-          description: "Sendeplan wurde erfolgreich erstellt.",
-        });
+      if (!selectedShow) {
+        throw new Error("Selected show not found");
       }
+
+      // Create the schedule item with the show title
+      await createScheduleItem({
+        ...data,
+        showTitle: selectedShow.title,
+      });
+
+      toast({
+        title: "Erfolg!",
+        description: "Sendeplan wurde erfolgreich erstellt.",
+      });
       onSuccess();
     } catch (error) {
-      console.error('Error with schedule:', error);
+      console.error('Error creating schedule item:', error);
       toast({
         title: "Fehler!",
-        description: isEditing 
-          ? "Der Sendeplan konnte nicht aktualisiert werden."
-          : "Der Sendeplan konnte nicht erstellt werden.",
+        description: "Der Sendeplan konnte nicht erstellt werden.",
         variant: "destructive"
       });
     }
@@ -126,12 +96,12 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
               <FormItem>
                 <FormLabel>Sendung</FormLabel>
                 <Select 
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  defaultValue={field.value ? field.value.toString() : undefined}
+                  onValueChange={(value) => field.onChange(parseInt(value))} 
+                  defaultValue={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sendung auswählen" />
+                      <SelectValue placeholder="Wähle eine Sendung" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -156,11 +126,11 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Tag auswählen" />
+                      <SelectValue placeholder="Wähle einen Tag" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {weekdays.map((day) => (
+                    {days.map((day) => (
                       <SelectItem key={day} value={day}>
                         {day}
                       </SelectItem>
@@ -207,7 +177,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
               <FormItem>
                 <FormLabel>Moderator (optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Max Mustermann" {...field} />
+                  <Input placeholder="Name des Moderators" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -227,9 +197,6 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                 </FormControl>
                 <div className="space-y-1 leading-none">
                   <FormLabel>Wöchentlich wiederholen</FormLabel>
-                  <FormDescription>
-                    Diese Sendung jede Woche ausstrahlen
-                  </FormDescription>
                 </div>
               </FormItem>
             )}
@@ -240,9 +207,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
           <Button variant="outline" type="button" onClick={onCancel}>
             Abbrechen
           </Button>
-          <Button type="submit">
-            {isEditing ? 'Sendeplan aktualisieren' : 'Sendeplan erstellen'}
-          </Button>
+          <Button type="submit">Sendeplan erstellen</Button>
         </div>
       </form>
     </Form>
