@@ -35,7 +35,7 @@ const Login = () => {
         
         if (Array.isArray(result.user.roles)) {
           userRoles = result.user.roles;
-        } else if (typeof result.user.roles === 'string') {
+        } else if (typeof result.user.roles === 'string' && result.user.roles) {
           userRoles = result.user.roles.split(',');
         }
             
@@ -78,7 +78,7 @@ const Login = () => {
         
     if (Array.isArray(userData.roles)) {
       userRoles = userData.roles;
-    } else if (typeof userData.roles === 'string') {
+    } else if (typeof userData.roles === 'string' && userData.roles) {
       userRoles = userData.roles.split(',');
     }
         
