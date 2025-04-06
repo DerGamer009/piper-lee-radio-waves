@@ -246,6 +246,49 @@ export const executeQuery = async (query: string, params: any[] = []) => {
     return [{ affectedRows: initialLength - users.length }];
   }
   
+  // Add support for schedule operations
+  if (query.includes('INSERT INTO schedule')) {
+    const [showId, dayOfWeek, startTime, endTime, hostId, isRecurring, createdAt, updatedAt] = params;
+    const newScheduleItem = {
+      id: schedule.length + 1,
+      show_id: showId,
+      day_of_week: dayOfWeek,
+      start_time: startTime,
+      end_time: endTime,
+      host_id: hostId,
+      is_recurring: isRecurring,
+      created_at: createdAt,
+      updated_at: updatedAt
+    };
+    
+    schedule.push(newScheduleItem);
+    return [{ insertId: newScheduleItem.id }];
+  }
+  
+  if (query.includes('UPDATE schedule')) {
+    const id = params[params.length - 1];
+    const index = schedule.findIndex(s => s.id === id);
+    
+    if (index !== -1) {
+      const [showId, dayOfWeek, startTime, endTime, hostId, isRecurring, updatedAt] = params;
+      
+      schedule[index] = {
+        ...schedule[index],
+        show_id: showId,
+        day_of_week: dayOfWeek,
+        start_time: startTime,
+        end_time: endTime,
+        host_id: hostId,
+        is_recurring: isRecurring,
+        updated_at: updatedAt
+      };
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    return [{ affectedRows: 0 }];
+  }
+  
   if (query.includes('DELETE FROM schedule')) {
     const scheduleId = params[0];
     const initialLength = schedule.length;

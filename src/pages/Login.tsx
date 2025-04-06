@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,7 @@ const Login = () => {
         // Redirect based on user role
         const userRoles = Array.isArray(result.user.roles) 
           ? result.user.roles 
-          : typeof result.user.roles === 'string' 
+          : typeof result.user.roles === 'string' && result.user.roles
             ? result.user.roles.split(',') 
             : [];
             
@@ -73,7 +74,7 @@ const Login = () => {
   if (isLoggedIn && userData) {
     const userRoles = Array.isArray(userData.roles) 
       ? userData.roles 
-      : typeof userData.roles === 'string' 
+      : typeof userData.roles === 'string' && userData.roles
         ? userData.roles.split(',') 
         : [];
         

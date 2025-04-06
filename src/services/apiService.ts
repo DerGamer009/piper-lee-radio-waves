@@ -281,6 +281,107 @@ export const getSchedule = async (): Promise<ScheduleItem[]> => {
   }
 };
 
+// Add the missing functions for creating and updating schedule items
+export const createScheduleItem = async (data: Partial<ScheduleItem>): Promise<number> => {
+  try {
+    // Transform the data to match database schema
+    const dbData = {
+      show_id: data.showId || data.show_id,
+      day_of_week: data.dayOfWeek || data.day_of_week,
+      start_time: data.startTime || data.start_time,
+      end_time: data.endTime || data.end_time,
+      host_id: data.hostId || data.host_id || null,
+      host_name: data.hostName || data.host_name,
+      is_recurring: data.isRecurring !== undefined ? (data.isRecurring ? 1 : 0) : 
+                   data.is_recurring !== undefined ? (data.is_recurring ? 1 : 0) : 1
+    };
+    
+    // Find host ID based on name if provided but no ID
+    if (dbData.host_name && !dbData.host_id) {
+      const users = await executeQuery(
+        'SELECT id FROM users WHERE full_name = ?',
+        [dbData.host_name]
+      ) as any[];
+      
+      if (Array.isArray(users) && users.length > 0) {
+        dbData.host_id = users[0].id;
+      }
+    }
+    
+    // Insert into schedule table
+    const [result] = await executeQuery(
+      `INSERT INTO schedule (show_id, day_of_week, start_time, end_time, host_id, is_recurring, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        dbData.show_id, 
+        dbData.day_of_week, 
+        dbData.start_time, 
+        dbData.end_time, 
+        dbData.host_id, 
+        dbData.is_recurring,
+        new Date().toISOString(),
+        new Date().toISOString()
+      ]
+    ) as any[];
+    
+    return result.insertId;
+  } catch (error) {
+    console.error('Error creating schedule item:', error);
+    throw error;
+  }
+};
+
+export const updateSchedule = async (id: number, data: Partial<ScheduleItem>): Promise<boolean> => {
+  try {
+    // Transform the data to match database schema
+    const dbData = {
+      show_id: data.showId || data.show_id,
+      day_of_week: data.dayOfWeek || data.day_of_week,
+      start_time: data.startTime || data.start_time,
+      end_time: data.endTime || data.end_time,
+      host_id: data.hostId || data.host_id || null,
+      host_name: data.hostName || data.host_name,
+      is_recurring: data.isRecurring !== undefined ? (data.isRecurring ? 1 : 0) : 
+                  data.is_recurring !== undefined ? (data.is_recurring ? 1 : 0) : 1
+    };
+    
+    // Find host ID based on name if provided but no ID
+    if (dbData.host_name && !dbData.host_id) {
+      const users = await executeQuery(
+        'SELECT id FROM users WHERE full_name = ?',
+        [dbData.host_name]
+      ) as any[];
+      
+      if (Array.isArray(users) && users.length > 0) {
+        dbData.host_id = users[0].id;
+      }
+    }
+    
+    // Update schedule table
+    await executeQuery(
+      `UPDATE schedule 
+       SET show_id = ?, day_of_week = ?, start_time = ?, end_time = ?, 
+           host_id = ?, is_recurring = ?, updated_at = ?
+       WHERE id = ?`,
+      [
+        dbData.show_id, 
+        dbData.day_of_week, 
+        dbData.start_time, 
+        dbData.end_time, 
+        dbData.host_id, 
+        dbData.is_recurring,
+        new Date().toISOString(),
+        id
+      ]
+    );
+    
+    return true;
+  } catch (error) {
+    console.error(`Error updating schedule item ${id}:`, error);
+    throw error;
+  }
+};
+
 export const deleteScheduleItem = async (id: number): Promise<boolean> => {
   try {
     await executeQuery('DELETE FROM schedule WHERE id = ?', [id]);

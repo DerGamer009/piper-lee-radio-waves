@@ -6,7 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Mic, Calendar, Plus, Edit, Trash, LogOut } from "lucide-react";
-import { getSchedule, getShows, deleteScheduleItem, Show, ScheduleItem } from "@/services/apiService";
+import { getSchedule, getShows, deleteScheduleItem, Show as ApiShow, ScheduleItem } from "@/services/apiService";
 import ScheduleForm from "@/components/ScheduleForm";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -20,6 +20,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Define a Show interface that matches what ScheduleForm expects
+interface Show {
+  id: number;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  createdBy: number;
+}
+
 const Moderator = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -31,10 +40,23 @@ const Moderator = () => {
     queryFn: getSchedule
   });
 
-  const { data: shows, isLoading: showsLoading } = useQuery({
+  const { data: apiShows, isLoading: showsLoading } = useQuery({
     queryKey: ['shows'],
     queryFn: getShows
   });
+
+  // Convert API shows to the format expected by ScheduleForm
+  const shows: Show[] = React.useMemo(() => {
+    if (!apiShows || !Array.isArray(apiShows)) return [];
+    
+    return apiShows.map((show: ApiShow) => ({
+      id: show.id,
+      title: show.title,
+      description: show.description,
+      imageUrl: show.image_url,
+      createdBy: show.created_by || 0,
+    }));
+  }, [apiShows]);
 
   const [isAddingSchedule, setIsAddingSchedule] = useState(false);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
@@ -104,10 +126,16 @@ const Moderator = () => {
     };
     
     return [...scheduleItems].sort((a, b) => {
-      if (dayOrder[a.dayOfWeek] !== dayOrder[b.dayOfWeek]) {
-        return dayOrder[a.dayOfWeek] - dayOrder[b.dayOfWeek];
+      const aDayOfWeek = a.dayOfWeek || a.day_of_week;
+      const bDayOfWeek = b.dayOfWeek || b.day_of_week;
+      
+      if (dayOrder[aDayOfWeek] !== dayOrder[bDayOfWeek]) {
+        return dayOrder[aDayOfWeek] - dayOrder[bDayOfWeek];
       }
-      return a.startTime.localeCompare(b.startTime);
+      
+      const aStartTime = a.startTime || a.start_time;
+      const bStartTime = b.startTime || b.start_time;
+      return aStartTime.localeCompare(bStartTime);
     });
   }, [scheduleItems]);
 
@@ -147,7 +175,7 @@ const Moderator = () => {
           </CardHeader>
           <CardContent>
             <ScheduleForm 
-              shows={shows && Array.isArray(shows) ? shows : []}
+              shows={shows}
               onCancel={() => setIsAddingSchedule(false)} 
               onSuccess={handleScheduleSuccess} 
             />
@@ -162,7 +190,7 @@ const Moderator = () => {
           </CardHeader>
           <CardContent>
             <ScheduleForm 
-              shows={shows && Array.isArray(shows) ? shows : []}
+              shows={shows}
               scheduleItem={selectedSchedule}
               onCancel={() => setIsEditingSchedule(false)} 
               onSuccess={handleScheduleSuccess}
@@ -196,13 +224,13 @@ const Moderator = () => {
               {sortedSchedule.length > 0 ? (
                 sortedSchedule.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.dayOfWeek}</TableCell>
-                    <TableCell>{item.startTime}</TableCell>
-                    <TableCell>{item.endTime}</TableCell>
-                    <TableCell>{item.showTitle}</TableCell>
-                    <TableCell>{item.hostName || 'Nicht zugewiesen'}</TableCell>
+                    <TableCell>{item.dayOfWeek || item.day_of_week}</TableCell>
+                    <TableCell>{item.startTime || item.start_time}</TableCell>
+                    <TableCell>{item.endTime || item.end_time}</TableCell>
+                    <TableCell>{item.show_title}</TableCell>
+                    <TableCell>{(item.hostName || item.host_name) || 'Nicht zugewiesen'}</TableCell>
                     <TableCell>
-                      {item.isRecurring ? (
+                      {(item.isRecurring !== undefined ? item.isRecurring : item.is_recurring) ? (
                         <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Ja</span>
                       ) : (
                         <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Nein</span>

@@ -51,12 +51,13 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      showId: scheduleItem?.showId || 0,
-      dayOfWeek: scheduleItem?.dayOfWeek || '',
-      startTime: scheduleItem?.startTime || '',
-      endTime: scheduleItem?.endTime || '',
-      hostName: scheduleItem?.hostName || '',
-      isRecurring: scheduleItem?.isRecurring !== undefined ? scheduleItem.isRecurring : true,
+      showId: scheduleItem?.showId || scheduleItem?.show_id || 0,
+      dayOfWeek: scheduleItem?.dayOfWeek || scheduleItem?.day_of_week || '',
+      startTime: scheduleItem?.startTime || scheduleItem?.start_time || '',
+      endTime: scheduleItem?.endTime || scheduleItem?.end_time || '',
+      hostName: scheduleItem?.hostName || scheduleItem?.host_name || '',
+      isRecurring: scheduleItem?.isRecurring !== undefined ? scheduleItem.isRecurring : 
+                  scheduleItem?.is_recurring !== undefined ? scheduleItem.is_recurring : true,
     },
   });
 
@@ -72,12 +73,18 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
       // Ensure required fields are present
       const scheduleData = {
         showId: data.showId,
+        show_id: data.showId,
         showTitle: selectedShow?.title || '',
         dayOfWeek: data.dayOfWeek,
+        day_of_week: data.dayOfWeek,
         startTime: data.startTime,
+        start_time: data.startTime,
         endTime: data.endTime,
+        end_time: data.endTime,
         hostName: data.hostName,
-        isRecurring: data.isRecurring
+        host_name: data.hostName,
+        isRecurring: data.isRecurring,
+        is_recurring: data.isRecurring
       };
       
       if (isEditing && scheduleItem) {
