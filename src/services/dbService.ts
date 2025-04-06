@@ -1,264 +1,343 @@
-// This file provides mock database services for frontend development
-// In a real application, these would be API calls to a backend server
 
-/**
- * Mock database users with password credentials
- * Note: In a real application, passwords would be hashed and never stored in plain text
- */
-const mockDbUsers = [
+// This file simulates database operations in the browser
+
+// Mock data storage
+let users = [
   {
     id: 1,
-    username: "admin",
-    password: "admin123", // In real app, this would be hashed
-    email: "admin@radiostation.de",
-    fullName: "Admin User",
-    roles: ["admin"],
-    isActive: true
+    username: 'admin',
+    password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
+    email: 'admin@example.com',
+    full_name: 'Administrator',
+    is_active: 1,
+    last_login: '2023-01-01T00:00:00.000Z',
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
   },
   {
     id: 2,
-    username: "moderator1",
-    password: "mod123", // In real app, this would be hashed
-    email: "mod1@radiostation.de",
-    fullName: "Moderator Eins",
-    roles: ["moderator"],
-    isActive: true
-  },
-  {
-    id: 3,
-    username: "user1",
-    password: "user123", // In real app, this would be hashed
-    email: "user1@example.com",
-    fullName: "Regular User",
-    roles: ["user"],
-    isActive: false
+    username: 'moderator',
+    password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
+    email: 'moderator@example.com',
+    full_name: 'Moderator User',
+    is_active: 1,
+    last_login: '2023-01-01T00:00:00.000Z',
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
   }
 ];
 
-/**
- * Mock database connection info 
- * This is just for demonstration - in a real app this would be server-side only
- */
-const dbConfig = {
-  host: "127.0.0.1",
-  user: "radio_station",
-  password: "Gamer09!!",
-  database: "radio_station"
+let roles = [
+  { id: 1, name: 'admin', description: 'Administrator role' },
+  { id: 2, name: 'moderator', description: 'Moderator role' },
+  { id: 3, name: 'user', description: 'Standard user role' }
+];
+
+let userRoles = [
+  { user_id: 1, role_id: 1 },
+  { user_id: 2, role_id: 2 }
+];
+
+let shows = [
+  {
+    id: 1,
+    title: 'Morning Show',
+    description: 'Wake up with our morning show',
+    image_url: '/placeholder.svg',
+    created_by: 1,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  },
+  {
+    id: 2,
+    title: 'Afternoon Relaxation',
+    description: 'Relax with smooth tunes in the afternoon',
+    image_url: '/placeholder.svg',
+    created_by: 2,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  }
+];
+
+let schedule = [
+  {
+    id: 1,
+    show_id: 1,
+    day_of_week: 'Montag',
+    start_time: '08:00',
+    end_time: '10:00',
+    host_id: 1,
+    is_recurring: 1,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  },
+  {
+    id: 2,
+    show_id: 2,
+    day_of_week: 'Dienstag',
+    start_time: '14:00',
+    end_time: '16:00',
+    host_id: 2,
+    is_recurring: 1,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  }
+];
+
+// Mock function to execute SQL-like queries
+export const executeQuery = async (query: string, params: any[] = []) => {
+  console.log('Executing query:', query, 'with params:', params);
+  
+  // Simple query execution simulation
+  if (query.includes('SELECT') && query.includes('FROM users')) {
+    // Handle user queries
+    if (query.includes('WHERE u.id = ?')) {
+      const userId = params[0];
+      const user = users.find(u => u.id === userId);
+      if (!user) return [];
+      
+      const userRolesList = userRoles
+        .filter(ur => ur.user_id === userId)
+        .map(ur => {
+          const role = roles.find(r => r.id === ur.role_id);
+          return role ? role.name : null;
+        })
+        .filter(Boolean);
+      
+      return [{
+        ...user,
+        roles: userRolesList.join(',')
+      }];
+    }
+    
+    // Get all users with roles
+    return users.map(user => {
+      const userRolesList = userRoles
+        .filter(ur => ur.user_id === user.id)
+        .map(ur => {
+          const role = roles.find(r => r.id === ur.role_id);
+          return role ? role.name : null;
+        })
+        .filter(Boolean);
+      
+      return {
+        ...user,
+        roles: userRolesList.join(',')
+      };
+    });
+  }
+  
+  if (query.includes('SELECT') && query.includes('FROM shows')) {
+    // Handle show queries
+    if (query.includes('WHERE s.id = ?')) {
+      const showId = params[0];
+      const show = shows.find(s => s.id === showId);
+      if (!show) return [];
+      
+      const creator = users.find(u => u.id === show.created_by);
+      
+      return [{
+        ...show,
+        creator_name: creator ? creator.full_name : null
+      }];
+    }
+    
+    // Get all shows with creator names
+    return shows.map(show => {
+      const creator = users.find(u => u.id === show.created_by);
+      
+      return {
+        ...show,
+        creator_name: creator ? creator.full_name : null
+      };
+    });
+  }
+  
+  if (query.includes('SELECT') && query.includes('FROM schedule')) {
+    // Handle schedule queries
+    if (query.includes('WHERE s.id = ?')) {
+      const scheduleId = params[0];
+      const scheduleItem = schedule.find(s => s.id === scheduleId);
+      if (!scheduleItem) return [];
+      
+      const show = shows.find(s => s.id === scheduleItem.show_id);
+      const host = users.find(u => u.id === scheduleItem.host_id);
+      
+      return [{
+        ...scheduleItem,
+        show_title: show ? show.title : null,
+        show_description: show ? show.description : null,
+        host_name: host ? host.full_name : null
+      }];
+    }
+    
+    // Get all schedule items with show and host details
+    return schedule.map(scheduleItem => {
+      const show = shows.find(s => s.id === scheduleItem.show_id);
+      const host = users.find(u => u.id === scheduleItem.host_id);
+      
+      return {
+        ...scheduleItem,
+        show_title: show ? show.title : null,
+        show_description: show ? show.description : null,
+        host_name: host ? host.full_name : null
+      };
+    });
+  }
+  
+  if (query.includes('INSERT INTO users')) {
+    const [username, passwordHash, email, fullName, isActive] = params;
+    const newUser = {
+      id: users.length + 1,
+      username,
+      password_hash: passwordHash,
+      email,
+      full_name: fullName,
+      is_active: isActive,
+      last_login: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    return [{ insertId: newUser.id }];
+  }
+  
+  if (query.includes('INSERT INTO user_roles')) {
+    const [userId, roleId] = params;
+    userRoles.push({ user_id: userId, role_id: roleId });
+    return [{ affectedRows: 1 }];
+  }
+  
+  if (query.includes('UPDATE users')) {
+    const id = params[params.length - 1];
+    const index = users.findIndex(u => u.id === id);
+    
+    if (index !== -1) {
+      const [username, email, fullName, isActive] = params;
+      
+      users[index] = {
+        ...users[index],
+        username,
+        email,
+        full_name: fullName,
+        is_active: isActive,
+        updated_at: new Date().toISOString()
+      };
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    return [{ affectedRows: 0 }];
+  }
+  
+  if (query.includes('DELETE FROM user_roles')) {
+    const userId = params[0];
+    userRoles = userRoles.filter(ur => ur.user_id !== userId);
+    return [{ affectedRows: 1 }];
+  }
+  
+  if (query.includes('DELETE FROM users')) {
+    const userId = params[0];
+    const initialLength = users.length;
+    users = users.filter(u => u.id !== userId);
+    userRoles = userRoles.filter(ur => ur.user_id !== userId);
+    
+    return [{ affectedRows: initialLength - users.length }];
+  }
+  
+  // Add support for schedule operations
+  if (query.includes('INSERT INTO schedule')) {
+    const [showId, dayOfWeek, startTime, endTime, hostId, isRecurring, createdAt, updatedAt] = params;
+    const newScheduleItem = {
+      id: schedule.length + 1,
+      show_id: showId,
+      day_of_week: dayOfWeek,
+      start_time: startTime,
+      end_time: endTime,
+      host_id: hostId,
+      is_recurring: isRecurring,
+      created_at: createdAt,
+      updated_at: updatedAt
+    };
+    
+    schedule.push(newScheduleItem);
+    return [{ insertId: newScheduleItem.id }];
+  }
+  
+  if (query.includes('UPDATE schedule')) {
+    const id = params[params.length - 1];
+    const index = schedule.findIndex(s => s.id === id);
+    
+    if (index !== -1) {
+      const [showId, dayOfWeek, startTime, endTime, hostId, isRecurring, updatedAt] = params;
+      
+      schedule[index] = {
+        ...schedule[index],
+        show_id: showId,
+        day_of_week: dayOfWeek,
+        start_time: startTime,
+        end_time: endTime,
+        host_id: hostId,
+        is_recurring: isRecurring,
+        updated_at: updatedAt
+      };
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    return [{ affectedRows: 0 }];
+  }
+  
+  if (query.includes('DELETE FROM schedule')) {
+    const scheduleId = params[0];
+    const initialLength = schedule.length;
+    schedule = schedule.filter(s => s.id !== scheduleId);
+    
+    return [{ affectedRows: initialLength - schedule.length }];
+  }
+  
+  if (query.includes('SELECT id FROM roles WHERE name = ?')) {
+    const roleName = params[0];
+    const role = roles.find(r => r.name === roleName);
+    
+    return role ? [[role]] : [[]];
+  }
+  
+  // Default fallback
+  return [];
 };
 
-/**
- * Mock database shows
- */
-const mockDbShows = [
-  {
-    id: 1,
-    title: "Morgenmelodien",
-    description: "Starten Sie Ihren Tag mit den besten Melodien und guter Laune.",
-    imageUrl: null,
-    createdBy: 1
-  },
-  {
-    id: 2,
-    title: "Mittagsbeat",
-    description: "Energiegeladene Musik für Ihre Mittagspause.",
-    imageUrl: null,
-    createdBy: 1
-  },
-  {
-    id: 3,
-    title: "Nachmittagsklänge",
-    description: "Entspannte Musik für den Nachmittag.",
-    imageUrl: null,
-    createdBy: 1
-  },
-  {
-    id: 4,
-    title: "Abendechos",
-    description: "Die besten Hits zum Abend.",
-    imageUrl: null,
-    createdBy: 1
-  },
-  {
-    id: 5,
-    title: "Nachtlounge",
-    description: "Musik zum Entspannen und Träumen.",
-    imageUrl: null,
-    createdBy: 1
-  }
-];
-
-/**
- * Mock database schedule
- */
-const mockDbSchedule = [
-  {
-    id: 1,
-    showId: 1,
-    showTitle: "Morgenmelodien",
-    dayOfWeek: "Montag",
-    startTime: "08:00:00",
-    endTime: "11:00:00",
-    hostId: 1,
-    hostName: "Admin User",
-    isRecurring: true
-  },
-  {
-    id: 2,
-    showId: 2,
-    showTitle: "Mittagsbeat",
-    dayOfWeek: "Montag",
-    startTime: "12:00:00",
-    endTime: "14:00:00",
-    hostId: 1,
-    hostName: "Admin User",
-    isRecurring: true
-  },
-  {
-    id: 3,
-    showId: 3,
-    showTitle: "Nachmittagsklänge",
-    dayOfWeek: "Dienstag",
-    startTime: "13:00:00",
-    endTime: "15:00:00",
-    hostId: 1,
-    hostName: "Admin User",
-    isRecurring: true
-  },
-  {
-    id: 4,
-    showId: 4,
-    showTitle: "Abendechos",
-    dayOfWeek: "Mittwoch",
-    startTime: "19:00:00",
-    endTime: "21:00:00",
-    hostId: 1,
-    hostName: "Admin User",
-    isRecurring: true
-  },
-  {
-    id: 5,
-    showId: 5,
-    showTitle: "Nachtlounge",
-    dayOfWeek: "Donnerstag",
-    startTime: "22:00:00",
-    endTime: "00:00:00",
-    hostId: 1,
-    hostName: "Admin User",
-    isRecurring: true
-  }
-];
-
-// Simulate database delay
-const simulateDelay = () => new Promise(resolve => setTimeout(resolve, 500));
-
-/**
- * Verify username and password against mock DB
- */
-export async function verifyUserCredentials(username: string, password: string) {
-  await simulateDelay();
-  // In a real application, this would query the database and check password hash
-  const user = mockDbUsers.find(u => 
-    u.username === username && 
-    u.password === password && 
-    u.isActive === true
-  );
+// Authentication functions
+export const authenticateUser = async (username: string, passwordHash: string) => {
+  const user = users.find(u => u.username === username && u.password_hash === passwordHash && u.is_active === 1);
   
   if (user) {
-    // Don't return the password in the response
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
-  return null;
-}
-
-/**
- * Get all users from the mock database
- */
-export async function getDbUsers() {
-  await simulateDelay();
-  // Return users without passwords
-  return mockDbUsers.map(({ password, ...user }) => user);
-}
-
-/**
- * Create a new user in the mock database
- */
-export async function createDbUser(user: {
-  username: string;
-  email: string;
-  fullName: string;
-  roles: string[];
-  isActive: boolean;
-}) {
-  await simulateDelay();
-  const newUser = {
-    ...user,
-    id: mockDbUsers.length + 1,
-    password: "default123" // This would be hashed in a real app
-  };
-  mockDbUsers.push(newUser);
-  
-  // Return user without password
-  const { password, ...userWithoutPassword } = newUser;
-  return userWithoutPassword;
-}
-
-/**
- * Get all shows from the mock database
- */
-export async function getDbShows() {
-  await simulateDelay();
-  return [...mockDbShows];
-}
-
-/**
- * Get the schedule from the mock database
- */
-export async function getDbSchedule() {
-  await simulateDelay();
-  return [...mockDbSchedule];
-}
-
-/**
- * Create a new schedule item in the mock database
- */
-export async function createDbScheduleItem(schedule: {
-  showId: number;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
-  hostId?: number;
-  isRecurring: boolean;
-}) {
-  await simulateDelay();
-  
-  // Find the show to get the title
-  const show = mockDbShows.find(s => s.id === schedule.showId);
-  if (!show) {
-    throw new Error(`Show with ID ${schedule.showId} not found`);
-  }
-  
-  // Find the host name if hostId is provided
-  let hostName = undefined;
-  if (schedule.hostId) {
-    const host = mockDbUsers.find(u => u.id === schedule.hostId);
-    if (host) {
-      hostName = host.fullName;
+    const userRolesList = userRoles
+      .filter(ur => ur.user_id === user.id)
+      .map(ur => {
+        const role = roles.find(r => r.id === ur.role_id);
+        return role ? role.name : null;
+      })
+      .filter(Boolean);
+    
+    // Update last login
+    const index = users.findIndex(u => u.id === user.id);
+    if (index !== -1) {
+      users[index] = {
+        ...users[index],
+        last_login: new Date().toISOString()
+      };
     }
+    
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullName: user.full_name,
+      roles: userRolesList
+    };
   }
   
-  const newSchedule = {
-    id: mockDbSchedule.length + 1,
-    showId: schedule.showId,
-    showTitle: show.title,
-    dayOfWeek: schedule.dayOfWeek,
-    startTime: schedule.startTime,
-    endTime: schedule.endTime,
-    hostId: schedule.hostId,
-    hostName,
-    isRecurring: schedule.isRecurring
-  };
-  
-  mockDbSchedule.push(newSchedule);
-  return newSchedule;
-}
+  return null;
+};

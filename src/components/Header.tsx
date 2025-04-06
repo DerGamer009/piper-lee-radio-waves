@@ -81,6 +81,20 @@ const Header = () => {
                   >
                     Partner
                   </Link>
+                  <Link 
+                    to="/sendeplan" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Sendeplan
+                  </Link>
+                  <Link 
+                    to="/kontakt" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Kontakt
+                  </Link>
                 </nav>
               </div>
             )}
@@ -110,6 +124,18 @@ const Header = () => {
               className="text-radio-light hover:text-white transition-colors"
             >
               Partner
+            </Link>
+            <Link 
+              to="/sendeplan" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              Sendeplan
+            </Link>
+            <Link 
+              to="/kontakt" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              Kontakt
             </Link>
           </nav>
         )}
