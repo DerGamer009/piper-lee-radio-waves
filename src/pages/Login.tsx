@@ -23,7 +23,17 @@ const Login = () => {
   const { toast } = useToast();
 
   const isLoggedIn = localStorage.getItem("user") !== null;
-  const userData: User | null = isLoggedIn ? JSON.parse(localStorage.getItem("user") || "{}") : null;
+  const userData: User | null = isLoggedIn ? JSON.parse(localStorage.getItem("user") || "null") : null;
+
+  const parseRoles = (roles: string[] | string | undefined): string[] => {
+    if (Array.isArray(roles)) {
+      return roles;
+    }
+    if (typeof roles === "string" && roles) {
+      return roles.split(",").map((r) => r.trim());
+    }
+    return [];
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,14 +44,7 @@ const Login = () => {
 
       if (result) {
         localStorage.setItem("user", JSON.stringify(result.user));
-
-        let userRoles: string[] = [];
-
-        if (Array.isArray(result.user.roles)) {
-          userRoles = result.user.roles;
-        } else if (typeof result.user.roles === "string" && result.user.roles) {
-          userRoles = result.user.roles.split(",").map((r) => r.trim());
-        }
+        const userRoles = parseRoles(result.user.roles);
 
         if (userRoles.includes("admin")) {
           navigate("/admin");
@@ -76,13 +79,7 @@ const Login = () => {
   };
 
   if (isLoggedIn && userData) {
-    let userRoles: string[] = [];
-
-    if (Array.isArray(userData.roles)) {
-      userRoles = userData.roles;
-    } else if (typeof userData.roles === "string" && userData.roles) {
-      userRoles = userData.roles.split(",").map((r) => r.trim());
-    }
+    const userRoles = parseRoles(userData.roles);
 
     if (userRoles.includes("admin")) {
       return <Navigate to="/admin" replace />;
