@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
 import { login } from "@/services/apiService";
 
+// Typdefinition für User
+type User = {
+  username: string;
+  fullName?: string;
+  roles: string[] | string;
+};
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -16,9 +22,8 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already logged in
   const isLoggedIn = localStorage.getItem("user") !== null;
-  const userData = isLoggedIn ? JSON.parse(localStorage.getItem("user") || "{}") : null;
+  const userData: User | null = isLoggedIn ? JSON.parse(localStorage.getItem("user") || "{}") : null;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,21 +31,26 @@ const Login = () => {
 
     try {
       const result = await login(username, password);
-      
+
       if (result) {
-        // Store user data in localStorage
         localStorage.setItem("user", JSON.stringify(result.user));
-        localStorage.setItem("token", result.token);
-        
-        // Redirect based on user role
-        if (result.user.roles.includes("admin")) {
+
+        let userRoles: string[] = [];
+
+        if (Array.isArray(result.user.roles)) {
+          userRoles = result.user.roles;
+        } else if (typeof result.user.roles === "string" && result.user.roles) {
+          userRoles = result.user.roles.split(",").map((r) => r.trim());
+        }
+
+        if (userRoles.includes("admin")) {
           navigate("/admin");
-        } else if (result.user.roles.includes("moderator")) {
+        } else if (userRoles.includes("moderator")) {
           navigate("/moderator");
         } else {
           navigate("/");
         }
-        
+
         toast({
           title: "Erfolgreich angemeldet",
           description: `Willkommen zurück, ${result.user.fullName || result.user.username}!`,
@@ -65,13 +75,21 @@ const Login = () => {
     }
   };
 
-  // If user is already logged in, redirect based on role
   if (isLoggedIn && userData) {
-    if (userData.roles.includes("admin")) {
+    let userRoles: string[] = [];
+
+    if (Array.isArray(userData.roles)) {
+      userRoles = userData.roles;
+    } else if (typeof userData.roles === "string" && userData.roles) {
+      userRoles = userData.roles.split(",").map((r) => r.trim());
+    }
+
+    if (userRoles.includes("admin")) {
       return <Navigate to="/admin" replace />;
-    } else if (userData.roles.includes("moderator")) {
+    } else if (userRoles.includes("moderator")) {
       return <Navigate to="/moderator" replace />;
     }
+    return <Navigate to="/" replace />;
   }
 
   return (
