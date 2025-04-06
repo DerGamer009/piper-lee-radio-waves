@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createUser } from '@/services/apiService';
+import { createUser, updateUser, User } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 // Define form schema
@@ -22,21 +22,23 @@ const formSchema = z.object({
 type UserFormValues = z.infer<typeof formSchema>;
 
 interface UserFormProps {
+  user?: User;
+  isEditing?: boolean;
   onCancel: () => void;
   onSuccess: () => void;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ onCancel, onSuccess }) => {
+const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, onSuccess }) => {
   const { toast } = useToast();
   
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
-      email: '',
-      fullName: '',
-      roles: ['user'],
-      isActive: true,
+      username: user?.username || '',
+      email: user?.email || '',
+      fullName: user?.fullName || '',
+      roles: user?.roles || ['user'],
+      isActive: user?.isActive !== undefined ? user.isActive : true,
     },
   });
 
@@ -48,17 +50,36 @@ const UserForm: React.FC<UserFormProps> = ({ onCancel, onSuccess }) => {
 
   const onSubmit = async (data: UserFormValues) => {
     try {
-      await createUser(data);
-      toast({
-        title: "Erfolg!",
-        description: "Benutzer wurde erfolgreich erstellt.",
-      });
+      // Ensure all required fields are present before submitting
+      const userData = {
+        username: data.username,
+        email: data.email,
+        fullName: data.fullName,
+        roles: data.roles,
+        isActive: data.isActive
+      };
+      
+      if (isEditing && user) {
+        await updateUser(user.id, userData);
+        toast({
+          title: "Erfolg!",
+          description: "Benutzer wurde erfolgreich aktualisiert.",
+        });
+      } else {
+        await createUser(userData);
+        toast({
+          title: "Erfolg!",
+          description: "Benutzer wurde erfolgreich erstellt.",
+        });
+      }
       onSuccess();
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('Error with user operation:', error);
       toast({
         title: "Fehler!",
-        description: "Der Benutzer konnte nicht erstellt werden.",
+        description: isEditing 
+          ? "Der Benutzer konnte nicht aktualisiert werden." 
+          : "Der Benutzer konnte nicht erstellt werden.",
         variant: "destructive"
       });
     }
@@ -187,7 +208,9 @@ const UserForm: React.FC<UserFormProps> = ({ onCancel, onSuccess }) => {
           <Button variant="outline" type="button" onClick={onCancel}>
             Abbrechen
           </Button>
-          <Button type="submit">Benutzer erstellen</Button>
+          <Button type="submit">
+            {isEditing ? "Benutzer aktualisieren" : "Benutzer erstellen"}
+          </Button>
         </div>
       </form>
     </Form>
