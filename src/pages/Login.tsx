@@ -83,6 +83,7 @@ const Login = () => {
     } else if (userRoles.includes("moderator")) {
       return <Navigate to="/moderator" replace />;
     }
+    return <Navigate to="/" replace />;
   }
 
   return (
