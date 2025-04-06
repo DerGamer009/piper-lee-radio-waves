@@ -31,7 +31,7 @@ const Login = () => {
         // Store user data in localStorage
         localStorage.setItem("user", JSON.stringify(result.user));
         
-        // Redirect based on user role
+        // Safely get user roles as an array regardless of how they're stored
         const userRoles = Array.isArray(result.user.roles) 
           ? result.user.roles 
           : typeof result.user.roles === 'string' && result.user.roles
@@ -72,6 +72,7 @@ const Login = () => {
 
   // If user is already logged in, redirect based on role
   if (isLoggedIn && userData) {
+    // Safely handle user roles as an array
     const userRoles = Array.isArray(userData.roles) 
       ? userData.roles 
       : typeof userData.roles === 'string' && userData.roles
