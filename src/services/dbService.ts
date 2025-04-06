@@ -1,61 +1,152 @@
 
-import mysql from 'mysql2/promise';
-
-// Database connection configuration
-const dbConfig = {
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'Gamer09!!',
-  database: 'radio_station'
-};
-
-// Create a connection pool
-const pool = mysql.createPool(dbConfig);
+// This file provides mock database services for frontend development
+// In a real application, these would be API calls to a backend server
 
 /**
- * Execute a query and return the results
- * @param query SQL query
- * @param params Query parameters
- * @returns Query results
+ * Mock database users
  */
-export async function executeQuery<T>(query: string, params: any[] = []): Promise<T> {
-  try {
-    const connection = await pool.getConnection();
-    try {
-      const [results] = await connection.execute(query, params);
-      return results as T;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Database error:', error);
-    throw error;
+const mockDbUsers = [
+  {
+    id: 1,
+    username: "admin",
+    email: "admin@radiostation.de",
+    fullName: "Admin User",
+    roles: ["admin"],
+    isActive: true
+  },
+  {
+    id: 2,
+    username: "moderator1",
+    email: "mod1@radiostation.de",
+    fullName: "Moderator Eins",
+    roles: ["moderator"],
+    isActive: true
+  },
+  {
+    id: 3,
+    username: "user1",
+    email: "user1@example.com",
+    fullName: "Regular User",
+    roles: ["user"],
+    isActive: false
   }
-}
+];
 
 /**
- * Get all users from the database
+ * Mock database shows
+ */
+const mockDbShows = [
+  {
+    id: 1,
+    title: "Morgenmelodien",
+    description: "Starten Sie Ihren Tag mit den besten Melodien und guter Laune.",
+    imageUrl: null,
+    createdBy: 1
+  },
+  {
+    id: 2,
+    title: "Mittagsbeat",
+    description: "Energiegeladene Musik für Ihre Mittagspause.",
+    imageUrl: null,
+    createdBy: 1
+  },
+  {
+    id: 3,
+    title: "Nachmittagsklänge",
+    description: "Entspannte Musik für den Nachmittag.",
+    imageUrl: null,
+    createdBy: 1
+  },
+  {
+    id: 4,
+    title: "Abendechos",
+    description: "Die besten Hits zum Abend.",
+    imageUrl: null,
+    createdBy: 1
+  },
+  {
+    id: 5,
+    title: "Nachtlounge",
+    description: "Musik zum Entspannen und Träumen.",
+    imageUrl: null,
+    createdBy: 1
+  }
+];
+
+/**
+ * Mock database schedule
+ */
+const mockDbSchedule = [
+  {
+    id: 1,
+    showId: 1,
+    showTitle: "Morgenmelodien",
+    dayOfWeek: "Montag",
+    startTime: "08:00:00",
+    endTime: "11:00:00",
+    hostId: 1,
+    hostName: "Admin User",
+    isRecurring: true
+  },
+  {
+    id: 2,
+    showId: 2,
+    showTitle: "Mittagsbeat",
+    dayOfWeek: "Montag",
+    startTime: "12:00:00",
+    endTime: "14:00:00",
+    hostId: 1,
+    hostName: "Admin User",
+    isRecurring: true
+  },
+  {
+    id: 3,
+    showId: 3,
+    showTitle: "Nachmittagsklänge",
+    dayOfWeek: "Dienstag",
+    startTime: "13:00:00",
+    endTime: "15:00:00",
+    hostId: 1,
+    hostName: "Admin User",
+    isRecurring: true
+  },
+  {
+    id: 4,
+    showId: 4,
+    showTitle: "Abendechos",
+    dayOfWeek: "Mittwoch",
+    startTime: "19:00:00",
+    endTime: "21:00:00",
+    hostId: 1,
+    hostName: "Admin User",
+    isRecurring: true
+  },
+  {
+    id: 5,
+    showId: 5,
+    showTitle: "Nachtlounge",
+    dayOfWeek: "Donnerstag",
+    startTime: "22:00:00",
+    endTime: "00:00:00",
+    hostId: 1,
+    hostName: "Admin User",
+    isRecurring: true
+  }
+];
+
+// Simulate database delay
+const simulateDelay = () => new Promise(resolve => setTimeout(resolve, 500));
+
+/**
+ * Get all users from the mock database
  */
 export async function getDbUsers() {
-  const query = `
-    SELECT u.id, u.username, u.email, u.full_name as fullName, 
-           GROUP_CONCAT(r.name) as roles, u.is_active as isActive
-    FROM users u
-    JOIN user_roles ur ON u.id = ur.user_id
-    JOIN roles r ON ur.role_id = r.id
-    GROUP BY u.id
-  `;
-  
-  const users = await executeQuery<any[]>(query);
-  return users.map(user => ({
-    ...user,
-    roles: user.roles.split(','),
-    isActive: Boolean(user.isActive)
-  }));
+  await simulateDelay();
+  return [...mockDbUsers];
 }
 
 /**
- * Create a new user
+ * Create a new user in the mock database
  */
 export async function createDbUser(user: {
   username: string;
@@ -64,94 +155,33 @@ export async function createDbUser(user: {
   roles: string[];
   isActive: boolean;
 }) {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-    
-    // Insert user
-    const insertUser = `
-      INSERT INTO users (username, password_hash, email, full_name, is_active) 
-      VALUES (?, ?, ?, ?, ?)
-    `;
-    const [userResult] = await connection.execute(
-      insertUser, 
-      [user.username, '$2y$10$tempPasswordHash', user.email, user.fullName, user.isActive]
-    );
-    
-    const userId = (userResult as any).insertId;
-    
-    // Insert roles
-    for (const role of user.roles) {
-      const insertRole = `
-        INSERT INTO user_roles (user_id, role_id)
-        SELECT ?, id FROM roles WHERE name = ?
-      `;
-      await connection.execute(insertRole, [userId, role]);
-    }
-    
-    await connection.commit();
-    
-    return {
-      id: userId,
-      ...user
-    };
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
-  }
+  await simulateDelay();
+  const newUser = {
+    ...user,
+    id: mockDbUsers.length + 1
+  };
+  mockDbUsers.push(newUser);
+  return newUser;
 }
 
 /**
- * Get all shows from the database
+ * Get all shows from the mock database
  */
 export async function getDbShows() {
-  const query = `
-    SELECT 
-      id, title, description, image_url as imageUrl, 
-      created_by as createdBy
-    FROM shows
-  `;
-  
-  return executeQuery<any[]>(query);
+  await simulateDelay();
+  return [...mockDbShows];
 }
 
 /**
- * Get the schedule from the database
+ * Get the schedule from the mock database
  */
 export async function getDbSchedule() {
-  const query = `
-    SELECT 
-      s.id, s.show_id as showId, sh.title as showTitle,
-      s.day_of_week as dayOfWeek, s.start_time as startTime, 
-      s.end_time as endTime, s.host_id as hostId,
-      u.full_name as hostName, s.is_recurring as isRecurring
-    FROM schedule s
-    JOIN shows sh ON s.show_id = sh.id
-    LEFT JOIN users u ON s.host_id = u.id
-    ORDER BY 
-      CASE s.day_of_week
-        WHEN 'Montag' THEN 1
-        WHEN 'Dienstag' THEN 2
-        WHEN 'Mittwoch' THEN 3
-        WHEN 'Donnerstag' THEN 4
-        WHEN 'Freitag' THEN 5
-        WHEN 'Samstag' THEN 6
-        WHEN 'Sonntag' THEN 7
-      END,
-      s.start_time
-  `;
-  
-  const schedules = await executeQuery<any[]>(query);
-  return schedules.map(schedule => ({
-    ...schedule,
-    isRecurring: Boolean(schedule.isRecurring)
-  }));
+  await simulateDelay();
+  return [...mockDbSchedule];
 }
 
 /**
- * Create a new schedule item
+ * Create a new schedule item in the mock database
  */
 export async function createDbScheduleItem(schedule: {
   showId: number;
@@ -161,41 +191,36 @@ export async function createDbScheduleItem(schedule: {
   hostId?: number;
   isRecurring: boolean;
 }) {
-  const query = `
-    INSERT INTO schedule 
-    (show_id, day_of_week, start_time, end_time, host_id, is_recurring)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
+  await simulateDelay();
   
-  const [result] = await pool.execute(
-    query, 
-    [
-      schedule.showId, 
-      schedule.dayOfWeek, 
-      schedule.startTime, 
-      schedule.endTime, 
-      schedule.hostId || null, 
-      schedule.isRecurring
-    ]
-  );
+  // Find the show to get the title
+  const show = mockDbShows.find(s => s.id === schedule.showId);
+  if (!show) {
+    throw new Error(`Show with ID ${schedule.showId} not found`);
+  }
   
-  const id = (result as any).insertId;
+  // Find the host name if hostId is provided
+  let hostName = undefined;
+  if (schedule.hostId) {
+    const host = mockDbUsers.find(u => u.id === schedule.hostId);
+    if (host) {
+      hostName = host.fullName;
+    }
+  }
   
-  // Get the inserted schedule with show information
-  const newSchedule = await executeQuery<any[]>(`
-    SELECT 
-      s.id, s.show_id as showId, sh.title as showTitle,
-      s.day_of_week as dayOfWeek, s.start_time as startTime, 
-      s.end_time as endTime, s.host_id as hostId,
-      u.full_name as hostName, s.is_recurring as isRecurring
-    FROM schedule s
-    JOIN shows sh ON s.show_id = sh.id
-    LEFT JOIN users u ON s.host_id = u.id
-    WHERE s.id = ?
-  `, [id]);
-  
-  return {
-    ...newSchedule[0],
-    isRecurring: Boolean(newSchedule[0].isRecurring)
+  const newSchedule = {
+    id: mockDbSchedule.length + 1,
+    showId: schedule.showId,
+    showTitle: show.title,
+    dayOfWeek: schedule.dayOfWeek,
+    startTime: schedule.startTime,
+    endTime: schedule.endTime,
+    hostId: schedule.hostId,
+    hostName,
+    isRecurring: schedule.isRecurring
   };
+  
+  mockDbSchedule.push(newSchedule);
+  return newSchedule;
 }
+
