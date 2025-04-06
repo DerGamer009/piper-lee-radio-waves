@@ -142,6 +142,34 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <footer className="bg-radio-dark/80 backdrop-blur-sm border-t border-white/10 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center gap-2 mb-4 md:mb-0">
+              <Radio className="h-5 w-5 text-radio-purple" />
+              <p className="text-sm text-radio-light/70">
+                © 2025 Piper Lee Radio. Alle Rechte vorbehalten.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-6 justify-center">
+              <Link to="/datenschutz" className="text-radio-light/70 hover:text-white transition-colors">
+                Datenschutz
+              </Link>
+              <Link to="/nutzungsbedingungen" className="text-radio-light/70 hover:text-white transition-colors">
+                Nutzungsbedingungen
+              </Link>
+              <Link to="/impressum" className="text-radio-light/70 hover:text-white transition-colors">
+                Impressum
+              </Link>
+              <Link to="/kontakt" className="text-radio-light/70 hover:text-white transition-colors">
+                Kontakt
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </>
   );
 };
