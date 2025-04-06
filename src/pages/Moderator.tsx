@@ -1,18 +1,29 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Mic, Calendar, Plus, Edit, Trash, LogOut } from "lucide-react";
-import { getSchedule, getShows } from "@/services/apiService";
+import { getSchedule, getShows, deleteScheduleItem } from "@/services/apiService";
 import ScheduleForm from "@/components/ScheduleForm";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Moderator = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Fetch schedule and shows
   const { data: scheduleItems, isLoading: scheduleLoading } = useQuery({
@@ -25,7 +36,10 @@ const Moderator = () => {
     queryFn: getShows
   });
 
-  const [isAddingSchedule, setIsAddingSchedule] = React.useState(false);
+  const [isAddingSchedule, setIsAddingSchedule] = useState(false);
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -35,6 +49,42 @@ const Moderator = () => {
       description: "Sie wurden erfolgreich abgemeldet.",
     });
     navigate("/login");
+  };
+
+  const handleEditSchedule = (scheduleId: number) => {
+    setSelectedScheduleId(scheduleId);
+    setIsEditingSchedule(true);
+  };
+
+  const handleDeleteClick = (scheduleId: number) => {
+    setSelectedScheduleId(scheduleId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (selectedScheduleId) {
+      try {
+        await deleteScheduleItem(selectedScheduleId);
+        queryClient.invalidateQueries({ queryKey: ['schedule'] });
+        toast({
+          title: "Sendeplan gelöscht",
+          description: "Der Sendeplan wurde erfolgreich gelöscht.",
+        });
+      } catch (error) {
+        toast({
+          title: "Fehler",
+          description: "Der Sendeplan konnte nicht gelöscht werden.",
+          variant: "destructive",
+        });
+      }
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleScheduleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    setIsAddingSchedule(false);
+    setIsEditingSchedule(false);
   };
 
   const isLoading = scheduleLoading || showsLoading;
@@ -60,6 +110,8 @@ const Moderator = () => {
       return a.startTime.localeCompare(b.startTime);
     });
   }, [scheduleItems]);
+
+  const selectedSchedule = scheduleItems?.find(item => item.id === selectedScheduleId);
 
   if (isLoading) return <div className="p-4">Daten werden geladen...</div>;
 
@@ -95,7 +147,24 @@ const Moderator = () => {
             <ScheduleForm 
               shows={shows || []}
               onCancel={() => setIsAddingSchedule(false)} 
-              onSuccess={() => setIsAddingSchedule(false)} 
+              onSuccess={handleScheduleSuccess} 
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {isEditingSchedule && selectedSchedule && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Sendeplan bearbeiten</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScheduleForm 
+              shows={shows || []}
+              scheduleItem={selectedSchedule}
+              onCancel={() => setIsEditingSchedule(false)} 
+              onSuccess={handleScheduleSuccess}
+              isEditing={true}
             />
           </CardContent>
         </Card>
@@ -138,10 +207,20 @@ const Moderator = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" title="Bearbeiten">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Bearbeiten"
+                        onClick={() => handleEditSchedule(item.id)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Löschen">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Löschen"
+                        onClick={() => handleDeleteClick(item.id)}
+                      >
                         <Trash className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -158,6 +237,23 @@ const Moderator = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sendeplan löschen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie diesen Sendeplan wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

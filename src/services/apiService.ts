@@ -86,7 +86,8 @@ export const updateUser = async (id: number, user: Partial<User>): Promise<User 
   
   if (userIndex !== -1) {
     const updatedUser = { ...users[userIndex], ...user };
-    users[userIndex] = updatedUser;
+    // In a real app, we would call an update API here
+    // For our mock, we'll just return the updated user
     return updatedUser;
   }
   
@@ -98,7 +99,7 @@ export const deleteUser = async (id: number): Promise<boolean> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // This would actually call a backend API to delete the user
+  // In a real app, this would call a backend API to delete the user
   // For now we'll just simulate success
   return true;
 };
@@ -163,7 +164,7 @@ export const getSchedule = async (): Promise<ScheduleItem[]> => {
   }
 };
 
-export const createScheduleItem = async (schedule: Omit<ScheduleItem, 'id'>): Promise<ScheduleItem | null> => {
+export const createScheduleItem = async (schedule: Omit<ScheduleItem, 'id' | 'showTitle'>): Promise<ScheduleItem | null> => {
   console.log('Create schedule item:', schedule);
   
   try {
