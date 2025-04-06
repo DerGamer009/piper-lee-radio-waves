@@ -34,7 +34,7 @@ const Login = () => {
         // Safely get user roles as an array regardless of how they're stored
         const userRoles = Array.isArray(result.user.roles) 
           ? result.user.roles 
-          : typeof result.user.roles === 'string' && result.user.roles
+          : typeof result.user.roles === 'string' && result.user.roles.trim() !== ''
             ? result.user.roles.split(',') 
             : [];
             
@@ -75,7 +75,7 @@ const Login = () => {
     // Safely handle user roles as an array
     const userRoles = Array.isArray(userData.roles) 
       ? userData.roles 
-      : typeof userData.roles === 'string' && userData.roles
+      : typeof userData.roles === 'string' && userData.roles.trim() !== ''
         ? userData.roles.split(',') 
         : [];
         
