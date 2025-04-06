@@ -6,7 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Mic, Calendar, Plus, Edit, Trash, LogOut } from "lucide-react";
-import { getSchedule, getShows, deleteScheduleItem } from "@/services/apiService";
+import { getSchedule, getShows, deleteScheduleItem, Show, ScheduleItem } from "@/services/apiService";
 import ScheduleForm from "@/components/ScheduleForm";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -91,7 +91,7 @@ const Moderator = () => {
 
   // Sort schedule by day and time
   const sortedSchedule = React.useMemo(() => {
-    if (!scheduleItems) return [];
+    if (!scheduleItems || !Array.isArray(scheduleItems)) return [];
     
     const dayOrder = {
       "Montag": 1,
@@ -111,7 +111,9 @@ const Moderator = () => {
     });
   }, [scheduleItems]);
 
-  const selectedSchedule = scheduleItems?.find(item => item.id === selectedScheduleId);
+  const selectedSchedule = scheduleItems && Array.isArray(scheduleItems) 
+    ? scheduleItems.find(item => item.id === selectedScheduleId) 
+    : undefined;
 
   if (isLoading) return <div className="p-4">Daten werden geladen...</div>;
 
@@ -145,7 +147,7 @@ const Moderator = () => {
           </CardHeader>
           <CardContent>
             <ScheduleForm 
-              shows={shows || []}
+              shows={shows && Array.isArray(shows) ? shows : []}
               onCancel={() => setIsAddingSchedule(false)} 
               onSuccess={handleScheduleSuccess} 
             />
@@ -160,7 +162,7 @@ const Moderator = () => {
           </CardHeader>
           <CardContent>
             <ScheduleForm 
-              shows={shows || []}
+              shows={shows && Array.isArray(shows) ? shows : []}
               scheduleItem={selectedSchedule}
               onCancel={() => setIsEditingSchedule(false)} 
               onSuccess={handleScheduleSuccess}

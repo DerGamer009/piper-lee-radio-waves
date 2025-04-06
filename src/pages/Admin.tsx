@@ -5,7 +5,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Shield, UserPlus, Trash, Edit, LogOut } from "lucide-react";
-import { getUsers, deleteUser, updateUser } from "@/services/apiService";
+import { getUsers, deleteUser, updateUser, User } from "@/services/apiService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import UserForm from "@/components/UserForm";
 import { useToast } from "@/hooks/use-toast";
@@ -102,7 +102,7 @@ const Admin = () => {
   if (isLoading) return <div className="p-4">Loading users...</div>;
   if (error) return <div className="p-4 text-red-500">Error loading users: {error.toString()}</div>;
 
-  const selectedUser = users?.find(user => user.id === selectedUserId);
+  const selectedUser = users && Array.isArray(users) ? users.find(user => user.id === selectedUserId) : undefined;
 
   return (
     <div className="container mx-auto p-4">
@@ -171,13 +171,13 @@ const Admin = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users && users.length > 0 ? (
+              {users && Array.isArray(users) && users.length > 0 ? (
                 users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>{user.username}</TableCell>
                     <TableCell>{user.fullName}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.roles.join(", ")}</TableCell>
+                    <TableCell>{Array.isArray(user.roles) ? user.roles.join(', ') : user.roles}</TableCell>
                     <TableCell>
                       <Button 
                         variant="ghost" 

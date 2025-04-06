@@ -1,17 +1,14 @@
 
-import { executeQuery, getUsers, getUserById, createUser, updateUser, deleteUser,
-         getShows, getShowById, createShow, updateShow, deleteShow,
-         getSchedule, getScheduleById, createScheduleItem as dbCreateScheduleItem, 
-         updateScheduleItem, deleteScheduleItem, authenticateUser } from './dbService';
+import { executeQuery, authenticateUser } from './dbService';
 
 // Types
 export interface User {
   id: number;
   username: string;
   email: string;
-  full_name: string;
-  is_active: boolean;
-  roles: string;
+  fullName: string;
+  isActive: boolean;
+  roles: string[];
 }
 
 export interface Show {
@@ -46,8 +43,6 @@ export interface ScheduleItem {
 }
 
 // Mock authentication service
-// In a real app, this would verify with the backend
-// For now, we mock authentication with hardcoded credentials
 export const login = async (username: string, password: string) => {
   try {
     // In production, the password should be hashed on the client side before sending
@@ -90,50 +85,132 @@ export const hasRole = (requiredRoles: string[]) => {
   const user = getCurrentUser();
   if (!user) return false;
   
-  const userRoles = user.roles.split(',');
+  const userRoles = Array.isArray(user.roles) ? user.roles : user.roles.split(',');
   return requiredRoles.some(role => userRoles.includes(role));
 };
 
 // User API functions
-export const fetchUsers = async (): Promise<User[]> => {
+export const getUsers = async (): Promise<User[]> => {
   try {
-    return await getUsers() as User[];
+    const users = await executeQuery(`
+      SELECT u.id, u.username, u.email, u.full_name as fullName, u.is_active as isActive, 
+             GROUP_CONCAT(r.name) AS roles
+      FROM users u
+      JOIN user_roles ur ON u.id = ur.user_id
+      JOIN roles r ON ur.role_id = r.id
+      GROUP BY u.id
+    `) as any[];
+
+    // Transform data to match the User interface
+    return users.map(user => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName || user.full_name,
+      isActive: user.isActive !== undefined ? user.isActive : user.is_active === 1,
+      roles: user.roles ? user.roles.split(',') : []
+    }));
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
   }
 };
 
-export const fetchUserById = async (id: number): Promise<User> => {
+export const createUser = async (userData: Partial<User>): Promise<number> => {
   try {
-    return await getUserById(id) as User;
-  } catch (error) {
-    console.error(`Error fetching user ${id}:`, error);
-    throw error;
-  }
-};
-
-export const createNewUser = async (userData: Partial<User>): Promise<number> => {
-  try {
-    return await createUser(userData);
+    // Transform data to match the database schema
+    const dbData = {
+      username: userData.username,
+      password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // Default password hash
+      email: userData.email,
+      full_name: userData.fullName,
+      is_active: userData.isActive ? 1 : 0,
+      roles: userData.roles
+    };
+    
+    // Insert into users table
+    const [result] = await executeQuery(
+      `INSERT INTO users (username, password_hash, email, full_name, is_active)
+       VALUES (?, ?, ?, ?, ?)`,
+      [dbData.username, dbData.password_hash, dbData.email, dbData.full_name, dbData.is_active]
+    ) as any[];
+    
+    const userId = result.insertId;
+    
+    // Insert user roles
+    for (const roleName of dbData.roles || []) {
+      const [roles] = await executeQuery(
+        'SELECT id FROM roles WHERE name = ?',
+        [roleName]
+      ) as any[];
+      
+      if (Array.isArray(roles) && roles.length > 0) {
+        const roleId = roles[0].id;
+        await executeQuery(
+          'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)',
+          [userId, roleId]
+        );
+      }
+    }
+    
+    return userId;
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;
   }
 };
 
-export const updateUserData = async (id: number, userData: Partial<User>): Promise<boolean> => {
+export const updateUser = async (id: number, userData: Partial<User>): Promise<boolean> => {
   try {
-    return await updateUser(id, userData);
+    // Transform data to match the database schema
+    const dbData = {
+      username: userData.username,
+      email: userData.email,
+      full_name: userData.fullName,
+      is_active: userData.isActive ? 1 : 0,
+      roles: userData.roles
+    };
+    
+    // Update user data
+    await executeQuery(
+      `UPDATE users 
+       SET username = ?, email = ?, full_name = ?, is_active = ?
+       WHERE id = ?`,
+      [dbData.username, dbData.email, dbData.full_name, dbData.is_active, id]
+    );
+    
+    // Remove existing roles
+    await executeQuery(
+      'DELETE FROM user_roles WHERE user_id = ?',
+      [id]
+    );
+    
+    // Add new roles
+    for (const roleName of dbData.roles || []) {
+      const [roles] = await executeQuery(
+        'SELECT id FROM roles WHERE name = ?',
+        [roleName]
+      ) as any[];
+      
+      if (Array.isArray(roles) && roles.length > 0) {
+        const roleId = roles[0].id;
+        await executeQuery(
+          'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)',
+          [id, roleId]
+        );
+      }
+    }
+    
+    return true;
   } catch (error) {
     console.error(`Error updating user ${id}:`, error);
     throw error;
   }
 };
 
-export const deleteUserById = async (id: number): Promise<boolean> => {
+export const deleteUser = async (id: number): Promise<boolean> => {
   try {
-    await deleteUser(id);
+    await executeQuery('DELETE FROM users WHERE id = ?', [id]);
     return true;
   } catch (error) {
     console.error(`Error deleting user ${id}:`, error);
@@ -142,79 +219,61 @@ export const deleteUserById = async (id: number): Promise<boolean> => {
 };
 
 // Show API functions
-export const fetchShows = async (): Promise<Show[]> => {
+export const getShows = async (): Promise<Show[]> => {
   try {
-    return await getShows() as Show[];
+    return await executeQuery(`
+      SELECT s.*, u.full_name as creator_name
+      FROM shows s
+      LEFT JOIN users u ON s.created_by = u.id
+    `) as Show[];
   } catch (error) {
     console.error('Error fetching shows:', error);
     throw error;
   }
 };
 
-export const fetchShowById = async (id: number): Promise<Show> => {
+// Schedule related functions
+export const getSchedule = async (): Promise<ScheduleItem[]> => {
   try {
-    return await getShowById(id) as Show;
-  } catch (error) {
-    console.error(`Error fetching show ${id}:`, error);
-    throw error;
-  }
-};
-
-export const createNewShow = async (showData: Partial<Show>): Promise<number> => {
-  try {
-    const user = getCurrentUser();
-    showData.created_by = user ? user.id : null;
+    const scheduleData = await executeQuery(`
+      SELECT s.id, s.day_of_week as dayOfWeek, s.start_time as startTime, s.end_time as endTime,
+             s.is_recurring as isRecurring,
+             sh.id as showId, sh.title as showTitle, sh.description as showDescription,
+             u.id as hostId, u.full_name as hostName
+      FROM schedule s
+      JOIN shows sh ON s.show_id = sh.id
+      LEFT JOIN users u ON s.host_id = u.id
+      ORDER BY 
+        CASE s.day_of_week
+          WHEN 'Montag' THEN 1
+          WHEN 'Dienstag' THEN 2
+          WHEN 'Mittwoch' THEN 3
+          WHEN 'Donnerstag' THEN 4
+          WHEN 'Freitag' THEN 5
+          WHEN 'Samstag' THEN 6
+          WHEN 'Sonntag' THEN 7
+        END, s.start_time
+    `) as any[];
     
-    return await createShow(showData);
-  } catch (error) {
-    console.error('Error creating show:', error);
-    throw error;
-  }
-};
-
-export const updateShowData = async (id: number, showData: Partial<Show>): Promise<boolean> => {
-  try {
-    return await updateShow(id, showData);
-  } catch (error) {
-    console.error(`Error updating show ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteShowById = async (id: number): Promise<boolean> => {
-  try {
-    await deleteShow(id);
-    return true;
-  } catch (error) {
-    console.error(`Error deleting show ${id}:`, error);
-    throw error;
-  }
-};
-
-// Schedule API functions
-export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
-  try {
-    const scheduleData = await getSchedule() as any[];
-    
-    // Transform data to match the expected format
+    // Transform data to match the ScheduleItem interface
     return scheduleData.map(item => ({
       id: item.id,
-      show_id: item.show_id,
-      showId: item.show_id,
-      day_of_week: item.day_of_week,
-      dayOfWeek: item.day_of_week,
-      start_time: item.start_time,
-      startTime: item.start_time,
-      end_time: item.end_time,
-      endTime: item.end_time,
-      host_id: item.host_id,
-      hostId: item.host_id,
-      host_name: item.host_name,
-      hostName: item.host_name,
-      is_recurring: item.is_recurring === 1,
-      isRecurring: item.is_recurring === 1,
-      show_title: item.show_title,
-      show_description: item.show_description
+      show_id: item.showId,
+      showId: item.showId,
+      day_of_week: item.dayOfWeek,
+      dayOfWeek: item.dayOfWeek,
+      start_time: item.startTime,
+      startTime: item.startTime,
+      end_time: item.endTime,
+      endTime: item.endTime,
+      host_id: item.hostId,
+      hostId: item.hostId,
+      host_name: item.hostName,
+      hostName: item.hostName,
+      is_recurring: item.isRecurring === 1,
+      isRecurring: item.isRecurring === 1,
+      show_title: item.showTitle,
+      show_description: item.showDescription
     }));
   } catch (error) {
     console.error('Error fetching schedule:', error);
@@ -222,78 +281,15 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
   }
 };
 
-export const fetchScheduleById = async (id: number): Promise<ScheduleItem> => {
+export const deleteScheduleItem = async (id: number): Promise<boolean> => {
   try {
-    const item = await getScheduleById(id) as any;
-    
-    return {
-      id: item.id,
-      show_id: item.show_id,
-      showId: item.show_id,
-      day_of_week: item.day_of_week,
-      dayOfWeek: item.day_of_week,
-      start_time: item.start_time,
-      startTime: item.start_time,
-      end_time: item.end_time,
-      endTime: item.end_time,
-      host_id: item.host_id,
-      hostId: item.host_id,
-      host_name: item.host_name,
-      hostName: item.host_name,
-      is_recurring: item.is_recurring === 1,
-      isRecurring: item.is_recurring === 1,
-      show_title: item.show_title
-    };
-  } catch (error) {
-    console.error(`Error fetching schedule item ${id}:`, error);
-    throw error;
-  }
-};
-
-export const createScheduleItem = async (scheduleData: Partial<ScheduleItem>): Promise<number> => {
-  try {
-    // Transform data to match the database schema
-    const dbData = {
-      showId: scheduleData.showId || scheduleData.show_id,
-      dayOfWeek: scheduleData.dayOfWeek || scheduleData.day_of_week,
-      startTime: scheduleData.startTime || scheduleData.start_time,
-      endTime: scheduleData.endTime || scheduleData.end_time,
-      hostId: scheduleData.hostId || scheduleData.host_id,
-      isRecurring: scheduleData.isRecurring !== undefined ? scheduleData.isRecurring : scheduleData.is_recurring
-    };
-    
-    return await dbCreateScheduleItem(dbData);
-  } catch (error) {
-    console.error('Error creating schedule item:', error);
-    throw error;
-  }
-};
-
-export const updateSchedule = async (id: number, scheduleData: Partial<ScheduleItem>): Promise<boolean> => {
-  try {
-    // Transform data to match the database schema
-    const dbData = {
-      showId: scheduleData.showId || scheduleData.show_id,
-      dayOfWeek: scheduleData.dayOfWeek || scheduleData.day_of_week,
-      startTime: scheduleData.startTime || scheduleData.start_time,
-      endTime: scheduleData.endTime || scheduleData.end_time,
-      hostId: scheduleData.hostId || scheduleData.host_id,
-      isRecurring: scheduleData.isRecurring !== undefined ? scheduleData.isRecurring : scheduleData.is_recurring
-    };
-    
-    return await updateScheduleItem(id, dbData);
-  } catch (error) {
-    console.error(`Error updating schedule item ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteSchedule = async (id: number): Promise<boolean> => {
-  try {
-    await deleteScheduleItem(id);
+    await executeQuery('DELETE FROM schedule WHERE id = ?', [id]);
     return true;
   } catch (error) {
     console.error(`Error deleting schedule item ${id}:`, error);
     throw error;
   }
 };
+
+// Export other functions from dbService
+export { executeQuery };

@@ -1,281 +1,299 @@
 
-import mysql from 'mysql2/promise';
+// This file simulates database operations in the browser
 
-// Database configuration
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'password',
-  database: process.env.DB_NAME || 'radio_station',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-};
+// Mock data storage
+let users = [
+  {
+    id: 1,
+    username: 'admin',
+    password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
+    email: 'admin@example.com',
+    full_name: 'Administrator',
+    is_active: 1,
+    last_login: '2023-01-01T00:00:00.000Z',
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  },
+  {
+    id: 2,
+    username: 'moderator',
+    password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
+    email: 'moderator@example.com',
+    full_name: 'Moderator User',
+    is_active: 1,
+    last_login: '2023-01-01T00:00:00.000Z',
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  }
+];
 
-// Create connection pool
-const pool = mysql.createPool(dbConfig);
+let roles = [
+  { id: 1, name: 'admin', description: 'Administrator role' },
+  { id: 2, name: 'moderator', description: 'Moderator role' },
+  { id: 3, name: 'user', description: 'Standard user role' }
+];
 
-// Helper function to execute queries
+let userRoles = [
+  { user_id: 1, role_id: 1 },
+  { user_id: 2, role_id: 2 }
+];
+
+let shows = [
+  {
+    id: 1,
+    title: 'Morning Show',
+    description: 'Wake up with our morning show',
+    image_url: '/placeholder.svg',
+    created_by: 1,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  },
+  {
+    id: 2,
+    title: 'Afternoon Relaxation',
+    description: 'Relax with smooth tunes in the afternoon',
+    image_url: '/placeholder.svg',
+    created_by: 2,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  }
+];
+
+let schedule = [
+  {
+    id: 1,
+    show_id: 1,
+    day_of_week: 'Montag',
+    start_time: '08:00',
+    end_time: '10:00',
+    host_id: 1,
+    is_recurring: 1,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  },
+  {
+    id: 2,
+    show_id: 2,
+    day_of_week: 'Dienstag',
+    start_time: '14:00',
+    end_time: '16:00',
+    host_id: 2,
+    is_recurring: 1,
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
+  }
+];
+
+// Mock function to execute SQL-like queries
 export const executeQuery = async (query: string, params: any[] = []) => {
-  try {
-    const [rows] = await pool.execute(query, params);
-    return rows;
-  } catch (error) {
-    console.error('Database error:', error);
-    throw error;
-  }
-};
-
-// User related functions
-export const getUsers = async () => {
-  return executeQuery(`
-    SELECT u.id, u.username, u.email, u.full_name, u.is_active, 
-           GROUP_CONCAT(r.name) AS roles
-    FROM users u
-    JOIN user_roles ur ON u.id = ur.user_id
-    JOIN roles r ON ur.role_id = r.id
-    GROUP BY u.id
-  `);
-};
-
-export const getUserById = async (id: number) => {
-  const users = await executeQuery(
-    `SELECT u.*, GROUP_CONCAT(r.name) AS roles
-     FROM users u
-     JOIN user_roles ur ON u.id = ur.user_id
-     JOIN roles r ON ur.role_id = r.id
-     WHERE u.id = ?
-     GROUP BY u.id`,
-    [id]
-  );
-  return users[0];
-};
-
-export const createUser = async (userData: any) => {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // Insert user
-    const [result] = await connection.execute(
-      `INSERT INTO users (username, password_hash, email, full_name, is_active)
-       VALUES (?, ?, ?, ?, ?)`,
-      [userData.username, userData.password_hash, userData.email, userData.full_name, userData.is_active]
-    );
-    
-    const userId = (result as any).insertId;
-    
-    // Insert user roles
-    for (const roleName of userData.roles) {
-      const [roles] = await connection.execute(
-        'SELECT id FROM roles WHERE name = ?',
-        [roleName]
-      );
+  console.log('Executing query:', query, 'with params:', params);
+  
+  // Simple query execution simulation
+  if (query.includes('SELECT') && query.includes('FROM users')) {
+    // Handle user queries
+    if (query.includes('WHERE u.id = ?')) {
+      const userId = params[0];
+      const user = users.find(u => u.id === userId);
+      if (!user) return [];
       
-      if (Array.isArray(roles) && roles.length > 0) {
-        const roleId = (roles[0] as any).id;
-        await connection.execute(
-          'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)',
-          [userId, roleId]
-        );
-      }
+      const userRolesList = userRoles
+        .filter(ur => ur.user_id === userId)
+        .map(ur => {
+          const role = roles.find(r => r.id === ur.role_id);
+          return role ? role.name : null;
+        })
+        .filter(Boolean);
+      
+      return [{
+        ...user,
+        roles: userRolesList.join(',')
+      }];
     }
     
-    await connection.commit();
-    return userId;
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
-  }
-};
-
-export const updateUser = async (id: number, userData: any) => {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-    
-    // Update user data
-    await connection.execute(
-      `UPDATE users 
-       SET username = ?, email = ?, full_name = ?, is_active = ?
-       WHERE id = ?`,
-      [userData.username, userData.email, userData.full_name, userData.is_active, id]
-    );
-    
-    // Remove existing roles
-    await connection.execute(
-      'DELETE FROM user_roles WHERE user_id = ?',
-      [id]
-    );
-    
-    // Add new roles
-    for (const roleName of userData.roles) {
-      const [roles] = await connection.execute(
-        'SELECT id FROM roles WHERE name = ?',
-        [roleName]
-      );
+    // Get all users with roles
+    return users.map(user => {
+      const userRolesList = userRoles
+        .filter(ur => ur.user_id === user.id)
+        .map(ur => {
+          const role = roles.find(r => r.id === ur.role_id);
+          return role ? role.name : null;
+        })
+        .filter(Boolean);
       
-      if (Array.isArray(roles) && roles.length > 0) {
-        const roleId = (roles[0] as any).id;
-        await connection.execute(
-          'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)',
-          [id, roleId]
-        );
-      }
+      return {
+        ...user,
+        roles: userRolesList.join(',')
+      };
+    });
+  }
+  
+  if (query.includes('SELECT') && query.includes('FROM shows')) {
+    // Handle show queries
+    if (query.includes('WHERE s.id = ?')) {
+      const showId = params[0];
+      const show = shows.find(s => s.id === showId);
+      if (!show) return [];
+      
+      const creator = users.find(u => u.id === show.created_by);
+      
+      return [{
+        ...show,
+        creator_name: creator ? creator.full_name : null
+      }];
     }
     
-    await connection.commit();
-    return true;
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+    // Get all shows with creator names
+    return shows.map(show => {
+      const creator = users.find(u => u.id === show.created_by);
+      
+      return {
+        ...show,
+        creator_name: creator ? creator.full_name : null
+      };
+    });
   }
-};
-
-export const deleteUser = async (id: number) => {
-  return executeQuery('DELETE FROM users WHERE id = ?', [id]);
-};
-
-// Show related functions
-export const getShows = async () => {
-  return executeQuery(`
-    SELECT s.*, u.full_name as creator_name
-    FROM shows s
-    LEFT JOIN users u ON s.created_by = u.id
-  `);
-};
-
-export const getShowById = async (id: number) => {
-  const shows = await executeQuery(
-    `SELECT s.*, u.full_name as creator_name
-     FROM shows s
-     LEFT JOIN users u ON s.created_by = u.id
-     WHERE s.id = ?`,
-    [id]
-  );
-  return shows[0];
-};
-
-export const createShow = async (showData: any) => {
-  const [result] = await pool.execute(
-    `INSERT INTO shows (title, description, image_url, created_by)
-     VALUES (?, ?, ?, ?)`,
-    [showData.title, showData.description, showData.image_url, showData.created_by]
-  );
-  return (result as any).insertId;
-};
-
-export const updateShow = async (id: number, showData: any) => {
-  await executeQuery(
-    `UPDATE shows 
-     SET title = ?, description = ?, image_url = ?
-     WHERE id = ?`,
-    [showData.title, showData.description, showData.image_url, id]
-  );
-  return true;
-};
-
-export const deleteShow = async (id: number) => {
-  return executeQuery('DELETE FROM shows WHERE id = ?', [id]);
-};
-
-// Schedule related functions
-export const getSchedule = async () => {
-  return executeQuery(`
-    SELECT s.id, s.day_of_week, s.start_time, s.end_time, s.is_recurring,
-           sh.id as show_id, sh.title as show_title, sh.description as show_description,
-           u.id as host_id, u.full_name as host_name
-    FROM schedule s
-    JOIN shows sh ON s.show_id = sh.id
-    LEFT JOIN users u ON s.host_id = u.id
-    ORDER BY 
-      CASE s.day_of_week
-        WHEN 'Montag' THEN 1
-        WHEN 'Dienstag' THEN 2
-        WHEN 'Mittwoch' THEN 3
-        WHEN 'Donnerstag' THEN 4
-        WHEN 'Freitag' THEN 5
-        WHEN 'Samstag' THEN 6
-        WHEN 'Sonntag' THEN 7
-      END, s.start_time
-  `);
-};
-
-export const getScheduleById = async (id: number) => {
-  const schedules = await executeQuery(
-    `SELECT s.*, sh.title as show_title, u.full_name as host_name
-     FROM schedule s
-     JOIN shows sh ON s.show_id = sh.id
-     LEFT JOIN users u ON s.host_id = u.id
-     WHERE s.id = ?`,
-    [id]
-  );
-  return schedules[0];
-};
-
-export const createScheduleItem = async (scheduleData: any) => {
-  const [result] = await pool.execute(
-    `INSERT INTO schedule (show_id, day_of_week, start_time, end_time, host_id, is_recurring)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      scheduleData.showId, 
-      scheduleData.dayOfWeek, 
-      scheduleData.startTime, 
-      scheduleData.endTime,
-      scheduleData.hostId || null,
-      scheduleData.isRecurring
-    ]
-  );
-  return (result as any).insertId;
-};
-
-export const updateScheduleItem = async (id: number, scheduleData: any) => {
-  await executeQuery(
-    `UPDATE schedule 
-     SET show_id = ?, day_of_week = ?, start_time = ?, end_time = ?, 
-         host_id = ?, is_recurring = ?
-     WHERE id = ?`,
-    [
-      scheduleData.showId, 
-      scheduleData.dayOfWeek, 
-      scheduleData.startTime, 
-      scheduleData.endTime,
-      scheduleData.hostId || null,
-      scheduleData.isRecurring,
-      id
-    ]
-  );
-  return true;
-};
-
-export const deleteScheduleItem = async (id: number) => {
-  return executeQuery('DELETE FROM schedule WHERE id = ?', [id]);
+  
+  if (query.includes('SELECT') && query.includes('FROM schedule')) {
+    // Handle schedule queries
+    if (query.includes('WHERE s.id = ?')) {
+      const scheduleId = params[0];
+      const scheduleItem = schedule.find(s => s.id === scheduleId);
+      if (!scheduleItem) return [];
+      
+      const show = shows.find(s => s.id === scheduleItem.show_id);
+      const host = users.find(u => u.id === scheduleItem.host_id);
+      
+      return [{
+        ...scheduleItem,
+        show_title: show ? show.title : null,
+        show_description: show ? show.description : null,
+        host_name: host ? host.full_name : null
+      }];
+    }
+    
+    // Get all schedule items with show and host details
+    return schedule.map(scheduleItem => {
+      const show = shows.find(s => s.id === scheduleItem.show_id);
+      const host = users.find(u => u.id === scheduleItem.host_id);
+      
+      return {
+        ...scheduleItem,
+        show_title: show ? show.title : null,
+        show_description: show ? show.description : null,
+        host_name: host ? host.full_name : null
+      };
+    });
+  }
+  
+  if (query.includes('INSERT INTO users')) {
+    const [username, passwordHash, email, fullName, isActive] = params;
+    const newUser = {
+      id: users.length + 1,
+      username,
+      password_hash: passwordHash,
+      email,
+      full_name: fullName,
+      is_active: isActive,
+      last_login: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    return [{ insertId: newUser.id }];
+  }
+  
+  if (query.includes('INSERT INTO user_roles')) {
+    const [userId, roleId] = params;
+    userRoles.push({ user_id: userId, role_id: roleId });
+    return [{ affectedRows: 1 }];
+  }
+  
+  if (query.includes('UPDATE users')) {
+    const id = params[params.length - 1];
+    const index = users.findIndex(u => u.id === id);
+    
+    if (index !== -1) {
+      const [username, email, fullName, isActive] = params;
+      
+      users[index] = {
+        ...users[index],
+        username,
+        email,
+        full_name: fullName,
+        is_active: isActive,
+        updated_at: new Date().toISOString()
+      };
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    return [{ affectedRows: 0 }];
+  }
+  
+  if (query.includes('DELETE FROM user_roles')) {
+    const userId = params[0];
+    userRoles = userRoles.filter(ur => ur.user_id !== userId);
+    return [{ affectedRows: 1 }];
+  }
+  
+  if (query.includes('DELETE FROM users')) {
+    const userId = params[0];
+    const initialLength = users.length;
+    users = users.filter(u => u.id !== userId);
+    userRoles = userRoles.filter(ur => ur.user_id !== userId);
+    
+    return [{ affectedRows: initialLength - users.length }];
+  }
+  
+  if (query.includes('DELETE FROM schedule')) {
+    const scheduleId = params[0];
+    const initialLength = schedule.length;
+    schedule = schedule.filter(s => s.id !== scheduleId);
+    
+    return [{ affectedRows: initialLength - schedule.length }];
+  }
+  
+  if (query.includes('SELECT id FROM roles WHERE name = ?')) {
+    const roleName = params[0];
+    const role = roles.find(r => r.name === roleName);
+    
+    return role ? [[role]] : [[]];
+  }
+  
+  // Default fallback
+  return [];
 };
 
 // Authentication functions
 export const authenticateUser = async (username: string, passwordHash: string) => {
-  const users = await executeQuery(
-    `SELECT u.id, u.username, u.email, u.full_name, GROUP_CONCAT(r.name) as roles
-     FROM users u
-     JOIN user_roles ur ON u.id = ur.user_id
-     JOIN roles r ON r.id = ur.role_id
-     WHERE u.username = ? AND u.password_hash = ? AND u.is_active = 1
-     GROUP BY u.id`,
-    [username, passwordHash]
-  );
+  const user = users.find(u => u.username === username && u.password_hash === passwordHash && u.is_active === 1);
   
-  if (Array.isArray(users) && users.length > 0) {
-    const user = users[0] as any;
+  if (user) {
+    const userRolesList = userRoles
+      .filter(ur => ur.user_id === user.id)
+      .map(ur => {
+        const role = roles.find(r => r.id === ur.role_id);
+        return role ? role.name : null;
+      })
+      .filter(Boolean);
+    
     // Update last login
-    await executeQuery(
-      'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
-      [user.id]
-    );
-    return user;
+    const index = users.findIndex(u => u.id === user.id);
+    if (index !== -1) {
+      users[index] = {
+        ...users[index],
+        last_login: new Date().toISOString()
+      };
+    }
+    
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullName: user.full_name,
+      roles: userRolesList
+    };
   }
   
   return null;

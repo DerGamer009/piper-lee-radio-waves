@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,12 +29,17 @@ const Login = () => {
       if (result) {
         // Store user data in localStorage
         localStorage.setItem("user", JSON.stringify(result.user));
-        localStorage.setItem("token", result.token);
         
         // Redirect based on user role
-        if (result.user.roles.includes("admin")) {
+        const userRoles = Array.isArray(result.user.roles) 
+          ? result.user.roles 
+          : typeof result.user.roles === 'string' 
+            ? result.user.roles.split(',') 
+            : [];
+            
+        if (userRoles.includes("admin")) {
           navigate("/admin");
-        } else if (result.user.roles.includes("moderator")) {
+        } else if (userRoles.includes("moderator")) {
           navigate("/moderator");
         } else {
           navigate("/");
@@ -67,9 +71,15 @@ const Login = () => {
 
   // If user is already logged in, redirect based on role
   if (isLoggedIn && userData) {
-    if (userData.roles.includes("admin")) {
+    const userRoles = Array.isArray(userData.roles) 
+      ? userData.roles 
+      : typeof userData.roles === 'string' 
+        ? userData.roles.split(',') 
+        : [];
+        
+    if (userRoles.includes("admin")) {
       return <Navigate to="/admin" replace />;
-    } else if (userData.roles.includes("moderator")) {
+    } else if (userRoles.includes("moderator")) {
       return <Navigate to="/moderator" replace />;
     }
   }
