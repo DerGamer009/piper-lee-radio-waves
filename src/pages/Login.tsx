@@ -6,14 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
-import { login } from "@/services/apiService";
-
-// Typdefinition für User
-type User = {
-  username: string;
-  fullName?: string;
-  roles: string[] | string;
-};
+import { login, type User } from "@/services/apiService";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -44,6 +37,8 @@ const Login = () => {
 
       if (result) {
         localStorage.setItem("user", JSON.stringify(result.user));
+        localStorage.setItem("token", result.token || "");
+        
         const userRoles = parseRoles(result.user.roles);
 
         if (userRoles.includes("admin")) {
@@ -108,6 +103,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -119,6 +115,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
           </CardContent>
