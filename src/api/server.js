@@ -7,11 +7,22 @@ const app = express();
 const port = 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Initialize database connection
-const db = new sqlite3('users.db');
+let db;
+try {
+  db = new sqlite3('users.db');
+  console.log('Connected to SQLite database');
+} catch (error) {
+  console.error('Database connection error:', error);
+  process.exit(1);
+}
 
 // Initialize tables if they don't exist (using the existing schema from db.ts)
 db.exec(`
@@ -26,6 +37,21 @@ db.exec(`
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Add default admin user if none exists
+const adminExists = db.prepare('SELECT 1 FROM users WHERE username = ?').get('admin');
+if (!adminExists) {
+  try {
+    const hashedPassword = bcrypt.hashSync('admin123', 10);
+    db.prepare(`
+      INSERT INTO users (username, password, fullName, email, roles, isActive)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run('admin', hashedPassword, 'Administrator', 'admin@example.com', 'admin', true);
+    console.log('Default admin user created');
+  } catch (error) {
+    console.error('Error creating default admin user:', error);
+  }
+}
 
 // Auth Routes
 app.post('/api/login', async (req, res) => {
@@ -201,8 +227,25 @@ app.delete('/api/users/:id', (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server läuft auf Port ${port}`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    db.close();
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    db.close();
+  });
 });
 
 module.exports = app;

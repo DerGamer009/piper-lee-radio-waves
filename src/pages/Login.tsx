@@ -1,130 +1,125 @@
-import React, { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Lock } from "lucide-react";
-import { login, type User } from "@/services/apiService";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { EyeIcon, EyeOffIcon, LockIcon } from "lucide-react";
+import { login } from "@/services/apiService";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const isLoggedIn = localStorage.getItem("user") !== null;
-  const userData: User | null = isLoggedIn ? JSON.parse(localStorage.getItem("user") || "null") : null;
-
-  const parseRoles = (roles: string[] | string | undefined): string[] => {
-    if (Array.isArray(roles)) {
-      return roles;
-    }
-    if (typeof roles === "string" && roles) {
-      return roles.split(",").map((r) => r.trim());
-    }
-    return [];
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const result = await login(username, password);
-
-      if (result) {
-        localStorage.setItem("user", JSON.stringify(result.user));
-        localStorage.setItem("token", result.token || "");
+      const response = await login(username, password);
+      
+      if (response && response.user) {
+        const { roles } = response.user;
         
-        const userRoles = parseRoles(result.user.roles);
-
-        if (userRoles.includes("admin")) {
+        if (roles.includes("admin")) {
           navigate("/admin");
-        } else if (userRoles.includes("moderator")) {
+        } else if (roles.includes("moderator")) {
           navigate("/moderator");
         } else {
           navigate("/");
         }
-
+        
         toast({
-          title: "Erfolgreich angemeldet",
-          description: `Willkommen zurück, ${result.user.fullName || result.user.username}!`,
-          variant: "default",
+          title: "Anmeldung erfolgreich",
+          description: `Willkommen zurück, ${username}!`,
         });
       } else {
         toast({
-          title: "Anmeldung fehlgeschlagen",
-          description: "Ungültiger Benutzername oder Passwort.",
           variant: "destructive",
+          title: "Anmeldung fehlgeschlagen",
+          description: "Ungültige Anmeldeinformationen. Bitte versuche es erneut.",
         });
       }
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "Fehler bei der Anmeldung",
-        description: "Es gab ein Problem bei der Verarbeitung Ihrer Anfrage.",
         variant: "destructive",
+        title: "Anmeldung fehlgeschlagen",
+        description: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoggedIn && userData) {
-    const userRoles = parseRoles(userData.roles);
-
-    if (userRoles.includes("admin")) {
-      return <Navigate to="/admin" replace />;
-    } else if (userRoles.includes("moderator")) {
-      return <Navigate to="/moderator" replace />;
-    }
-    return <Navigate to="/" replace />;
-  }
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md">
+    <div className="container max-w-md mx-auto py-10">
+      <Card>
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center flex justify-center items-center gap-2">
-            <Lock className="h-6 w-6" />
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <LockIcon className="h-6 w-6" />
             Anmelden
           </CardTitle>
+          <CardDescription>
+            Gib deine Anmeldedaten ein, um fortzufahren
+          </CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Benutzername</Label>
               <Input
                 id="username"
-                placeholder="Benutzername eingeben"
+                placeholder="benutzername"
+                required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Passwort</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Passwort eingeben"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                  </span>
+                </Button>
+              </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" type="submit" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Anmelden..." : "Anmelden"}
             </Button>
-          </CardFooter>
-        </form>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button variant="link" asChild>
+            <Link to="/register">Noch kein Konto? Registrieren</Link>
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
