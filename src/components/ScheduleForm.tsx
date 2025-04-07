@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -108,7 +109,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Sendung</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
+                <Select onValueChange={value => field.onChange(Number(value))} defaultValue={String(field.value)}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Sendung auswählen" />
@@ -187,7 +188,12 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
               <FormItem>
                 <FormLabel>Moderator (optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Moderator ID" type="number" {...field} />
+                  <Input 
+                    placeholder="Moderator ID" 
+                    type="number" 
+                    value={field.value || ''}
+                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -207,9 +213,9 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                 </FormControl>
                 <div className="space-y-1 leading-none">
                   <FormLabel>Wiederkehrend</FormLabel>
-                  <FormDescription>
+                  <p className="text-sm text-muted-foreground">
                     Wiederholt sich dieser Termin wöchentlich?
-                  </FormDescription>
+                  </p>
                 </div>
               </FormItem>
             )}

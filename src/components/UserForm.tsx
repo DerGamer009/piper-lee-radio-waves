@@ -10,16 +10,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { createNewUser, updateUser, User } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
-// Define form schema
-const formSchema = z.object({
+// Define form schema for new users
+const newUserSchema = z.object({
   username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
+  password: z.string().min(6, { message: 'Passwort muss mindestens 6 Zeichen lang sein' }),
   email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
   fullName: z.string().min(3, { message: 'Name muss mindestens 3 Zeichen lang sein' }),
   roles: z.array(z.string()).min(1, { message: 'Mindestens eine Rolle muss ausgewählt sein' }),
   isActive: z.boolean().default(true),
 });
 
-type UserFormValues = z.infer<typeof formSchema>;
+// Define form schema for editing users
+const editUserSchema = z.object({
+  username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
+  email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
+  fullName: z.string().min(3, { message: 'Name muss mindestens 3 Zeichen lang sein' }),
+  roles: z.array(z.string()).min(1, { message: 'Mindestens eine Rolle muss ausgewählt sein' }),
+  isActive: z.boolean().default(true),
+});
 
 interface UserFormProps {
   user?: User;
@@ -31,15 +39,20 @@ interface UserFormProps {
 const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, onSuccess }) => {
   const { toast } = useToast();
   
+  // Use the appropriate schema based on whether we're editing or creating
+  const formSchema = isEditing ? editUserSchema : newUserSchema;
+  type UserFormValues = z.infer<typeof formSchema>;
+  
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: user?.username || '',
+      ...(isEditing ? {} : { password: '' }),
       email: user?.email || '',
       fullName: user?.fullName || '',
-      roles: typeof user?.roles === 'string' ? user.roles.split(',') : user?.roles || ['user'],
+      roles: user?.roles || ['user'],
       isActive: user?.isActive !== undefined ? user.isActive : true,
-    },
+    } as any,
   });
 
   const roleOptions = [
@@ -50,23 +63,14 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
 
   const onSubmit = async (data: UserFormValues) => {
     try {
-      // Ensure all required fields are present before submitting
-      const userData = {
-        username: data.username,
-        email: data.email,
-        fullName: data.fullName,
-        roles: data.roles,
-        isActive: data.isActive
-      };
-      
       if (isEditing && user) {
-        await updateUser(user.id, userData);
+        await updateUser(user.id, data);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-        await createNewUser(userData);
+        await createNewUser(data as any);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich erstellt.",
@@ -102,6 +106,22 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
               </FormItem>
             )}
           />
+
+          {!isEditing && (
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Passwort</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}

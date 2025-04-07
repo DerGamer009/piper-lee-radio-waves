@@ -8,8 +8,9 @@ let users = [
     username: 'admin',
     password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
     email: 'admin@example.com',
-    full_name: 'Administrator',
-    is_active: 1,
+    fullName: 'Administrator',
+    roles: ['admin'],
+    isActive: true,
     last_login: '2023-01-01T00:00:00.000Z',
     created_at: '2023-01-01T00:00:00.000Z',
     updated_at: '2023-01-01T00:00:00.000Z'
@@ -19,23 +20,13 @@ let users = [
     username: 'moderator',
     password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
     email: 'moderator@example.com',
-    full_name: 'Moderator User',
-    is_active: 1,
+    fullName: 'Moderator User',
+    roles: ['moderator'],
+    isActive: true,
     last_login: '2023-01-01T00:00:00.000Z',
     created_at: '2023-01-01T00:00:00.000Z',
     updated_at: '2023-01-01T00:00:00.000Z'
   }
-];
-
-let roles = [
-  { id: 1, name: 'admin', description: 'Administrator role' },
-  { id: 2, name: 'moderator', description: 'Moderator role' },
-  { id: 3, name: 'user', description: 'Standard user role' }
-];
-
-let userRoles = [
-  { user_id: 1, role_id: 1 },
-  { user_id: 2, role_id: 2 }
 ];
 
 let shows = [
@@ -46,7 +37,8 @@ let shows = [
     image_url: '/placeholder.svg',
     created_by: 1,
     created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
+    updated_at: '2023-01-01T00:00:00.000Z',
+    creator_name: 'Administrator'
   },
   {
     id: 2,
@@ -55,7 +47,8 @@ let shows = [
     image_url: '/placeholder.svg',
     created_by: 2,
     created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
+    updated_at: '2023-01-01T00:00:00.000Z',
+    creator_name: 'Moderator User'
   }
 ];
 
@@ -67,9 +60,12 @@ let schedule = [
     start_time: '08:00',
     end_time: '10:00',
     host_id: 1,
-    is_recurring: 1,
+    is_recurring: true,
     created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
+    updated_at: '2023-01-01T00:00:00.000Z',
+    show_title: 'Morning Show',
+    show_description: 'Wake up with our morning show',
+    host_name: 'Administrator'
   },
   {
     id: 2,
@@ -78,122 +74,45 @@ let schedule = [
     start_time: '14:00',
     end_time: '16:00',
     host_id: 2,
-    is_recurring: 1,
+    is_recurring: true,
     created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
+    updated_at: '2023-01-01T00:00:00.000Z',
+    show_title: 'Afternoon Relaxation',
+    show_description: 'Relax with smooth tunes in the afternoon',
+    host_name: 'Moderator User'
   }
 ];
 
-// Mock function to execute SQL-like queries
+// Mock function to execute queries
 export const executeQuery = async (query: string, params: any[] = []) => {
   console.log('Executing query:', query, 'with params:', params);
   
   // Simple query execution simulation
   if (query.includes('SELECT') && query.includes('FROM users')) {
-    // Handle user queries
-    if (query.includes('WHERE u.id = ?')) {
-      const userId = params[0];
-      const user = users.find(u => u.id === userId);
-      if (!user) return [];
-      
-      const userRolesList = userRoles
-        .filter(ur => ur.user_id === userId)
-        .map(ur => {
-          const role = roles.find(r => r.id === ur.role_id);
-          return role ? role.name : null;
-        })
-        .filter(Boolean);
-      
-      return [{
-        ...user,
-        roles: userRolesList.join(',')
-      }];
-    }
-    
-    // Get all users with roles
-    return users.map(user => {
-      const userRolesList = userRoles
-        .filter(ur => ur.user_id === user.id)
-        .map(ur => {
-          const role = roles.find(r => r.id === ur.role_id);
-          return role ? role.name : null;
-        })
-        .filter(Boolean);
-      
-      return {
-        ...user,
-        roles: userRolesList.join(',')
-      };
-    });
+    // Get all users
+    return users;
   }
   
   if (query.includes('SELECT') && query.includes('FROM shows')) {
-    // Handle show queries
-    if (query.includes('WHERE s.id = ?')) {
-      const showId = params[0];
-      const show = shows.find(s => s.id === showId);
-      if (!show) return [];
-      
-      const creator = users.find(u => u.id === show.created_by);
-      
-      return [{
-        ...show,
-        creator_name: creator ? creator.full_name : null
-      }];
-    }
-    
-    // Get all shows with creator names
-    return shows.map(show => {
-      const creator = users.find(u => u.id === show.created_by);
-      
-      return {
-        ...show,
-        creator_name: creator ? creator.full_name : null
-      };
-    });
+    // Get all shows
+    return shows;
   }
   
   if (query.includes('SELECT') && query.includes('FROM schedule')) {
-    // Handle schedule queries
-    if (query.includes('WHERE s.id = ?')) {
-      const scheduleId = params[0];
-      const scheduleItem = schedule.find(s => s.id === scheduleId);
-      if (!scheduleItem) return [];
-      
-      const show = shows.find(s => s.id === scheduleItem.show_id);
-      const host = users.find(u => u.id === scheduleItem.host_id);
-      
-      return [{
-        ...scheduleItem,
-        show_title: show ? show.title : null,
-        show_description: show ? show.description : null,
-        host_name: host ? host.full_name : null
-      }];
-    }
-    
-    // Get all schedule items with show and host details
-    return schedule.map(scheduleItem => {
-      const show = shows.find(s => s.id === scheduleItem.show_id);
-      const host = users.find(u => u.id === scheduleItem.host_id);
-      
-      return {
-        ...scheduleItem,
-        show_title: show ? show.title : null,
-        show_description: show ? show.description : null,
-        host_name: host ? host.full_name : null
-      };
-    });
+    // Get all schedule items
+    return schedule;
   }
   
   if (query.includes('INSERT INTO users')) {
-    const [username, passwordHash, email, fullName, isActive] = params;
+    const userData = params[0];
     const newUser = {
       id: users.length + 1,
-      username,
-      password_hash: passwordHash,
-      email,
-      full_name: fullName,
-      is_active: isActive,
+      username: userData.username,
+      password_hash: userData.password, // In a real app, we would hash this
+      email: userData.email || null,
+      fullName: userData.fullName || null,
+      roles: userData.roles,
+      isActive: userData.isActive !== undefined ? userData.isActive : true,
       last_login: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -203,25 +122,15 @@ export const executeQuery = async (query: string, params: any[] = []) => {
     return [{ insertId: newUser.id }];
   }
   
-  if (query.includes('INSERT INTO user_roles')) {
-    const [userId, roleId] = params;
-    userRoles.push({ user_id: userId, role_id: roleId });
-    return [{ affectedRows: 1 }];
-  }
-  
   if (query.includes('UPDATE users')) {
-    const id = params[params.length - 1];
+    const userData = params[0];
+    const id = params[1];
     const index = users.findIndex(u => u.id === id);
     
     if (index !== -1) {
-      const [username, email, fullName, isActive] = params;
-      
       users[index] = {
         ...users[index],
-        username,
-        email,
-        full_name: fullName,
-        is_active: isActive,
+        ...userData,
         updated_at: new Date().toISOString()
       };
       
@@ -231,34 +140,68 @@ export const executeQuery = async (query: string, params: any[] = []) => {
     return [{ affectedRows: 0 }];
   }
   
-  if (query.includes('DELETE FROM user_roles')) {
-    const userId = params[0];
-    userRoles = userRoles.filter(ur => ur.user_id !== userId);
-    return [{ affectedRows: 1 }];
-  }
-  
   if (query.includes('DELETE FROM users')) {
     const userId = params[0];
     const initialLength = users.length;
     users = users.filter(u => u.id !== userId);
-    userRoles = userRoles.filter(ur => ur.user_id !== userId);
     
     return [{ affectedRows: initialLength - users.length }];
   }
   
-  // Add support for schedule operations
+  if (query.includes('INSERT INTO shows')) {
+    const showData = params[0];
+    const newShow = {
+      id: shows.length + 1,
+      ...showData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    shows.push(newShow);
+    return [{ insertId: newShow.id }];
+  }
+  
+  if (query.includes('UPDATE shows')) {
+    const showData = params[0];
+    const id = params[1];
+    const index = shows.findIndex(s => s.id === id);
+    
+    if (index !== -1) {
+      shows[index] = {
+        ...shows[index],
+        ...showData,
+        updated_at: new Date().toISOString()
+      };
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    return [{ affectedRows: 0 }];
+  }
+  
+  if (query.includes('DELETE FROM shows')) {
+    const showId = params[0];
+    const initialLength = shows.length;
+    shows = shows.filter(s => s.id !== showId);
+    // Also delete related schedule items
+    schedule = schedule.filter(s => s.show_id !== showId);
+    
+    return [{ affectedRows: initialLength - shows.length }];
+  }
+  
   if (query.includes('INSERT INTO schedule')) {
-    const [showId, dayOfWeek, startTime, endTime, hostId, isRecurring, createdAt, updatedAt] = params;
+    const scheduleData = params[0];
+    const relatedShow = shows.find(s => s.id === scheduleData.show_id);
+    const host = users.find(u => u.id === scheduleData.host_id);
+    
     const newScheduleItem = {
       id: schedule.length + 1,
-      show_id: showId,
-      day_of_week: dayOfWeek,
-      start_time: startTime,
-      end_time: endTime,
-      host_id: hostId,
-      is_recurring: isRecurring,
-      created_at: createdAt,
-      updated_at: updatedAt
+      ...scheduleData,
+      show_title: relatedShow ? relatedShow.title : null,
+      show_description: relatedShow ? relatedShow.description : null,
+      host_name: host ? host.fullName : null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     schedule.push(newScheduleItem);
@@ -266,21 +209,34 @@ export const executeQuery = async (query: string, params: any[] = []) => {
   }
   
   if (query.includes('UPDATE schedule')) {
-    const id = params[params.length - 1];
+    const scheduleData = params[0];
+    const id = params[1];
     const index = schedule.findIndex(s => s.id === id);
     
     if (index !== -1) {
-      const [showId, dayOfWeek, startTime, endTime, hostId, isRecurring, updatedAt] = params;
+      // Get updated related data if needed
+      let showTitle = schedule[index].show_title;
+      let showDescription = schedule[index].show_description;
+      let hostName = schedule[index].host_name;
+      
+      if (scheduleData.show_id) {
+        const relatedShow = shows.find(s => s.id === scheduleData.show_id);
+        showTitle = relatedShow ? relatedShow.title : null;
+        showDescription = relatedShow ? relatedShow.description : null;
+      }
+      
+      if (scheduleData.host_id) {
+        const host = users.find(u => u.id === scheduleData.host_id);
+        hostName = host ? host.fullName : null;
+      }
       
       schedule[index] = {
         ...schedule[index],
-        show_id: showId,
-        day_of_week: dayOfWeek,
-        start_time: startTime,
-        end_time: endTime,
-        host_id: hostId,
-        is_recurring: isRecurring,
-        updated_at: updatedAt
+        ...scheduleData,
+        show_title: showTitle,
+        show_description: showDescription,
+        host_name: hostName,
+        updated_at: new Date().toISOString()
       };
       
       return [{ affectedRows: 1 }];
@@ -297,30 +253,17 @@ export const executeQuery = async (query: string, params: any[] = []) => {
     return [{ affectedRows: initialLength - schedule.length }];
   }
   
-  if (query.includes('SELECT id FROM roles WHERE name = ?')) {
-    const roleName = params[0];
-    const role = roles.find(r => r.name === roleName);
-    
-    return role ? [[role]] : [[]];
-  }
-  
   // Default fallback
   return [];
 };
 
-// Authentication functions
-export const authenticateUser = async (username: string, passwordHash: string) => {
-  const user = users.find(u => u.username === username && u.password_hash === passwordHash && u.is_active === 1);
+// Authentication functions for browser environment
+export const authenticateUser = async (username: string, password: string) => {
+  // This is a simplified authentication function for browser environment
+  // In a real application, we would send the credentials to a secure backend
+  const user = users.find(u => u.username === username && u.password_hash === password && u.isActive);
   
   if (user) {
-    const userRolesList = userRoles
-      .filter(ur => ur.user_id === user.id)
-      .map(ur => {
-        const role = roles.find(r => r.id === ur.role_id);
-        return role ? role.name : null;
-      })
-      .filter(Boolean);
-    
     // Update last login
     const index = users.findIndex(u => u.id === user.id);
     if (index !== -1) {
@@ -334,8 +277,9 @@ export const authenticateUser = async (username: string, passwordHash: string) =
       id: user.id,
       username: user.username,
       email: user.email,
-      fullName: user.full_name,
-      roles: userRolesList
+      fullName: user.fullName,
+      roles: user.roles,
+      isActive: user.isActive
     };
   }
   
