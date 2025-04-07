@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,13 +8,26 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createNewUser } from "@/services/apiService";
-import { EyeIcon, EyeOffIcon, UserPlusIcon } from "lucide-react";
-import { checkServerStatus } from "@/services/serverStarter";
+import { EyeIcon, EyeOffIcon, UserPlusIcon, AlertTriangleIcon, ServerIcon } from "lucide-react";
+import { checkServerStatus, getServerStartInstructions } from "@/services/serverStarter";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isServerRunning, setIsServerRunning] = useState<boolean | null>(null);
   
   const [formData, setFormData] = useState({
     username: "",
@@ -25,6 +37,18 @@ const Register = () => {
     roles: ["user"],
     isActive: true
   });
+
+  useEffect(() => {
+    const checkServer = async () => {
+      const running = await checkServerStatus();
+      setIsServerRunning(running);
+    };
+    
+    checkServer();
+    
+    const interval = setInterval(checkServer, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -44,7 +68,6 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // First check if the API server is running
       const isServerRunning = await checkServerStatus();
       if (!isServerRunning) {
         toast({
@@ -85,6 +108,35 @@ const Register = () => {
 
   return (
     <div className="container max-w-md mx-auto py-10">
+      {isServerRunning === false && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangleIcon className="h-4 w-4" />
+          <AlertTitle>API-Server nicht erreichbar</AlertTitle>
+          <AlertDescription>
+            Der API-Server ist nicht erreichbar. Die Registrierung wird nicht funktionieren.
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="mt-2">
+                  <ServerIcon className="h-4 w-4 mr-2" />
+                  Wie starte ich den Server?
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>API-Server starten</AlertDialogTitle>
+                  <AlertDialogDescription className="whitespace-pre-line">
+                    {getServerStartInstructions()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction>OK</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl flex items-center gap-2">
@@ -186,7 +238,11 @@ const Register = () => {
               <Label htmlFor="isActive">Konto aktivieren</Label>
             </div>
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || isServerRunning === false}
+            >
               {isLoading ? "Registriere..." : "Registrieren"}
             </Button>
           </form>

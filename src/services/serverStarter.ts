@@ -15,6 +15,11 @@ export const checkServerStatus = async (): Promise<boolean> => {
   }
 };
 
+// Instructions to show to the user about starting the server
+export const getServerStartInstructions = (): string => {
+  return 'Bitte führe in einem Terminal das folgende Kommando aus:\n\nnode src/api/startServer.js';
+};
+
 export const checkApiServer = async (): Promise<boolean> => {
   try {
     // First check if the server is already running
