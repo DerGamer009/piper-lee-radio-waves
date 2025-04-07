@@ -21,25 +21,17 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect } from "react";
-
-// Create a function to start the API server
-const startApiServer = async () => {
-  try {
-    // Make a request to wake up the server
-    await fetch('http://localhost:3001/api/users', { method: 'GET' });
-    console.log('API server is ready');
-  } catch (error) {
-    console.log('API server might not be running, attempting to start...');
-    // In a real application, you might want to show a notification to the user
-  }
-};
+import { startServer } from "./services/serverStarter";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   // Start the API server when the app loads
   useEffect(() => {
-    startApiServer();
+    // Start the Node.js server when the app loads
+    startServer();
+    
+    // Clean up function not needed as the server is managed by serverStarter.ts
   }, []);
 
   return (

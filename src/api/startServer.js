@@ -1,7 +1,6 @@
-
 // Simple script to start the Express API server
 
-const { exec } = require('child_process');
+const { fork } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -15,24 +14,18 @@ if (!fs.existsSync(serverPath)) {
 
 // Start the server
 console.log('Starting API server...');
-const server = exec(`node ${serverPath}`, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error starting server: ${error.message}`);
-    return;
+const server = fork(serverPath, [], {
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    PORT: '3001'
   }
-  if (stderr) {
-    console.error(`Server error: ${stderr}`);
-    return;
-  }
-  console.log(`Server output: ${stdout}`);
 });
 
-server.stdout.on('data', (data) => {
-  console.log(`Server: ${data}`);
+server.on('error', (err) => {
+  console.error(`Server error: ${err.message}`);
+  process.exit(1);
 });
 
-server.stderr.on('data', (data) => {
-  console.error(`Server error: ${data}`);
-});
-
+// This will keep the process running as long as the child is running
 console.log('API server started in background');
