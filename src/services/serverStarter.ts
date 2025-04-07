@@ -15,7 +15,7 @@ export const checkServerStatus = async (): Promise<boolean> => {
   }
 };
 
-export const checkApiServer = async (): Promise<void> => {
+export const checkApiServer = async (): Promise<boolean> => {
   try {
     // First check if the server is already running
     const isRunning = await checkServerStatus();
@@ -25,7 +25,9 @@ export const checkApiServer = async (): Promise<void> => {
       console.log('API server is not running. Please start it manually.');
       // You could show a toast notification here
     }
+    return isRunning;
   } catch (error) {
     console.error('Error checking API server status:', error);
+    return false;
   }
 };

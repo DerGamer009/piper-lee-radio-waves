@@ -30,11 +30,20 @@ const App = () => {
   // Check if the API server is running when the app loads
   useEffect(() => {
     const checkServer = async () => {
-      const isRunning = await checkApiServer();
-      if (!isRunning) {
+      try {
+        const isRunning = await checkApiServer();
+        if (!isRunning) {
+          toast({
+            title: "API Server nicht erreichbar",
+            description: "Der API-Server scheint nicht zu laufen. Bitte starte ihn manuell.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error checking API server:", error);
         toast({
-          title: "API Server nicht erreichbar",
-          description: "Der API-Server scheint nicht zu laufen. Bitte starte ihn manuell.",
+          title: "Fehler",
+          description: "Fehler beim Überprüfen des API-Servers.",
           variant: "destructive"
         });
       }
