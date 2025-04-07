@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createUser, updateUser, User } from '@/services/apiService';
+import { createNewUser, updateUser, User } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 // Define form schema
@@ -37,7 +37,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
       username: user?.username || '',
       email: user?.email || '',
       fullName: user?.fullName || '',
-      roles: user?.roles || ['user'],
+      roles: typeof user?.roles === 'string' ? user.roles.split(',') : user?.roles || ['user'],
       isActive: user?.isActive !== undefined ? user.isActive : true,
     },
   });
@@ -66,7 +66,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-        await createUser(userData);
+        await createNewUser(userData);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich erstellt.",

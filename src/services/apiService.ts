@@ -1,12 +1,20 @@
+
 import { authenticateUser, getAllUsers, createUser, updateUser as dbUpdateUser, deleteUser as dbDeleteUser, type DBUser, type CreateUserData } from '@/lib/db';
 import { getShows as dbGetShows, createShow as dbCreateShow, updateShow as dbUpdateShow, deleteShow as dbDeleteShow, 
          getSchedule as dbGetSchedule, createScheduleItem as dbCreateScheduleItem, updateScheduleItem as dbUpdateScheduleItem, 
-         deleteScheduleItem as dbDeleteScheduleItem, type Show, type ScheduleItem } from '@/lib/showsDb';
+         deleteScheduleItem as dbDeleteScheduleItem, type Show, type ScheduleItem as DBScheduleItem } from '@/lib/showsDb';
 
 // Types
 export interface User extends Omit<DBUser, 'password'> {}
 
-export { Show, ScheduleItem };
+export interface Show extends Show {}  // Re-export the Show type
+
+// Extended ScheduleItem interface to include UI fields
+export interface ScheduleItem extends DBScheduleItem {
+  show_title?: string;       // For UI display
+  show_description?: string; // For UI display
+  host_name?: string;        // For UI display
+}
 
 export interface LoginResponse {
   user: User;
