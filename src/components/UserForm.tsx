@@ -33,6 +33,9 @@ const editUserSchema = z.object({
 type NewUserFormValues = z.infer<typeof newUserSchema>;
 type EditUserFormValues = z.infer<typeof editUserSchema>;
 
+// Type that can represent either form values based on isEditing flag
+type UserFormValues<T extends boolean> = T extends true ? EditUserFormValues : NewUserFormValues;
+
 interface UserFormProps {
   user?: User;
   isEditing?: boolean;
@@ -45,10 +48,9 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
   
   // Use the appropriate schema based on whether we're editing or creating
   const formSchema = isEditing ? editUserSchema : newUserSchema;
-  type UserFormValues = isEditing ? EditUserFormValues : NewUserFormValues;
   
   // Set default values for the form
-  const defaultValues: Partial<UserFormValues> = {
+  const defaultValues: Partial<UserFormValues<typeof isEditing>> = {
     username: user?.username || '',
     email: user?.email || '',
     fullName: user?.fullName || '',
@@ -61,9 +63,9 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
     (defaultValues as Partial<NewUserFormValues>).password = '';
   }
   
-  const form = useForm<UserFormValues>({
+  const form = useForm<UserFormValues<typeof isEditing>>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultValues as UserFormValues,
+    defaultValues: defaultValues as UserFormValues<typeof isEditing>,
   });
 
   const roleOptions = [
@@ -72,7 +74,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
     { id: 'user', label: 'Nutzer' },
   ];
 
-  const onSubmit = async (data: UserFormValues) => {
+  const onSubmit = async (data: UserFormValues<typeof isEditing>) => {
     try {
       if (isEditing && user) {
         await updateUser(user.id, data as EditUserFormValues);
