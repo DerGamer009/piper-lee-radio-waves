@@ -1,7 +1,3 @@
-
-// Adjust the imports to avoid Node-specific modules
-import { executeQuery, authenticateUser as dbAuthenticateUser } from '@/services/dbService';
-
 // Types
 export interface User {
   id: number;
@@ -55,24 +51,46 @@ export interface LoginResponse {
   token?: string;
 }
 
-// Mock response types for database operations
-interface DbQueryResult {
-  insertId?: number;
-  affectedRows?: number;
-}
+// API Base URL
+const API_BASE_URL = 'http://localhost:3001/api';
+
+// Helper to make API requests
+const apiRequest = async (endpoint: string, options?: RequestInit) => {
+  const token = localStorage.getItem('token');
+  
+  const defaultOptions: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  };
+  
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...defaultOptions,
+    ...options,
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(error.error || 'API request failed');
+  }
+  
+  return response.json();
+};
 
 // Authentication service
 export const login = async (username: string, password: string): Promise<LoginResponse | null> => {
   try {
-    const user = await dbAuthenticateUser(username, password);
-    if (!user) return null;
-
-    // Store user in localStorage
-    const token = 'dummy-token';
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-
-    return { user, token };
+    const response = await apiRequest('/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    
+    // Store user data in localStorage
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return null;
@@ -100,21 +118,13 @@ export const hasRole = (requiredRoles: string[]): boolean => {
   const user = getCurrentUser();
   if (!user) return false;
   
-  const userRoles = Array.isArray(user.roles) ? user.roles : [];
-  return requiredRoles.some(role => userRoles.includes(role));
+  return requiredRoles.some(role => user.roles.includes(role));
 };
 
 // User API functions
 export const getUsers = async (): Promise<User[]> => {
   try {
-    const results = await executeQuery('SELECT * FROM users');
-    if (Array.isArray(results)) {
-      return results.map(user => ({
-        ...user,
-        roles: typeof user.roles === 'string' ? user.roles.split(',') : user.roles
-      })) as User[];
-    }
-    return [];
+    return await apiRequest('/users');
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -123,26 +133,10 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const createNewUser = async (userData: CreateUserData): Promise<User | null> => {
   try {
-    // For simplicity in browser environment, we generate a password if not provided
-    const userToCreate = {
-      ...userData,
-      password: userData.password || 'defaultPassword123' // Would be hashed in a real app
-    };
-    
-    const result = await executeQuery('INSERT INTO users', [userToCreate]) as DbQueryResult[];
-    if (result && result.length > 0 && result[0]?.insertId) {
-      // Simulate fetching the created user
-      return {
-        id: result[0].insertId,
-        username: userData.username,
-        email: userData.email || '',
-        fullName: userData.fullName || '',
-        roles: userData.roles,
-        isActive: userData.isActive ?? true,
-        created_at: new Date().toISOString()
-      };
-    }
-    return null;
+    return await apiRequest('/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
   } catch (error) {
     console.error('Error creating user:', error);
     return null;
@@ -151,11 +145,10 @@ export const createNewUser = async (userData: CreateUserData): Promise<User | nu
 
 export const updateUser = async (id: number, userData: Partial<CreateUserData>): Promise<User | null> => {
   try {
-    await executeQuery('UPDATE users', [userData, id]);
-    
-    // Simulate fetching the updated user
-    const users = await getUsers();
-    return users.find(user => user.id === id) || null;
+    return await apiRequest(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
   } catch (error) {
     console.error('Error updating user:', error);
     return null;
@@ -164,8 +157,10 @@ export const updateUser = async (id: number, userData: Partial<CreateUserData>):
 
 export const deleteUser = async (id: number): Promise<boolean> => {
   try {
-    const result = await executeQuery('DELETE FROM users', [id]) as DbQueryResult[];
-    return result && result.length > 0 && !!result[0]?.affectedRows;
+    await apiRequest(`/users/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
   } catch (error) {
     console.error('Error deleting user:', error);
     return false;
@@ -175,7 +170,10 @@ export const deleteUser = async (id: number): Promise<boolean> => {
 // Show API functions
 export const getShows = async (): Promise<Show[]> => {
   try {
-    const results = await executeQuery('SELECT * FROM shows');
+    // This is a mock implementation - in a real app, call the API
+    const results = await import('@/services/dbService').then(
+      module => module.executeQuery('SELECT * FROM shows')
+    );
     return Array.isArray(results) ? results as Show[] : [];
   } catch (error) {
     console.error('Error fetching shows:', error);
