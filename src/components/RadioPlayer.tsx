@@ -1,10 +1,11 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import AudioVisualizer from "./AudioVisualizer";
 import StreamInfo from "./StreamInfo";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface RadioPlayerProps {
   streamUrl: string;
@@ -21,6 +22,9 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
   const [streamError, setStreamError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Set correct stream URL
+  const CORRECTED_STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
+
   useEffect(() => {
     // Create a new audio element or reset the existing one
     if (!audioRef.current) {
@@ -28,7 +32,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
     }
     
     // Set proper properties
-    audioRef.current.src = streamUrl;
+    audioRef.current.src = CORRECTED_STREAM_URL;
     audioRef.current.volume = volume;
     audioRef.current.crossOrigin = "anonymous";
     audioRef.current.preload = "auto";
@@ -82,7 +86,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
         audioRef.current.removeEventListener("ended", handleEnded);
       }
     };
-  }, [streamUrl, toast]);
+  }, [toast]);
 
   const togglePlay = () => {
     if (audioRef.current) {
