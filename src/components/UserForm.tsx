@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createNewUser, updateUser, User } from '@/services/apiService';
+import { createNewUser, updateUser, User, CreateUserData } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 // Define form schema for new users with password
@@ -83,7 +83,16 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-        await createNewUser(data as NewUserFormValues);
+        // Ensure we're passing properly typed data with required fields
+        const newUserData: CreateUserData = {
+          username: data.username,
+          password: (data as NewUserFormValues).password,
+          email: data.email,
+          fullName: data.fullName,
+          roles: data.roles,
+          isActive: data.isActive
+        };
+        await createNewUser(newUserData);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich erstellt.",
