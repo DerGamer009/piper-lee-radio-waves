@@ -1,3 +1,4 @@
+
 // Types
 export interface User {
   id: number;
@@ -49,6 +50,15 @@ export interface CreateUserData {
 export interface LoginResponse {
   user: User;
   token?: string;
+}
+
+// Import the executeQuery function and define the DbQueryResult interface
+import { executeQuery } from '@/services/dbService';
+
+// Define the DbQueryResult interface if it's not exported from dbService
+interface DbQueryResult {
+  insertId?: number;
+  affectedRows?: number;
 }
 
 // API Base URL
