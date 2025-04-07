@@ -55,6 +55,12 @@ export interface LoginResponse {
   token?: string;
 }
 
+// Mock response types for database operations
+interface DbQueryResult {
+  insertId?: number;
+  affectedRows?: number;
+}
+
 // Authentication service
 export const login = async (username: string, password: string): Promise<LoginResponse | null> => {
   try {
@@ -94,7 +100,7 @@ export const hasRole = (requiredRoles: string[]): boolean => {
   const user = getCurrentUser();
   if (!user) return false;
   
-  const userRoles = Array.isArray(user.roles) ? user.roles : user.roles.split(',');
+  const userRoles = Array.isArray(user.roles) ? user.roles : [];
   return requiredRoles.some(role => userRoles.includes(role));
 };
 
@@ -102,10 +108,13 @@ export const hasRole = (requiredRoles: string[]): boolean => {
 export const getUsers = async (): Promise<User[]> => {
   try {
     const results = await executeQuery('SELECT * FROM users');
-    return results.map(user => ({
-      ...user,
-      roles: typeof user.roles === 'string' ? user.roles.split(',') : user.roles
-    }));
+    if (Array.isArray(results)) {
+      return results.map(user => ({
+        ...user,
+        roles: typeof user.roles === 'string' ? user.roles.split(',') : user.roles
+      })) as User[];
+    }
+    return [];
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -120,8 +129,8 @@ export const createNewUser = async (userData: CreateUserData): Promise<User | nu
       password: userData.password || 'defaultPassword123' // Would be hashed in a real app
     };
     
-    const result = await executeQuery('INSERT INTO users', [userToCreate]);
-    if (result && result.length > 0 && result[0].insertId) {
+    const result = await executeQuery('INSERT INTO users', [userToCreate]) as DbQueryResult[];
+    if (result && result.length > 0 && result[0]?.insertId) {
       // Simulate fetching the created user
       return {
         id: result[0].insertId,
@@ -155,8 +164,8 @@ export const updateUser = async (id: number, userData: Partial<CreateUserData>):
 
 export const deleteUser = async (id: number): Promise<boolean> => {
   try {
-    const result = await executeQuery('DELETE FROM users', [id]);
-    return result && result.length > 0 && result[0].affectedRows > 0;
+    const result = await executeQuery('DELETE FROM users', [id]) as DbQueryResult[];
+    return result && result.length > 0 && !!result[0]?.affectedRows;
   } catch (error) {
     console.error('Error deleting user:', error);
     return false;
@@ -166,7 +175,8 @@ export const deleteUser = async (id: number): Promise<boolean> => {
 // Show API functions
 export const getShows = async (): Promise<Show[]> => {
   try {
-    return await executeQuery('SELECT * FROM shows');
+    const results = await executeQuery('SELECT * FROM shows');
+    return Array.isArray(results) ? results as Show[] : [];
   } catch (error) {
     console.error('Error fetching shows:', error);
     return [];
@@ -175,8 +185,8 @@ export const getShows = async (): Promise<Show[]> => {
 
 export const createShow = async (show: Omit<Show, 'id' | 'created_at' | 'updated_at'>): Promise<Show | null> => {
   try {
-    const result = await executeQuery('INSERT INTO shows', [show]);
-    if (result && result.length > 0 && result[0].insertId) {
+    const result = await executeQuery('INSERT INTO shows', [show]) as DbQueryResult[];
+    if (result && result.length > 0 && result[0]?.insertId) {
       return {
         ...show,
         id: result[0].insertId,
@@ -206,8 +216,8 @@ export const updateShow = async (id: number, show: Partial<Show>): Promise<Show 
 
 export const deleteShow = async (id: number): Promise<boolean> => {
   try {
-    const result = await executeQuery('DELETE FROM shows', [id]);
-    return result && result.length > 0 && result[0].affectedRows > 0;
+    const result = await executeQuery('DELETE FROM shows', [id]) as DbQueryResult[];
+    return result && result.length > 0 && !!result[0]?.affectedRows;
   } catch (error) {
     console.error('Error deleting show:', error);
     return false;
@@ -217,7 +227,8 @@ export const deleteShow = async (id: number): Promise<boolean> => {
 // Schedule API functions
 export const getSchedule = async (): Promise<ScheduleItem[]> => {
   try {
-    return await executeQuery('SELECT * FROM schedule');
+    const results = await executeQuery('SELECT * FROM schedule');
+    return Array.isArray(results) ? results as ScheduleItem[] : [];
   } catch (error) {
     console.error('Error fetching schedule:', error);
     return [];
@@ -226,8 +237,8 @@ export const getSchedule = async (): Promise<ScheduleItem[]> => {
 
 export const createScheduleItem = async (item: Omit<ScheduleItem, 'id' | 'created_at' | 'updated_at'>): Promise<ScheduleItem | null> => {
   try {
-    const result = await executeQuery('INSERT INTO schedule', [item]);
-    if (result && result.length > 0 && result[0].insertId) {
+    const result = await executeQuery('INSERT INTO schedule', [item]) as DbQueryResult[];
+    if (result && result.length > 0 && result[0]?.insertId) {
       return {
         ...item,
         id: result[0].insertId,
@@ -257,8 +268,8 @@ export const updateScheduleItem = async (id: number, item: Partial<ScheduleItem>
 
 export const deleteScheduleItem = async (id: number): Promise<boolean> => {
   try {
-    const result = await executeQuery('DELETE FROM schedule', [id]);
-    return result && result.length > 0 && result[0].affectedRows > 0;
+    const result = await executeQuery('DELETE FROM schedule', [id]) as DbQueryResult[];
+    return result && result.length > 0 && !!result[0]?.affectedRows;
   } catch (error) {
     console.error('Error deleting schedule item:', error);
     return false;

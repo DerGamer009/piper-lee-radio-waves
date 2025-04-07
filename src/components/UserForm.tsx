@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { createNewUser, updateUser, User } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
-// Define form schema for new users
+// Define form schema for new users with password
 const newUserSchema = z.object({
   username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
   password: z.string().min(6, { message: 'Passwort muss mindestens 6 Zeichen lang sein' }),
@@ -20,7 +20,7 @@ const newUserSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-// Define form schema for editing users
+// Define form schema for editing users (no password field)
 const editUserSchema = z.object({
   username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
   email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
@@ -28,6 +28,10 @@ const editUserSchema = z.object({
   roles: z.array(z.string()).min(1, { message: 'Mindestens eine Rolle muss ausgewählt sein' }),
   isActive: z.boolean().default(true),
 });
+
+// Define the types for both schemas
+type NewUserFormValues = z.infer<typeof newUserSchema>;
+type EditUserFormValues = z.infer<typeof editUserSchema>;
 
 interface UserFormProps {
   user?: User;
@@ -41,18 +45,25 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
   
   // Use the appropriate schema based on whether we're editing or creating
   const formSchema = isEditing ? editUserSchema : newUserSchema;
-  type UserFormValues = z.infer<typeof formSchema>;
+  type UserFormValues = isEditing ? EditUserFormValues : NewUserFormValues;
+  
+  // Set default values for the form
+  const defaultValues: Partial<UserFormValues> = {
+    username: user?.username || '',
+    email: user?.email || '',
+    fullName: user?.fullName || '',
+    roles: user?.roles || ['user'],
+    isActive: user?.isActive !== undefined ? user.isActive : true,
+  };
+
+  // Add password field only for new users
+  if (!isEditing) {
+    (defaultValues as Partial<NewUserFormValues>).password = '';
+  }
   
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: user?.username || '',
-      ...(isEditing ? {} : { password: '' }),
-      email: user?.email || '',
-      fullName: user?.fullName || '',
-      roles: user?.roles || ['user'],
-      isActive: user?.isActive !== undefined ? user.isActive : true,
-    } as any,
+    defaultValues: defaultValues as UserFormValues,
   });
 
   const roleOptions = [
@@ -64,13 +75,13 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
   const onSubmit = async (data: UserFormValues) => {
     try {
       if (isEditing && user) {
-        await updateUser(user.id, data);
+        await updateUser(user.id, data as EditUserFormValues);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-        await createNewUser(data as any);
+        await createNewUser(data as NewUserFormValues);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich erstellt.",
@@ -115,7 +126,15 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
                 <FormItem>
                   <FormLabel>Passwort</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      onChange={field.onChange}
+                      value={field.value as string}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -158,7 +177,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
               <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-6">
                 <FormControl>
                   <Checkbox
-                    checked={field.value}
+                    checked={field.value as boolean}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -198,12 +217,13 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
                         >
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(role.id)}
+                              checked={(field.value as string[])?.includes(role.id)}
                               onCheckedChange={(checked) => {
+                                const currentValues = field.value as string[];
                                 return checked
-                                  ? field.onChange([...field.value, role.id])
+                                  ? field.onChange([...currentValues, role.id])
                                   : field.onChange(
-                                      field.value?.filter(
+                                      currentValues?.filter(
                                         (value) => value !== role.id
                                       )
                                     )
