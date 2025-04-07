@@ -21,17 +21,26 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect } from "react";
-import { startServer } from "./services/serverStarter";
+import { checkApiServer } from "./services/serverStarter";
+import { toast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Start the API server when the app loads
+  // Check if the API server is running when the app loads
   useEffect(() => {
-    // Start the Node.js server when the app loads
-    startServer();
+    const checkServer = async () => {
+      const isRunning = await checkApiServer();
+      if (!isRunning) {
+        toast({
+          title: "API Server nicht erreichbar",
+          description: "Der API-Server scheint nicht zu laufen. Bitte starte ihn manuell.",
+          variant: "destructive"
+        });
+      }
+    };
     
-    // Clean up function not needed as the server is managed by serverStarter.ts
+    checkServer();
   }, []);
 
   return (

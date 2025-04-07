@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { createNewUser } from "@/services/apiService";
 import { EyeIcon, EyeOffIcon, UserPlusIcon } from "lucide-react";
+import { checkServerStatus } from "@/services/serverStarter";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -43,6 +44,18 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      // First check if the API server is running
+      const isServerRunning = await checkServerStatus();
+      if (!isServerRunning) {
+        toast({
+          variant: "destructive",
+          title: "API-Server nicht erreichbar",
+          description: "Der API-Server scheint nicht zu laufen. Bitte starte ihn manuell und versuche es erneut."
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       const result = await createNewUser(formData);
       
       if (result) {
