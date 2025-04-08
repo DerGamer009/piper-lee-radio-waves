@@ -1,185 +1,159 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import bcrypt from 'bcryptjs';
+import Database from 'better-sqlite3';
+import { hash, compare } from 'bcryptjs';
 
-// Initialize database
-const dbPromise = open({
-  filename: 'users.db',
-  driver: sqlite3.Database
-});
+const db = new Database('users.db');
 
-// Create users table
-const initializeDatabase = async () => {
-  const db = await dbPromise;
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      fullName TEXT,
-      email TEXT,
-      roles TEXT,
-      isActive INTEGER DEFAULT 1,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-};
+// Initialisiere die Datenbank
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    fullName TEXT,
+    email TEXT UNIQUE,
+    roles TEXT NOT NULL,
+    isActive BOOLEAN DEFAULT true,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-// Initialize default users
-const initializeDefaultUsers = async () => {
-  const db = await dbPromise;
-  const defaultUsers = [
-    {
-      username: 'admin',
-      password: 'admin123',
-      fullName: 'Admin User',
-      email: 'admin@example.com',
-      roles: 'admin',
-      isActive: 1
-    },
-    {
-      username: 'moderator',
-      password: 'mod123',
-      fullName: 'Moderator User',
-      email: 'mod@example.com',
-      roles: 'moderator',
-      isActive: 1
-    }
-  ];
-
-  for (const user of defaultUsers) {
-    const existingUser = await db.get('SELECT id FROM users WHERE username = ?', [user.username]);
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      await db.run(
-        'INSERT INTO users (username, password, fullName, email, roles, isActive) VALUES (?, ?, ?, ?, ?, ?)',
-        [user.username, hashedPassword, user.fullName, user.email, user.roles, user.isActive]
-      );
-    }
-  }
-};
-
-// Initialize database and default users
-initializeDatabase().then(initializeDefaultUsers);
-
-// Types
 export interface DBUser {
   id: number;
   username: string;
   password?: string;
-  fullName: string;
-  email: string;
+  fullName?: string;
+  email?: string;
   roles: string;
-  isActive: number;
+  isActive: boolean;
   createdAt: string;
 }
 
 export interface CreateUserData {
   username: string;
   password: string;
-  fullName: string;
-  email: string;
+  fullName?: string;
+  email?: string;
   roles: string[];
-  isActive: boolean;
+  isActive?: boolean;
 }
 
-// Database functions
-export const authenticateUser = async (username: string, password: string): Promise<DBUser | null> => {
-  const db = await dbPromise;
-  const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
-  
-  if (user && user.password) {
-    const isValid = await bcrypt.compare(password, user.password);
-    if (isValid) {
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword as DBUser;
-    }
+// Füge Standardbenutzer hinzu, wenn sie nicht existieren
+const initializeDefaultUsers = async () => {
+  const adminExists = db.prepare('SELECT 1 FROM users WHERE username = ?').get('admin');
+  const moderatorExists = db.prepare('SELECT 1 FROM users WHERE username = ?').get('moderator');
+
+  if (!adminExists) {
+    const adminPassword = await hash('admin123', 10);
+    db.prepare(`
+      INSERT INTO users (username, password, fullName, email, roles, isActive)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run('admin', adminPassword, 'Administrator', 'admin@piper-lee.net', 'admin', true);
   }
-  return null;
+
+  if (!moderatorExists) {
+    const moderatorPassword = await hash('moderator123', 10);
+    db.prepare(`
+      INSERT INTO users (username, password, fullName, email, roles, isActive)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run('moderator', moderatorPassword, 'Moderator', 'moderator@piper-lee.net', 'moderator', true);
+  }
 };
 
-export const getAllUsers = async (): Promise<Omit<DBUser, 'password'>[]> => {
-  const db = await dbPromise;
-  const users = await db.all('SELECT id, username, fullName, email, roles, isActive, createdAt FROM users');
-  return users as Omit<DBUser, 'password'>[];
+// Benutzer authentifizieren
+export const authenticateUser = async (username: string, password: string): Promise<DBUser | null> => {
+  const user = db.prepare('SELECT * FROM users WHERE username = ? AND isActive = true').get(username) as DBUser | undefined;
+  
+  if (!user || !user.password) {
+    return null;
+  }
+
+  const passwordValid = await compare(password, user.password);
+  if (!passwordValid) {
+    return null;
+  }
+
+  // Passwort aus der Rückgabe entfernen
+  const { password: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
 };
 
+// Alle Benutzer abrufen
+export const getAllUsers = (): Omit<DBUser, 'password'>[] => {
+  const users = db.prepare('SELECT * FROM users').all() as DBUser[];
+  return users.map(({ password: _, ...user }) => user);
+};
+
+// Benutzer erstellen
 export const createUser = async (userData: CreateUserData): Promise<Omit<DBUser, 'password'>> => {
-  const db = await dbPromise;
-  const hashedPassword = await bcrypt.hash(userData.password, 10);
+  const hashedPassword = await hash(userData.password, 10);
   
-  const result = await db.run(
-    'INSERT INTO users (username, password, fullName, email, roles, isActive) VALUES (?, ?, ?, ?, ?, ?)',
-    [
-      userData.username,
-      hashedPassword,
-      userData.fullName,
-      userData.email,
-      JSON.stringify(userData.roles),
-      userData.isActive ? 1 : 0
-    ]
+  const result = db.prepare(`
+    INSERT INTO users (username, password, fullName, email, roles, isActive)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    userData.username,
+    hashedPassword,
+    userData.fullName || null,
+    userData.email || null,
+    userData.roles.join(','),
+    userData.isActive ?? true
   );
-  
-  const newUser = await db.get(
-    'SELECT id, username, fullName, email, roles, isActive, createdAt FROM users WHERE id = ?',
-    [result.lastID]
-  );
-  
-  return newUser as Omit<DBUser, 'password'>;
+
+  const newUser = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid) as DBUser;
+  const { password: _, ...userWithoutPassword } = newUser;
+  return userWithoutPassword;
 };
 
-export const updateUser = async (id: number, userData: Partial<CreateUserData>): Promise<Omit<DBUser, 'password'>> => {
-  const db = await dbPromise;
+// Benutzer aktualisieren
+export const updateUser = async (id: number, userData: Partial<CreateUserData>): Promise<Omit<DBUser, 'password'> | null> => {
   const updates: string[] = [];
   const values: any[] = [];
-  
+
   if (userData.username) {
     updates.push('username = ?');
     values.push(userData.username);
   }
-  
   if (userData.password) {
     updates.push('password = ?');
-    values.push(await bcrypt.hash(userData.password, 10));
+    values.push(await hash(userData.password, 10));
   }
-  
-  if (userData.fullName) {
+  if (userData.fullName !== undefined) {
     updates.push('fullName = ?');
     values.push(userData.fullName);
   }
-  
-  if (userData.email) {
+  if (userData.email !== undefined) {
     updates.push('email = ?');
     values.push(userData.email);
   }
-  
   if (userData.roles) {
     updates.push('roles = ?');
-    values.push(JSON.stringify(userData.roles));
+    values.push(userData.roles.join(','));
   }
-  
-  if (typeof userData.isActive === 'boolean') {
+  if (userData.isActive !== undefined) {
     updates.push('isActive = ?');
-    values.push(userData.isActive ? 1 : 0);
+    values.push(userData.isActive);
   }
-  
-  if (updates.length > 0) {
-    values.push(id);
-    await db.run(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
-      values
-    );
-  }
-  
-  const updatedUser = await db.get(
-    'SELECT id, username, fullName, email, roles, isActive, createdAt FROM users WHERE id = ?',
-    [id]
-  );
-  
-  return updatedUser as Omit<DBUser, 'password'>;
+
+  if (updates.length === 0) return null;
+
+  values.push(id);
+  const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+  db.prepare(query).run(...values);
+
+  const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as DBUser | undefined;
+  if (!updatedUser) return null;
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+  return userWithoutPassword;
 };
 
-export const deleteUser = async (id: number): Promise<void> => {
-  const db = await dbPromise;
-  await db.run('DELETE FROM users WHERE id = ?', [id]);
-}; 
+// Benutzer löschen
+export const deleteUser = (id: number): boolean => {
+  const result = db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  return result.changes > 0;
+};
+
+// Initialisiere Standardbenutzer
+initializeDefaultUsers().catch(console.error);
+
+export default db; 
