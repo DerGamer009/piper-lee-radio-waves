@@ -62,29 +62,8 @@ const initializeDefaultUsers = async () => {
 // Initialize database and default users
 initializeDatabase().then(initializeDefaultUsers);
 
-// Types
-export interface DBUser {
-  id: number;
-  username: string;
-  password?: string;
-  fullName: string;
-  email: string;
-  roles: string;
-  isActive: number;
-  createdAt: string;
-}
-
-export interface CreateUserData {
-  username: string;
-  password: string;
-  fullName: string;
-  email: string;
-  roles: string[];
-  isActive: boolean;
-}
-
 // Database functions
-export const authenticateUser = async (username: string, password: string): Promise<DBUser | null> => {
+export const authenticateUser = async (username, password) => {
   const db = await dbPromise;
   const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
   
@@ -92,19 +71,19 @@ export const authenticateUser = async (username: string, password: string): Prom
     const isValid = await bcrypt.compare(password, user.password);
     if (isValid) {
       const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword as DBUser;
+      return userWithoutPassword;
     }
   }
   return null;
 };
 
-export const getAllUsers = async (): Promise<Omit<DBUser, 'password'>[]> => {
+export const getAllUsers = async () => {
   const db = await dbPromise;
   const users = await db.all('SELECT id, username, fullName, email, roles, isActive, createdAt FROM users');
-  return users as Omit<DBUser, 'password'>[];
+  return users;
 };
 
-export const createUser = async (userData: CreateUserData): Promise<Omit<DBUser, 'password'>> => {
+export const createUser = async (userData) => {
   const db = await dbPromise;
   const hashedPassword = await bcrypt.hash(userData.password, 10);
   
@@ -125,13 +104,13 @@ export const createUser = async (userData: CreateUserData): Promise<Omit<DBUser,
     [result.lastID]
   );
   
-  return newUser as Omit<DBUser, 'password'>;
+  return newUser;
 };
 
-export const updateUser = async (id: number, userData: Partial<CreateUserData>): Promise<Omit<DBUser, 'password'>> => {
+export const updateUser = async (id, userData) => {
   const db = await dbPromise;
-  const updates: string[] = [];
-  const values: any[] = [];
+  const updates = [];
+  const values = [];
   
   if (userData.username) {
     updates.push('username = ?');
@@ -176,10 +155,10 @@ export const updateUser = async (id: number, userData: Partial<CreateUserData>):
     [id]
   );
   
-  return updatedUser as Omit<DBUser, 'password'>;
+  return updatedUser;
 };
 
-export const deleteUser = async (id: number): Promise<void> => {
+export const deleteUser = async (id) => {
   const db = await dbPromise;
   await db.run('DELETE FROM users WHERE id = ?', [id]);
 }; 
