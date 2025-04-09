@@ -1,253 +1,163 @@
-
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { createNewUser, updateUser, User, CreateUserData } from '@/services/apiService';
+import { User, updateUser, createNewUser } from '../services/apiService';
 import { useToast } from '@/hooks/use-toast';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 
-// Define form schema for new users with password
-const newUserSchema = z.object({
-  username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
-  password: z.string().min(6, { message: 'Passwort muss mindestens 6 Zeichen lang sein' }),
-  email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
-  fullName: z.string().min(3, { message: 'Name muss mindestens 3 Zeichen lang sein' }),
-  roles: z.array(z.string()).min(1, { message: 'Mindestens eine Rolle muss ausgewählt sein' }),
-  isActive: z.boolean().default(true),
+const userSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  fullName: z.string().min(1, 'Full name is required'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
+  roles: z.array(z.string()),
+  isActive: z.boolean(),
 });
 
-// Define form schema for editing users (no password field)
-const editUserSchema = z.object({
-  username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
-  email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
-  fullName: z.string().min(3, { message: 'Name muss mindestens 3 Zeichen lang sein' }),
-  roles: z.array(z.string()).min(1, { message: 'Mindestens eine Rolle muss ausgewählt sein' }),
-  isActive: z.boolean().default(true),
-});
-
-// Define the types for both schemas
-type NewUserFormValues = z.infer<typeof newUserSchema>;
-type EditUserFormValues = z.infer<typeof editUserSchema>;
-
-// Type that can represent either form values based on isEditing flag
-type UserFormValues<T extends boolean> = T extends true ? EditUserFormValues : NewUserFormValues;
+type UserFormData = z.infer<typeof userSchema>;
 
 interface UserFormProps {
   user?: User;
-  isEditing?: boolean;
-  onCancel: () => void;
   onSuccess: () => void;
+  onCancel?: () => void;
+  isEditing?: boolean;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, onSuccess }) => {
+export function UserForm({ user, onSuccess, onCancel, isEditing = false }: UserFormProps) {
   const { toast } = useToast();
-  
-  // Use the appropriate schema based on whether we're editing or creating
-  const formSchema = isEditing ? editUserSchema : newUserSchema;
-  
-  // Set default values for the form
-  const defaultValues: Partial<UserFormValues<typeof isEditing>> = {
-    username: user?.username || '',
-    email: user?.email || '',
-    fullName: user?.fullName || '',
-    roles: user?.roles || ['user'],
-    isActive: user?.isActive !== undefined ? user.isActive : true,
-  };
-
-  // Add password field only for new users
-  if (!isEditing) {
-    (defaultValues as Partial<NewUserFormValues>).password = '';
-  }
-  
-  const form = useForm<UserFormValues<typeof isEditing>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultValues as UserFormValues<typeof isEditing>,
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userSchema),
+    defaultValues: {
+      username: user?.username || '',
+      fullName: user?.fullName || '',
+      email: user?.email || '',
+      roles: user?.roles || [],
+      isActive: user?.isActive ?? true,
+    },
   });
 
-  const roleOptions = [
-    { id: 'admin', label: 'Administrator' },
-    { id: 'moderator', label: 'Moderator' },
-    { id: 'user', label: 'Nutzer' },
-  ];
-
-  const onSubmit = async (data: UserFormValues<typeof isEditing>) => {
+  const onSubmit = async (data: UserFormData) => {
     try {
       if (isEditing && user) {
-        await updateUser(user.id, data as EditUserFormValues);
-        toast({
-          title: "Erfolg!",
-          description: "Benutzer wurde erfolgreich aktualisiert.",
-        });
+        await updateUser(user.id, data);
       } else {
-        // Ensure we're passing properly typed data with required fields
-        const newUserData: CreateUserData = {
-          username: data.username,
-          password: (data as NewUserFormValues).password,
-          email: data.email,
-          fullName: data.fullName,
-          roles: data.roles,
-          isActive: data.isActive
-        };
-        await createNewUser(newUserData);
-        toast({
-          title: "Erfolg!",
-          description: "Benutzer wurde erfolgreich erstellt.",
-        });
+        if (!data.password) {
+          toast({
+            title: "Error",
+            description: "Password is required for new users",
+            variant: "destructive",
+          });
+          return;
+        }
+        await createNewUser(data);
       }
+      toast({
+        title: "Success",
+        description: isEditing ? "User updated successfully" : "User created successfully",
+      });
       onSuccess();
     } catch (error) {
-      console.error('Error with user operation:', error);
+      console.error('Error saving user:', error);
       toast({
-        title: "Fehler!",
-        description: isEditing 
-          ? "Der Benutzer konnte nicht aktualisiert werden." 
-          : "Der Benutzer konnte nicht erstellt werden.",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to save user",
+        variant: "destructive",
       });
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Benutzername</FormLabel>
-                <FormControl>
-                  <Input placeholder="benutzername" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {!isEditing && (
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Passwort</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      onChange={field.onChange}
-                      value={field.value as string}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
+        />
 
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {!isEditing && (
           <FormField
             control={form.control}
-            name="email"
+            name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>E-Mail</FormLabel>
+                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="email@beispiel.de" {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Vollständiger Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Max Mustermann" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="isActive"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-6">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value as boolean}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Aktiv</FormLabel>
-                  <FormDescription>
-                    Ist dieser Benutzer aktiv?
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
+        )}
 
         <FormField
           control={form.control}
           name="roles"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
-              <div className="mb-4">
-                <FormLabel>Rollen</FormLabel>
-                <FormDescription>
-                  Wählen Sie eine oder mehrere Rollen für diesen Benutzer.
-                </FormDescription>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                {roleOptions.map((role) => (
-                  <FormField
-                    key={role.id}
-                    control={form.control}
-                    name="roles"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={role.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={(field.value as string[])?.includes(role.id)}
-                              onCheckedChange={(checked) => {
-                                const currentValues = field.value as string[];
-                                return checked
-                                  ? field.onChange([...currentValues, role.id])
-                                  : field.onChange(
-                                      currentValues?.filter(
-                                        (value) => value !== role.id
-                                      )
-                                    )
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {role.label}
-                          </FormLabel>
-                        </FormItem>
-                      )
-                    }}
-                  />
+              <FormLabel>Roles</FormLabel>
+              <div className="space-y-2">
+                {['admin', 'moderator', 'user'].map((role) => (
+                  <div key={role} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={role}
+                      checked={field.value?.includes(role)}
+                      onCheckedChange={(checked) => {
+                        const currentRoles = field.value || [];
+                        if (checked) {
+                          field.onChange([...currentRoles, role]);
+                        } else {
+                          field.onChange(currentRoles.filter((r) => r !== role));
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor={role}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </label>
+                  </div>
                 ))}
               </div>
               <FormMessage />
@@ -255,17 +165,39 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
           )}
         />
 
-        <div className="flex justify-end space-x-4 pt-4">
-          <Button variant="outline" type="button" onClick={onCancel}>
-            Abbrechen
-          </Button>
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Active</FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-3">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
           <Button type="submit">
-            {isEditing ? "Benutzer aktualisieren" : "Benutzer erstellen"}
+            {isEditing ? 'Update User' : 'Create User'}
           </Button>
         </div>
       </form>
     </Form>
   );
-};
-
-export default UserForm;
+}

@@ -1,6 +1,3 @@
-
-// Simple script to start the Express API server
-
 import { fork } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,7 +7,7 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const serverPath = path.join(__dirname, 'server.js');
+const serverPath = path.join(__dirname, 'server.ts');
 
 // Check if server file exists
 if (!fs.existsSync(serverPath)) {

@@ -1,4 +1,3 @@
-
 // Types
 export interface User {
   id: number;
@@ -38,13 +37,13 @@ export interface ScheduleItem {
   host_name?: string;        // For UI display
 }
 
-export interface CreateUserData {
+interface CreateUserData {
   username: string;
-  password?: string;  // Make password optional for update operations
-  email?: string;
-  fullName?: string;
+  fullName: string;
+  email: string;
+  password?: string;
   roles: string[];
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 export interface LoginResponse {
@@ -62,48 +61,59 @@ interface DbQueryResult {
 }
 
 // API Base URL
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3001';
 
-// Helper to make API requests
-const apiRequest = async (endpoint: string, options?: RequestInit) => {
+// Helper function to make API requests
+const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
-  
-  const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
   };
-  
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...defaultOptions,
     ...options,
+    headers,
   });
-  
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    const error = await response.json().catch(() => ({ error: 'API request failed' }));
     throw new Error(error.error || 'API request failed');
   }
-  
-  return response.json();
+
+  return response.json().catch(() => null);
 };
 
 // Authentication service
 export const login = async (username: string, password: string): Promise<LoginResponse | null> => {
   try {
-    const response = await apiRequest('/login', {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ username, password }),
     });
     
-    // Store user data in localStorage
-    localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
+    const data = await response.json().catch(() => null);
     
-    return response;
+    if (!response.ok || !data) {
+      throw new Error(data?.error || 'Login failed');
+    }
+    
+    // Store user data in localStorage
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+    }
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    
+    return data;
   } catch (error) {
     console.error('Login error:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -134,46 +144,66 @@ export const hasRole = (requiredRoles: string[]): boolean => {
 // User API functions
 export const getUsers = async (): Promise<User[]> => {
   try {
-    return await apiRequest('/users');
+    const response = await apiRequest('/api/users');
+    return response.map((user: any) => ({
+      ...user,
+      roles: typeof user.roles === 'string' ? user.roles.split(',') : user.roles,
+    }));
   } catch (error) {
     console.error('Error fetching users:', error);
-    return [];
+    throw error;
   }
 };
 
-export const createNewUser = async (userData: CreateUserData): Promise<User | null> => {
+export async function createNewUser(userData: CreateUserData): Promise<User> {
+  if (!userData.password) {
+    throw new Error('Password is required for new users');
+  }
+
   try {
-    return await apiRequest('/register', {
+    const response = await fetch('/api/users', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(userData),
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to create user');
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error creating user:', error);
-    return null;
+    throw error;
   }
-};
+}
 
-export const updateUser = async (id: number, userData: Partial<CreateUserData>): Promise<User | null> => {
+export const updateUser = async (userId: number, userData: Partial<CreateUserData>): Promise<User> => {
   try {
-    return await apiRequest(`/users/${id}`, {
+    const response = await apiRequest(`/api/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
+    return {
+      ...response,
+      roles: typeof response.roles === 'string' ? response.roles.split(',') : response.roles,
+    };
   } catch (error) {
     console.error('Error updating user:', error);
-    return null;
+    throw error;
   }
 };
 
-export const deleteUser = async (id: number): Promise<boolean> => {
+export const deleteUser = async (userId: number): Promise<void> => {
   try {
-    await apiRequest(`/users/${id}`, {
+    await apiRequest(`/api/users/${userId}`, {
       method: 'DELETE',
     });
-    return true;
   } catch (error) {
     console.error('Error deleting user:', error);
-    return false;
+    throw error;
   }
 };
 
