@@ -1,15 +1,9 @@
-
 import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import ModeratorSidebar from "@/components/ModeratorSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { getCurrentUser } from "@/services/apiService";
-import RadioPlayer from "@/components/RadioPlayer";
-
-// Constants for radio stream
-const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
-const STATION_NAME = "Piper Lee Radio";
 
 const Moderator = () => {
   const currentUser = getCurrentUser();
@@ -34,21 +28,18 @@ const Moderator = () => {
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold">Moderator Dashboard</h1>
             </div>
-            <div className="ml-auto">
-          <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
-          </div>
           </header>
 
           <main className="container mx-auto p-4 sm:p-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card>
-          <CardHeader>
+                <CardHeader>
                   <CardTitle>Willkommen zurück</CardTitle>
                   <CardDescription>
                     Hallo {currentUser?.fullName || currentUser?.username}! Hier ist dein Dashboard.
                   </CardDescription>
-          </CardHeader>
-          <CardContent>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Status:</span>
@@ -59,17 +50,17 @@ const Moderator = () => {
                       <span className="text-sm">{currentUser?.roles.join(', ')}</span>
                     </div>
                   </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
 
               <Card>
-          <CardHeader>
+                <CardHeader>
                   <CardTitle>Nächste Sendung</CardTitle>
                   <CardDescription>
                     Deine nächste Sendung ist:
                   </CardDescription>
-          </CardHeader>
-          <CardContent>
+                </CardHeader>
+                <CardContent>
                   {upcomingShows.length > 0 ? (
                     <div className="space-y-4">
                       {upcomingShows.map(show => (
@@ -86,11 +77,11 @@ const Moderator = () => {
                       Keine bevorstehenden Sendungen.
                     </p>
                   )}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
 
-      <Card>
-        <CardHeader>
+              <Card>
+                <CardHeader>
                   <CardTitle>Statistiken</CardTitle>
                   <CardDescription>
                     Deine Sendungsstatistiken
@@ -121,33 +112,33 @@ const Moderator = () => {
                 <CardDescription>
                   Alle Sendungen, die du moderierst
                 </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
                       <TableHead>Titel</TableHead>
-                <TableHead>Tag</TableHead>
+                      <TableHead>Tag</TableHead>
                       <TableHead>Startzeit</TableHead>
                       <TableHead>Endzeit</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {myShows.map(show => (
                       <TableRow key={show.id}>
                         <TableCell className="font-medium">{show.title}</TableCell>
                         <TableCell>{show.dayOfWeek}</TableCell>
                         <TableCell>{show.startTime}</TableCell>
                         <TableCell>{show.endTime}</TableCell>
-                  </TableRow>
+                      </TableRow>
                     ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </main>
         </div>
-    </div>
+      </div>
     </SidebarProvider>
   );
 };
