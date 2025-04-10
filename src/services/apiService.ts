@@ -26,7 +26,7 @@ export interface Show {
 export interface ScheduleItem {
   id: number;
   show_id: number;
-  day_of_week: number;
+  day_of_week: number;  // This must be a number (0-6 for Monday-Sunday)
   start_time: string;
   end_time: string;
   host_id?: number;
@@ -268,7 +268,24 @@ export const deleteShow = async (id: number): Promise<boolean> => {
 export const getSchedule = async (): Promise<ScheduleItem[]> => {
   try {
     const results = await executeQuery('SELECT * FROM schedule');
-    return Array.isArray(results) ? results as ScheduleItem[] : [];
+    if (Array.isArray(results)) {
+      // Ensure the result is properly typed as ScheduleItem[]
+      return results.map(item => ({
+        id: item.id || 0,
+        show_id: item.show_id || 0,
+        day_of_week: item.day_of_week || 0,
+        start_time: item.start_time || '',
+        end_time: item.end_time || '',
+        host_id: item.host_id,
+        is_recurring: !!item.is_recurring,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        show_title: item.show_title,
+        show_description: item.show_description,
+        host_name: item.host_name
+      })) as ScheduleItem[];
+    }
+    return [];
   } catch (error) {
     console.error('Error fetching schedule:', error);
     return [];

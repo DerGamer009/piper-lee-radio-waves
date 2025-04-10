@@ -1,4 +1,3 @@
-
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
@@ -7,7 +6,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { createShow, deleteShow, getSchedule, getShows, updateShow, createScheduleItem, updateScheduleItem, deleteScheduleItem } from './lib/showsDb';
+import { createShow, deleteShow, getSchedule, getShows, updateShow, createScheduleItem, updateScheduleItem, deleteScheduleItem } from '../lib/showsDb';
 
 // Extend Express Request type to include user
 declare global {

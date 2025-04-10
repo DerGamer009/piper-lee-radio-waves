@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -41,6 +40,17 @@ const dayOptions = [
   'Sonntag'
 ];
 
+// Helper function to convert string day to number
+const dayToNumber = (day: string): number => {
+  const index = dayOptions.indexOf(day);
+  return index >= 0 ? index : 0; // Default to Monday (0) if not found
+};
+
+// Helper function to convert number to day string
+const numberToDay = (num: number): string => {
+  return dayOptions[num] || 'Montag'; // Default to Monday if invalid
+};
+
 const ScheduleForm: React.FC<ScheduleFormProps> = ({ 
   scheduleItem, 
   shows = [], 
@@ -54,7 +64,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       show_id: scheduleItem?.show_id || 0,
-      day_of_week: scheduleItem?.day_of_week || 'Montag',
+      day_of_week: scheduleItem ? numberToDay(scheduleItem.day_of_week) : 'Montag',
       start_time: scheduleItem?.start_time || '',
       end_time: scheduleItem?.end_time || '',
       host_id: scheduleItem?.host_id || undefined,
@@ -66,7 +76,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
     try {
       const scheduleData = {
         show_id: data.show_id,
-        day_of_week: data.day_of_week,
+        day_of_week: dayToNumber(data.day_of_week),
         start_time: data.start_time,
         end_time: data.end_time,
         host_id: data.host_id,
