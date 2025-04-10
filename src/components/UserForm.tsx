@@ -1,3 +1,4 @@
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -42,7 +43,15 @@ export function UserForm({ user, onSuccess, onCancel, isEditing = false }: UserF
   const onSubmit = async (data: UserFormData) => {
     try {
       if (isEditing && user) {
-        await updateUser(user.id, data);
+        // For updating users we don't need to require all fields
+        await updateUser(user.id, {
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          password: data.password, // optional
+          roles: data.roles,
+          isActive: data.isActive
+        });
       } else {
         if (!data.password) {
           toast({
@@ -52,7 +61,15 @@ export function UserForm({ user, onSuccess, onCancel, isEditing = false }: UserF
           });
           return;
         }
-        await createNewUser(data);
+        // For creating a new user all fields are required
+        await createNewUser({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          password: data.password,
+          roles: data.roles,
+          isActive: data.isActive
+        });
       }
       toast({
         title: "Success",

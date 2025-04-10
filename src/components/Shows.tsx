@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -30,6 +31,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createShow, updateShow } from "@/services/apiService";
 
+interface ShowFormData {
+  title: string;
+  description: string;
+  image_url: string;
+}
+
 export function Shows() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -37,10 +44,10 @@ export function Shows() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingShow, setEditingShow] = useState<Show | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ShowFormData>({
     title: "",
     description: "",
-    imageUrl: "",
+    image_url: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -70,7 +77,9 @@ export function Shows() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateShow,
+    mutationFn: ({ id, ...data }: { id: number } & Partial<ShowFormData>) => {
+      return updateShow(id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shows'] });
       setIsDialogOpen(false);
@@ -142,7 +151,7 @@ export function Shows() {
     setFormData({
       title: show.title,
       description: show.description,
-      imageUrl: show.imageUrl,
+      image_url: show.image_url || "",
     });
     setIsDialogOpen(true);
   };
@@ -154,7 +163,7 @@ export function Shows() {
   };
 
   const resetForm = () => {
-    setFormData({ title: "", description: "", imageUrl: "" });
+    setFormData({ title: "", description: "", image_url: "" });
     setEditingShow(null);
   };
 
@@ -214,9 +223,9 @@ export function Shows() {
                   <Label htmlFor="imageUrl">Bild URL</Label>
                   <Input
                     id="imageUrl"
-                    value={formData.imageUrl}
+                    value={formData.image_url}
                     onChange={(e) =>
-                      setFormData({ ...formData, imageUrl: e.target.value })
+                      setFormData({ ...formData, image_url: e.target.value })
                     }
                     required
                   />
@@ -297,4 +306,4 @@ export function Shows() {
       </AlertDialog>
     </div>
   );
-} 
+}

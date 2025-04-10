@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-interface ScheduleFormData {
-  showId: number;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  hostId: number;
-  isRecurring: boolean;
+interface ScheduleItemData {
+  id?: number;
+  show_id: number;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  host_id: number;
+  is_recurring: boolean;
 }
 
 export function Schedule() {
@@ -24,14 +26,14 @@ export function Schedule() {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<ScheduleFormData | null>(null);
-  const [formData, setFormData] = useState<ScheduleFormData>({
-    showId: 0,
-    dayOfWeek: 0,
-    startTime: "00:00",
-    endTime: "01:00",
-    hostId: 0,
-    isRecurring: false
+  const [editingSchedule, setEditingSchedule] = useState<ScheduleItemData | null>(null);
+  const [formData, setFormData] = useState<ScheduleItemData>({
+    show_id: 0,
+    day_of_week: 0,
+    start_time: "00:00",
+    end_time: "01:00",
+    host_id: 0,
+    is_recurring: false
   });
 
   const { data: scheduleItems = [], isLoading } = useQuery({
@@ -40,7 +42,7 @@ export function Schedule() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: ScheduleFormData) => createScheduleItem(data),
+    mutationFn: (data: ScheduleItemData) => createScheduleItem(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
       setIsDialogOpen(false);
@@ -53,7 +55,10 @@ export function Schedule() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { id: number } & ScheduleFormData) => updateScheduleItem(data.id, data),
+    mutationFn: ({ id, ...data }: ScheduleItemData) => {
+      if (!id) throw new Error("ID is required for update");
+      return updateScheduleItem(id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
       setIsDialogOpen(false);
@@ -87,20 +92,20 @@ export function Schedule() {
 
   const resetForm = () => {
     setFormData({
-      showId: 0,
-      dayOfWeek: 0,
-      startTime: "00:00",
-      endTime: "01:00",
-      hostId: 0,
-      isRecurring: false
+      show_id: 0,
+      day_of_week: 0,
+      start_time: "00:00",
+      end_time: "01:00",
+      host_id: 0,
+      is_recurring: false
     });
     setEditingSchedule(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingSchedule) {
-      updateMutation.mutate({ id: editingSchedule.id, ...formData });
+    if (editingSchedule && editingSchedule.id) {
+      updateMutation.mutate({ ...formData, id: editingSchedule.id });
     } else {
       createMutation.mutate(formData);
     }
@@ -129,8 +134,8 @@ export function Schedule() {
                   <Input
                     id="showId"
                     type="number"
-                    value={formData.showId}
-                    onChange={(e) => setFormData({ ...formData, showId: parseInt(e.target.value) })}
+                    value={formData.show_id}
+                    onChange={(e) => setFormData({ ...formData, show_id: parseInt(e.target.value) })}
                     required
                   />
                 </div>
@@ -139,8 +144,8 @@ export function Schedule() {
                   <Input
                     id="startTime"
                     type="time"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                     required
                   />
                 </div>
@@ -149,8 +154,8 @@ export function Schedule() {
                   <Input
                     id="endTime"
                     type="time"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                     required
                   />
                 </div>
@@ -159,8 +164,8 @@ export function Schedule() {
                   <Input
                     id="hostId"
                     type="number"
-                    value={formData.hostId}
-                    onChange={(e) => setFormData({ ...formData, hostId: parseInt(e.target.value) })}
+                    value={formData.host_id}
+                    onChange={(e) => setFormData({ ...formData, host_id: parseInt(e.target.value) })}
                     required
                   />
                 </div>
@@ -168,8 +173,8 @@ export function Schedule() {
                   <input
                     type="checkbox"
                     id="isRecurring"
-                    checked={formData.isRecurring}
-                    onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                    checked={formData.is_recurring}
+                    onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
                   />
                   <Label htmlFor="isRecurring">Wöchentlich wiederholen</Label>
                 </div>
@@ -220,12 +225,12 @@ export function Schedule() {
                     onClick={() => {
                       setEditingSchedule({
                         id: item.id,
-                        showId: item.show_id,
-                        dayOfWeek: item.day_of_week,
-                        startTime: item.start_time,
-                        endTime: item.end_time,
-                        hostId: item.host_id,
-                        isRecurring: item.is_recurring
+                        show_id: item.show_id,
+                        day_of_week: item.day_of_week,
+                        start_time: item.start_time,
+                        end_time: item.end_time,
+                        host_id: item.host_id,
+                        is_recurring: item.is_recurring
                       });
                       setIsDialogOpen(true);
                     }}
@@ -255,4 +260,4 @@ export function Schedule() {
       </div>
     </div>
   );
-} 
+}

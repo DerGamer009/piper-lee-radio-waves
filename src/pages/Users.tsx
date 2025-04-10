@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { UserPlus, Trash, Edit } from 'lucide-react';
 import { getUsers, deleteUser, updateUser } from '@/services/apiService';
-import UserForm from '@/components/UserForm';
+import { UserForm } from '@/components/UserForm';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -211,4 +212,4 @@ export default function Users() {
       </AlertDialog>
     </div>
   );
-} 
+}

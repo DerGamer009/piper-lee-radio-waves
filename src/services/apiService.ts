@@ -1,3 +1,4 @@
+
 // Types
 export interface User {
   id: number;
@@ -25,7 +26,7 @@ export interface Show {
 export interface ScheduleItem {
   id: number;
   show_id: number;
-  day_of_week: string;
+  day_of_week: number;
   start_time: string;
   end_time: string;
   host_id?: number;
@@ -37,7 +38,7 @@ export interface ScheduleItem {
   host_name?: string;        // For UI display
 }
 
-interface CreateUserData {
+export interface CreateUserData {
   username: string;
   fullName: string;
   email: string;
@@ -61,7 +62,7 @@ interface DbQueryResult {
 }
 
 // API Base URL
-const API_BASE_URL = 'http://localhost:3001';
+import { API_BASE_URL } from '@/config';
 
 // Helper function to make API requests
 const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
@@ -161,10 +162,11 @@ export async function createNewUser(userData: CreateUserData): Promise<User> {
   }
 
   try {
-    const response = await fetch('/api/users', {
+    const response = await fetch(`${API_BASE_URL}/api/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify(userData),
     });
