@@ -21,7 +21,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect } from "react";
-import { checkApiServer } from "./services/serverStarter";
+import { checkApiServer, getServerStartInstructions } from "./services/serverStarter";
 import { toast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient();
