@@ -1,34 +1,26 @@
 
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+  },
   plugins: [
-    react({
-      // Add these babel options to fix the browserslist issue
-      babel: {
-        babelrc: false,
-        configFile: false,
-        presets: [
-          ['@babel/preset-env', { targets: { node: 'current' } }],
-          ['@babel/preset-react', { runtime: 'automatic' }],
-          '@babel/preset-typescript'
-        ],
-      }
-    })
-  ],
+    react(),
+    mode === 'development' &&
+    componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    port: 8080
-  },
   build: {
-    // Add this to help with browserslist issues
-    target: 'es2015'
-  }
-});
+    sourcemap: true,
+  },
+}));

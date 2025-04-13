@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -35,15 +36,21 @@ const Login = () => {
         
         toast({
           title: "Anmeldung erfolgreich",
-          description: `Willkommen zurück, ${response.user.fullName || username}!`,
+          description: `Willkommen zurück, ${username}!`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Anmeldung fehlgeschlagen",
+          description: "Ungültige Anmeldeinformationen. Bitte versuche es erneut.",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Anmeldung fehlgeschlagen",
-        description: error.message || "Ungültige Anmeldeinformationen. Bitte versuche es erneut.",
+        description: "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.",
       });
     } finally {
       setIsLoading(false);

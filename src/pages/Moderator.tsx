@@ -1,9 +1,15 @@
+
 import React from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import ModeratorSidebar from "@/components/ModeratorSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { getCurrentUser } from "@/services/apiService";
+import RadioPlayer from "@/components/RadioPlayer";
+
+// Constants for radio stream
+const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
+const STATION_NAME = "Piper Lee Radio";
 
 const Moderator = () => {
   const currentUser = getCurrentUser();
@@ -16,7 +22,7 @@ const Moderator = () => {
   const upcomingShows = [
     { id: 1, title: "Morning Show", date: "10.04.2023", startTime: "08:00", endTime: "10:00" },
   ];
-
+  
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
@@ -28,8 +34,11 @@ const Moderator = () => {
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold">Moderator Dashboard</h1>
             </div>
+            <div className="ml-auto">
+              <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
+            </div>
           </header>
-
+          
           <main className="container mx-auto p-4 sm:p-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Card>
@@ -52,7 +61,7 @@ const Moderator = () => {
                   </div>
                 </CardContent>
               </Card>
-
+              
               <Card>
                 <CardHeader>
                   <CardTitle>Nächste Sendung</CardTitle>
@@ -79,7 +88,7 @@ const Moderator = () => {
                   )}
                 </CardContent>
               </Card>
-
+              
               <Card>
                 <CardHeader>
                   <CardTitle>Statistiken</CardTitle>
