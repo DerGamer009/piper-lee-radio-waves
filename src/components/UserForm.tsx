@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-<<<<<<< Updated upstream
 import { createNewUser, updateUser, User, CreateUserData } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,30 +35,16 @@ type EditUserFormValues = z.infer<typeof editUserSchema>;
 
 // Type that can represent either form values based on isEditing flag
 type UserFormValues<T extends boolean> = T extends true ? EditUserFormValues : NewUserFormValues;
-=======
-import { createNewUser, updateUser, User } from '@/services/apiService';
-import { useToast } from '@/hooks/use-toast';
-
-const userSchema = z.object({
-  username: z.string().min(1, 'Benutzername ist erforderlich'),
-  email: z.string().email('Ungültige E-Mail-Adresse'),
-  fullName: z.string().min(1, 'Vollständiger Name ist erforderlich'),
-  password: z.string().min(6, 'Passwort muss mindestens 6 Zeichen lang sein'),
-  roles: z.array(z.string()).min(1, 'Mindestens eine Rolle ist erforderlich'),
-  isActive: z.boolean().default(true),
-});
-
-type UserFormData = z.infer<typeof userSchema>;
->>>>>>> Stashed changes
 
 interface UserFormProps {
   user?: User;
-  onSubmit: (data: UserFormData) => void;
+  isEditing?: boolean;
+  onCancel: () => void;
+  onSuccess: () => void;
 }
 
-export const UserForm: React.FC<UserFormProps> = ({ user, onSubmit }) => {
+const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, onSuccess }) => {
   const { toast } = useToast();
-<<<<<<< Updated upstream
   
   // Use the appropriate schema based on whether we're editing or creating
   const formSchema = isEditing ? editUserSchema : newUserSchema;
@@ -90,30 +78,11 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSubmit }) => {
     try {
       if (isEditing && user) {
         await updateUser(user.id, data as EditUserFormValues);
-=======
-  const form = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
-    defaultValues: {
-      username: user?.username || '',
-      email: user?.email || '',
-      fullName: user?.fullName || '',
-      password: '',
-      roles: user?.roles || ['user'],
-      isActive: user?.isActive ?? true,
-    },
-  });
-
-  const handleSubmit = async (data: UserFormData) => {
-    try {
-      if (user) {
-        await updateUser(user.id, data);
->>>>>>> Stashed changes
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-<<<<<<< Updated upstream
         // Ensure we're passing properly typed data with required fields
         const newUserData: CreateUserData = {
           username: data.username,
@@ -122,15 +91,6 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSubmit }) => {
           fullName: data.fullName,
           roles: data.roles,
           isActive: data.isActive
-=======
-        const newUserData = {
-          username: data.username,
-          email: data.email,
-          fullName: data.fullName,
-          password: data.password,
-          roles: data.roles,
-          isActive: data.isActive,
->>>>>>> Stashed changes
         };
         await createNewUser(newUserData);
         toast({
@@ -138,18 +98,20 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSubmit }) => {
           description: "Benutzer wurde erfolgreich erstellt.",
         });
       }
-      onSubmit(data);
+      onSuccess();
     } catch (error) {
+      console.error('Error with user operation:', error);
       toast({
-        title: "Fehler",
-        description: "Es gab ein Problem beim Speichern des Benutzers.",
-        variant: "destructive",
+        title: "Fehler!",
+        description: isEditing 
+          ? "Der Benutzer konnte nicht aktualisiert werden." 
+          : "Der Benutzer konnte nicht erstellt werden.",
+        variant: "destructive"
       });
     }
   };
 
   return (
-<<<<<<< Updated upstream
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -291,96 +253,19 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onSubmit }) => {
               <FormMessage />
             </FormItem>
           )}
-=======
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-      <div>
-        <label htmlFor="username">Benutzername</label>
-        <input
-          id="username"
-          {...form.register('username')}
-          className="w-full p-2 border rounded"
->>>>>>> Stashed changes
         />
-        {form.formState.errors.username && (
-          <p className="text-red-500">{form.formState.errors.username.message}</p>
-        )}
-      </div>
 
-      <div>
-        <label htmlFor="email">E-Mail</label>
-        <input
-          id="email"
-          type="email"
-          {...form.register('email')}
-          className="w-full p-2 border rounded"
-        />
-        {form.formState.errors.email && (
-          <p className="text-red-500">{form.formState.errors.email.message}</p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="fullName">Vollständiger Name</label>
-        <input
-          id="fullName"
-          {...form.register('fullName')}
-          className="w-full p-2 border rounded"
-        />
-        {form.formState.errors.fullName && (
-          <p className="text-red-500">{form.formState.errors.fullName.message}</p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="password">Passwort</label>
-        <input
-          id="password"
-          type="password"
-          {...form.register('password')}
-          className="w-full p-2 border rounded"
-        />
-        {form.formState.errors.password && (
-          <p className="text-red-500">{form.formState.errors.password.message}</p>
-        )}
-      </div>
-
-      <div>
-        <label>Rollen</label>
-        <div className="space-y-2">
-          {['admin', 'moderator', 'user'].map((role) => (
-            <div key={role} className="flex items-center space-x-2">
-              <Checkbox
-                id={role}
-                checked={form.watch('roles').includes(role)}
-                onCheckedChange={(checked) => {
-                  const currentRoles = form.getValues('roles');
-                  if (checked) {
-                    form.setValue('roles', [...currentRoles, role]);
-                  } else {
-                    form.setValue('roles', currentRoles.filter((r) => r !== role));
-                  }
-                }}
-              />
-              <label htmlFor={role}>{role}</label>
-            </div>
-          ))}
+        <div className="flex justify-end space-x-4 pt-4">
+          <Button variant="outline" type="button" onClick={onCancel}>
+            Abbrechen
+          </Button>
+          <Button type="submit">
+            {isEditing ? "Benutzer aktualisieren" : "Benutzer erstellen"}
+          </Button>
         </div>
-        {form.formState.errors.roles && (
-          <p className="text-red-500">{form.formState.errors.roles.message}</p>
-        )}
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="isActive"
-          {...form.register('isActive')}
-        />
-        <label htmlFor="isActive">Aktiv</label>
-      </div>
-
-      <Button type="submit">
-        {user ? 'Benutzer aktualisieren' : 'Benutzer erstellen'}
-      </Button>
-    </form>
+      </form>
+    </Form>
   );
 };
+
+export default UserForm;

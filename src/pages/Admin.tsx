@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { UserPlus, Trash, Edit } from "lucide-react";
 import { getUsers, deleteUser, updateUser, User } from "@/services/apiService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserForm } from "@/components/UserForm";
+import UserForm from "@/components/UserForm";
 import { useToast } from "@/hooks/use-toast";
 import RadioPlayer from "@/components/RadioPlayer";
 import {
