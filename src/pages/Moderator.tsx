@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Define a Show interface that matches what ScheduleForm expects
 interface Show {
   id: number;
   title: string;
@@ -28,6 +29,7 @@ interface Show {
   createdBy: number;
 }
 
+// Constants for radio stream
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 const STATION_NAME = "Piper Lee Radio";
 
@@ -36,6 +38,7 @@ const Moderator = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Fetch schedule and shows
   const { data: scheduleItems, isLoading: scheduleLoading } = useQuery({
     queryKey: ['schedule'],
     queryFn: getSchedule
@@ -46,6 +49,7 @@ const Moderator = () => {
     queryFn: getShows
   });
 
+  // Convert API shows to the format expected by ScheduleForm
   const shows: Show[] = React.useMemo(() => {
     if (!apiShows || !Array.isArray(apiShows)) return [];
     
@@ -111,6 +115,7 @@ const Moderator = () => {
 
   const isLoading = scheduleLoading || showsLoading;
 
+  // Sort schedule by day and time
   const sortedSchedule = React.useMemo(() => {
     if (!scheduleItems || !Array.isArray(scheduleItems)) return [];
     
@@ -125,15 +130,15 @@ const Moderator = () => {
     };
     
     return [...scheduleItems].sort((a, b) => {
-      const aDayOfWeek = a.day_of_week;
-      const bDayOfWeek = b.day_of_week;
+      const aDayOfWeek = a.dayOfWeek || a.day_of_week;
+      const bDayOfWeek = b.dayOfWeek || b.day_of_week;
       
       if (dayOrder[aDayOfWeek] !== dayOrder[bDayOfWeek]) {
         return dayOrder[aDayOfWeek] - dayOrder[bDayOfWeek];
       }
       
-      const aStartTime = a.start_time;
-      const bStartTime = b.start_time;
+      const aStartTime = a.startTime || a.start_time;
+      const bStartTime = b.startTime || b.start_time;
       return aStartTime.localeCompare(bStartTime);
     });
   }, [scheduleItems]);
@@ -226,13 +231,13 @@ const Moderator = () => {
               {sortedSchedule.length > 0 ? (
                 sortedSchedule.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.day_of_week}</TableCell>
-                    <TableCell>{item.start_time}</TableCell>
-                    <TableCell>{item.end_time}</TableCell>
+                    <TableCell>{item.dayOfWeek || item.day_of_week}</TableCell>
+                    <TableCell>{item.startTime || item.start_time}</TableCell>
+                    <TableCell>{item.endTime || item.end_time}</TableCell>
                     <TableCell>{item.show_title}</TableCell>
-                    <TableCell>{item.host_name || 'Nicht zugewiesen'}</TableCell>
+                    <TableCell>{(item.hostName || item.host_name) || 'Nicht zugewiesen'}</TableCell>
                     <TableCell>
-                      {(item.is_recurring !== undefined ? item.is_recurring : item.is_recurring) ? (
+                      {(item.isRecurring !== undefined ? item.isRecurring : item.is_recurring) ? (
                         <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Ja</span>
                       ) : (
                         <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Nein</span>

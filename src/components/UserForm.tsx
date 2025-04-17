@@ -7,21 +7,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createNewUser, updateUser, User } from '@/services/apiService';
+import { createUser, updateUser, User } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
-// Define form schema for new users with password
-const newUserSchema = z.object({
-  username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
-  password: z.string().min(6, { message: 'Passwort muss mindestens 6 Zeichen lang sein' }),
-  email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
-  fullName: z.string().min(3, { message: 'Name muss mindestens 3 Zeichen lang sein' }),
-  roles: z.array(z.string()).min(1, { message: 'Mindestens eine Rolle muss ausgewählt sein' }),
-  isActive: z.boolean().default(true),
-});
-
-// Define form schema for editing users (no password field)
-const editUserSchema = z.object({
+// Define form schema
+const formSchema = z.object({
   username: z.string().min(3, { message: 'Benutzername muss mindestens 3 Zeichen lang sein' }),
   email: z.string().email({ message: 'Ungültige E-Mail-Adresse' }),
   fullName: z.string().min(3, { message: 'Name muss mindestens 3 Zeichen lang sein' }),
@@ -29,9 +19,7 @@ const editUserSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-// Define the types for both schemas
-type NewUserFormValues = z.infer<typeof newUserSchema>;
-type EditUserFormValues = z.infer<typeof editUserSchema>;
+type UserFormValues = z.infer<typeof formSchema>;
 
 interface UserFormProps {
   user?: User;
@@ -43,27 +31,15 @@ interface UserFormProps {
 const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, onSuccess }) => {
   const { toast } = useToast();
   
-  // Use the appropriate schema based on whether we're editing or creating
-  const formSchema = isEditing ? editUserSchema : newUserSchema;
-  type UserFormValues = isEditing ? EditUserFormValues : NewUserFormValues;
-  
-  // Set default values for the form
-  const defaultValues: Partial<UserFormValues> = {
-    username: user?.username || '',
-    email: user?.email || '',
-    fullName: user?.fullName || '',
-    roles: user?.roles || ['user'],
-    isActive: user?.isActive !== undefined ? user.isActive : true,
-  };
-
-  // Add password field only for new users
-  if (!isEditing) {
-    (defaultValues as Partial<NewUserFormValues>).password = '';
-  }
-  
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultValues as UserFormValues,
+    defaultValues: {
+      username: user?.username || '',
+      email: user?.email || '',
+      fullName: user?.fullName || '',
+      roles: user?.roles || ['user'],
+      isActive: user?.isActive !== undefined ? user.isActive : true,
+    },
   });
 
   const roleOptions = [
@@ -74,14 +50,23 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
 
   const onSubmit = async (data: UserFormValues) => {
     try {
+      // Ensure all required fields are present before submitting
+      const userData = {
+        username: data.username,
+        email: data.email,
+        fullName: data.fullName,
+        roles: data.roles,
+        isActive: data.isActive
+      };
+      
       if (isEditing && user) {
-        await updateUser(user.id, data as EditUserFormValues);
+        await updateUser(user.id, userData);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-        await createNewUser(data as NewUserFormValues);
+        await createUser(userData);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich erstellt.",
@@ -118,30 +103,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
             )}
           />
 
-          {!isEditing && (
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Passwort</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      onChange={field.onChange}
-                      value={field.value as string}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
           <FormField
             control={form.control}
             name="email"
@@ -177,7 +138,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
               <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-6">
                 <FormControl>
                   <Checkbox
-                    checked={field.value as boolean}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -217,13 +178,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
                         >
                           <FormControl>
                             <Checkbox
-                              checked={(field.value as string[])?.includes(role.id)}
+                              checked={field.value?.includes(role.id)}
                               onCheckedChange={(checked) => {
-                                const currentValues = field.value as string[];
                                 return checked
-                                  ? field.onChange([...currentValues, role.id])
+                                  ? field.onChange([...field.value, role.id])
                                   : field.onChange(
-                                      currentValues?.filter(
+                                      field.value?.filter(
                                         (value) => value !== role.id
                                       )
                                     )
