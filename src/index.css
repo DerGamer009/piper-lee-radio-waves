@@ -1,0 +1,65 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 229 30% 14%;
+    --foreground: 0 0% 98%;
+
+    --card: 229 30% 18%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 229 30% 14%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 262 83% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 199 94% 48%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 229 15% 30%;
+    --muted-foreground: 240 5% 85%;
+
+    --accent: 291 86% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 229 20% 25%;
+    --input: 229 20% 25%;
+    --ring: 262 83% 65%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-radio-dark text-radio-light;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .audio-visualizer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    height: 2rem;
+  }
+
+  .audio-visualizer-bar {
+    width: 0.25rem;
+    background-color: theme('colors.radio.purple');
+    border-radius: 0.125rem;
+  }
+}
