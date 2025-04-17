@@ -1,6 +1,5 @@
 
 import { Navigate } from "react-router-dom";
-import { getCurrentUser, hasRole } from "@/services/apiService";
 
 interface ProtectedRouteProps {
   element: React.ReactNode;
@@ -9,8 +8,8 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) => {
   // Check if user is logged in
-  const user = getCurrentUser();
-  const isLoggedIn = !!user;
+  const userString = localStorage.getItem("user");
+  const isLoggedIn = userString !== null;
   
   // If not logged in, redirect to login
   if (!isLoggedIn) {
@@ -19,7 +18,11 @@ const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) =>
   
   // Check for required roles if specified
   if (requiredRoles.length > 0) {
-    const hasRequiredRole = hasRole(requiredRoles);
+    const user = JSON.parse(userString || "{}");
+    const userRoles = user.roles || [];
+    
+    // Check if the user has at least one of the required roles
+    const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
     
     if (!hasRequiredRole) {
       // User doesn't have the required role, redirect to home

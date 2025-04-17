@@ -7,7 +7,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createNewUser, updateUser, User, CreateUserData } from '@/services/apiService';
+import { createNewUser, updateUser, User } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 // Define form schema for new users with password
@@ -33,9 +33,6 @@ const editUserSchema = z.object({
 type NewUserFormValues = z.infer<typeof newUserSchema>;
 type EditUserFormValues = z.infer<typeof editUserSchema>;
 
-// Type that can represent either form values based on isEditing flag
-type UserFormValues<T extends boolean> = T extends true ? EditUserFormValues : NewUserFormValues;
-
 interface UserFormProps {
   user?: User;
   isEditing?: boolean;
@@ -48,9 +45,10 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
   
   // Use the appropriate schema based on whether we're editing or creating
   const formSchema = isEditing ? editUserSchema : newUserSchema;
+  type UserFormValues = isEditing ? EditUserFormValues : NewUserFormValues;
   
   // Set default values for the form
-  const defaultValues: Partial<UserFormValues<typeof isEditing>> = {
+  const defaultValues: Partial<UserFormValues> = {
     username: user?.username || '',
     email: user?.email || '',
     fullName: user?.fullName || '',
@@ -63,9 +61,9 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
     (defaultValues as Partial<NewUserFormValues>).password = '';
   }
   
-  const form = useForm<UserFormValues<typeof isEditing>>({
+  const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultValues as UserFormValues<typeof isEditing>,
+    defaultValues: defaultValues as UserFormValues,
   });
 
   const roleOptions = [
@@ -74,7 +72,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
     { id: 'user', label: 'Nutzer' },
   ];
 
-  const onSubmit = async (data: UserFormValues<typeof isEditing>) => {
+  const onSubmit = async (data: UserFormValues) => {
     try {
       if (isEditing && user) {
         await updateUser(user.id, data as EditUserFormValues);
@@ -83,16 +81,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
           description: "Benutzer wurde erfolgreich aktualisiert.",
         });
       } else {
-        // Ensure we're passing properly typed data with required fields
-        const newUserData: CreateUserData = {
-          username: data.username,
-          password: (data as NewUserFormValues).password,
-          email: data.email,
-          fullName: data.fullName,
-          roles: data.roles,
-          isActive: data.isActive
-        };
-        await createNewUser(newUserData);
+        await createNewUser(data as NewUserFormValues);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich erstellt.",
