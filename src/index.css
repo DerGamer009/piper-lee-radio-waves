@@ -62,4 +62,37 @@
     background-color: theme('colors.radio.purple');
     border-radius: 0.125rem;
   }
+
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-md border border-white/5 shadow-md;
+  }
+
+  .gradient-card {
+    @apply bg-gradient-to-br from-card to-card/80 border border-white/5;
+  }
+
+  .system-status-indicator {
+    @apply p-4 rounded-lg border border-border bg-card/60 backdrop-blur-sm;
+  }
+
+  .system-status-item {
+    @apply flex justify-between items-center relative overflow-hidden transition-all duration-300;
+  }
+
+  .system-status-item:hover {
+    @apply bg-muted/20;
+  }
+
+  .system-status-icon {
+    @apply flex-shrink-0;
+  }
+
+  .pulse-ring {
+    @apply relative;
+  }
+  
+  .pulse-ring::after {
+    content: '';
+    @apply absolute inset-0 rounded-full animate-pulse-ring;
+  }
 }

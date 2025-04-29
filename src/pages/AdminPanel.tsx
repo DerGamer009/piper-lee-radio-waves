@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -445,11 +446,11 @@ const AdminPanel = () => {
         
         <TabsContent value="settings" className="space-y-6">
           {settingsChanged && (
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start gap-3 mb-4">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="bg-amber-900/50 border border-amber-700/50 p-4 rounded-lg flex items-start gap-3 mb-4">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-medium text-amber-800">Nicht gespeicherte Änderungen</h3>
-                <p className="text-sm text-amber-700">Sie haben Änderungen vorgenommen, die noch nicht gespeichert wurden.</p>
+                <h3 className="font-medium text-amber-400">Nicht gespeicherte Änderungen</h3>
+                <p className="text-sm text-amber-300">Sie haben Änderungen vorgenommen, die noch nicht gespeichert wurden.</p>
               </div>
             </div>
           )}
@@ -461,9 +462,9 @@ const AdminPanel = () => {
               headerClassName="border-b pb-4"
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-5 rounded-lg bg-gray-50 border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between system-status-indicator">
                   <div className="flex items-center gap-3">
-                    <div className="bg-indigo-100 p-2 rounded-full">
+                    <div className="bg-indigo-900/50 p-2 rounded-full">
                       <Users className="h-5 w-5 text-radio-purple" />
                     </div>
                     <Label htmlFor="registration-mode" className="font-medium text-lg">
@@ -472,7 +473,7 @@ const AdminPanel = () => {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-600">
+                    <span className={`text-sm font-medium ${registrationEnabled ? 'text-green-400' : 'text-muted-foreground'}`}>
                       {registrationEnabled ? 'Aktiviert' : 'Deaktiviert'}
                     </span>
                     <Switch
@@ -485,9 +486,9 @@ const AdminPanel = () => {
                   </div>
                 </div>
                 
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-md flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-blue-700">
+                <div className="bg-blue-900/30 border border-blue-700/30 p-4 rounded-md flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-300">
                     {registrationEnabled
                       ? "Neue Benutzer können sich registrieren. Der erste Benutzer erhält automatisch Administrator-Rechte."
                       : "Registrierung ist gesperrt. Nur bestehende Benutzer können sich anmelden."
@@ -503,37 +504,37 @@ const AdminPanel = () => {
               headerClassName="border-b pb-4"
             >
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
+                <div className="system-status-item system-status-indicator">
                   <div className="flex items-center gap-3">
-                    <Database className="h-5 w-5 text-indigo-600" />
+                    <Database className="h-5 w-5 text-indigo-400 system-status-icon" />
                     <span className="font-medium">Datenbank-Status:</span>
                   </div>
                   <StatusIndicator online={true} />
                 </div>
                 
-                <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
+                <div className="system-status-item system-status-indicator">
                   <div className="flex items-center gap-3">
-                    <Server className="h-5 w-5 text-blue-600" />
+                    <Server className="h-5 w-5 text-blue-400 system-status-icon" />
                     <span className="font-medium">API-Status:</span>
                   </div>
                   <StatusIndicator online={true} />
                 </div>
                 
-                <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
+                <div className="system-status-item system-status-indicator">
                   <div className="flex items-center gap-3">
-                    <Radio className="h-5 w-5 text-purple-600" />
+                    <Radio className="h-5 w-5 text-purple-400 system-status-icon" />
                     <span className="font-medium">Streaming-Server:</span>
                   </div>
                   <StatusIndicator online={true} />
                 </div>
                 
-                <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
+                <div className="system-status-item system-status-indicator">
                   <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-gray-600" />
+                    <Clock className="h-5 w-5 text-gray-400 system-status-icon" />
                     <span className="font-medium">Letztes Backup:</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-green-500" />
                     <span className="text-sm">
                       {new Date().toLocaleDateString('de-DE')} {new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})}
                     </span>
@@ -548,9 +549,9 @@ const AdminPanel = () => {
               headerClassName="border-b pb-4"
             >
               <div className="space-y-6 p-4">
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-start gap-2">
-                  <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-blue-700">
+                <div className="bg-blue-900/30 border border-blue-700/30 p-3 rounded-lg flex items-start gap-2">
+                  <Info className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-300">
                     Hier können Sie verschiedene Einstellungen für die Website vornehmen.
                     Änderungen werden sofort wirksam, sobald sie gespeichert werden.
                   </p>
@@ -567,7 +568,7 @@ const AdminPanel = () => {
                         setSettingsChanged(true);
                       }}
                       placeholder="Radio Community"
-                      className="bg-gray-50"
+                      className="bg-muted/20 border-border"
                     />
                   </div>
                   
@@ -581,7 +582,7 @@ const AdminPanel = () => {
                         setSettingsChanged(true);
                       }}
                       placeholder="Beschreibung der Website..."
-                      className="min-h-[100px] bg-gray-50"
+                      className="min-h-[100px] bg-muted/20 border-border"
                     />
                   </div>
                   
@@ -594,7 +595,7 @@ const AdminPanel = () => {
                         setSettingsChanged(true);
                       }}
                     >
-                      <SelectTrigger className="w-full bg-gray-50">
+                      <SelectTrigger className="w-full bg-muted/20 border-border">
                         <SelectValue placeholder="Wählen Sie ein Farbschema" />
                       </SelectTrigger>
                       <SelectContent>
@@ -608,18 +609,18 @@ const AdminPanel = () => {
                   </div>
                 </div>
 
-                <Separator className="my-4" />
+                <Separator className="my-4 bg-border" />
                 
                 <div className="space-y-4">
                   <h3 className="font-medium">Funktionseinstellungen</h3>
                   
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border">
+                  <div className="flex items-center justify-between system-status-indicator">
                     <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      <AlertTriangle className="h-5 w-5 text-amber-400" />
                       <Label htmlFor="maintenance-mode" className="font-medium">Wartungsmodus</Label>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className={`text-sm font-medium ${maintenanceMode ? 'text-amber-400' : 'text-muted-foreground'}`}>
                         {maintenanceMode ? 'Aktiviert' : 'Deaktiviert'}
                       </span>
                       <Switch
@@ -632,13 +633,13 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border">
+                  <div className="flex items-center justify-between system-status-indicator">
                     <div className="flex items-center gap-3">
-                      <BarChart className="h-5 w-5 text-blue-600" />
+                      <BarChart className="h-5 w-5 text-blue-400" />
                       <Label htmlFor="show-listener-count" className="font-medium">Hörerzahl anzeigen</Label>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className={`text-sm font-medium ${showListenerCount ? 'text-green-400' : 'text-muted-foreground'}`}>
                         {showListenerCount ? 'Aktiviert' : 'Deaktiviert'}
                       </span>
                       <Switch 
@@ -651,13 +652,13 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border">
+                  <div className="flex items-center justify-between system-status-indicator">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-indigo-600" />
+                      <FileText className="h-5 w-5 text-indigo-400" />
                       <Label htmlFor="enable-comments" className="font-medium">Kommentare aktivieren</Label>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className={`text-sm font-medium ${enableComments ? 'text-green-400' : 'text-muted-foreground'}`}>
                         {enableComments ? 'Aktiviert' : 'Deaktiviert'}
                       </span>
                       <Switch 
@@ -690,39 +691,39 @@ const AdminPanel = () => {
               headerClassName="border-b pb-4"
             >
               <div className="space-y-4 p-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Hier können Sie Ihre Daten sichern und wiederherstellen.
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-5 border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-sm space-y-3">
+                  <div className="p-5 border rounded-lg gradient-card shadow-sm space-y-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <Download className="h-4 w-4 text-blue-700" />
+                      <div className="bg-blue-900/50 p-2 rounded-full">
+                        <Download className="h-4 w-4 text-blue-400" />
                       </div>
                       <h3 className="font-medium">Backup erstellen</h3>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Erstellen Sie ein vollständiges Backup aller Daten.
                     </p>
-                    <Button variant="outline" className="w-full flex items-center justify-center gap-2 hover:bg-blue-50">
+                    <Button variant="outline" className="w-full flex items-center justify-center gap-2 hover:bg-muted/20">
                       <Download className="h-4 w-4" />
                       Backup herunterladen
                     </Button>
                   </div>
                   
-                  <div className="p-5 border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-sm space-y-3">
+                  <div className="p-5 border rounded-lg gradient-card shadow-sm space-y-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="bg-purple-100 p-2 rounded-full">
+                      <div className="bg-purple-900/50 p-2 rounded-full">
                         <Server className="h-4 w-4 text-radio-purple" />
                       </div>
                       <h3 className="font-medium">Backup wiederherstellen</h3>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Stellen Sie ein früheres Backup wieder her.
                     </p>
                     <div className="flex flex-col gap-2">
-                      <Input type="file" id="backup-file" className="border border-gray-300 bg-white" />
+                      <Input type="file" id="backup-file" className="border-border bg-muted/20" />
                       <Button variant="outline" disabled className="flex items-center justify-center gap-2">
                         <Server className="h-4 w-4" />
                         Backup hochladen
