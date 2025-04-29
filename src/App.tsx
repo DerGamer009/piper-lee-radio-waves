@@ -23,6 +23,7 @@ import AdminPanel from "./pages/AdminPanel";
 import UserDashboard from "./pages/UserDashboard";
 import Auth from "./pages/Auth";
 import News from "./pages/News";
+import Maintenance from "./pages/Maintenance";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/charts" element={<Layout><Charts /></Layout>} />
             <Route path="/news" element={<Layout><News /></Layout>} />
             <Route path="/news/:id" element={<Layout><News /></Layout>} />
+            <Route path="/maintenance" element={<Layout><Maintenance /></Layout>} />
             <Route 
               path="/user-dashboard" 
               element={<ProtectedRoute element={<Layout><UserDashboard /></Layout>} />} 

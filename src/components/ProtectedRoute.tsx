@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin, isModerator, roles } = useAuth();
+  const { user, loading, isAdmin, isModerator, roles, isMaintenanceMode } = useAuth();
   
   // Show loading or placeholder while auth state is being determined
   if (loading) {
@@ -18,6 +18,11 @@ const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) =>
   // If not logged in, redirect to login
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check for maintenance mode
+  if (isMaintenanceMode && !isAdmin) {
+    return <Navigate to="/maintenance" replace />;
   }
   
   // Check for required roles if specified

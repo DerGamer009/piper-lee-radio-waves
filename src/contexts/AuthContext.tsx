@@ -16,6 +16,7 @@ type AuthContextType = {
   isAdmin: boolean;
   isModerator: boolean;
   roles: UserRole[];
+  isMaintenanceMode: boolean; // Add maintenance mode state
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModerator, setIsModerator] = useState(false);
   const [roles, setRoles] = useState<UserRole[]>([]);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false); // Add maintenance mode state
   const { toast } = useToast();
 
   useEffect(() => {
@@ -60,8 +62,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
+    // Check for maintenance mode setting
+    const fetchMaintenanceMode = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'maintenance_mode')
+          .single();
+        
+        if (!error && data) {
+          setIsMaintenanceMode(data.value === 'true');
+        }
+      } catch (error) {
+        console.error('Error fetching maintenance mode:', error);
+      }
+    };
+
+    fetchMaintenanceMode();
+
+    // Set up subscription to app_settings changes
+    const appSettingsChannel = supabase
+      .channel('app_settings_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'app_settings' },
+        (payload) => {
+          // If maintenance_mode setting is changed
+          if (payload.new && payload.new.key === 'maintenance_mode') {
+            setIsMaintenanceMode(payload.new.value === 'true');
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       subscription.unsubscribe();
+      supabase.removeChannel(appSettingsChannel);
     };
   }, []);
 
@@ -177,7 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signOut, 
       isAdmin, 
       isModerator, 
-      roles 
+      roles,
+      isMaintenanceMode // Add to context value
     }}>
       {children}
     </AuthContext.Provider>
