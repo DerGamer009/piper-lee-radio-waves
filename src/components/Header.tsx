@@ -60,6 +60,13 @@ const Header = () => {
                   >
                     Startseite
                   </Link>
+                  <Link 
+                    to="/news" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    News
+                  </Link>
                   <a 
                     href="#about" 
                     className="text-radio-light hover:text-white transition-colors"
@@ -106,6 +113,12 @@ const Header = () => {
               className="text-radio-light hover:text-white transition-colors"
             >
               Startseite
+            </Link>
+            <Link 
+              to="/news" 
+              className="text-radio-light hover:text-white transition-colors"
+            >
+              News
             </Link>
             <a 
               href="#about" 

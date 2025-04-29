@@ -18,6 +18,7 @@ import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import Login from "./pages/Login";
+import News from "./pages/News";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
@@ -46,6 +47,8 @@ const App = () => (
           <Route path="/sendeplan" element={<Layout><Schedule /></Layout>} />
           <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
           <Route path="/charts" element={<Layout><Charts /></Layout>} />
+          <Route path="/news" element={<Layout><News /></Layout>} />
+          <Route path="/news/:id" element={<Layout><News /></Layout>} />
           <Route 
             path="/admin" 
             element={<ProtectedRoute element={<Layout><Admin /></Layout>} requiredRoles={["admin"]} />} 
