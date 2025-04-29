@@ -1,37 +1,103 @@
 
-import { ReactNode } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
 import Header from "./Header";
-import RadioPlayer from "./RadioPlayer";
-import { useLocation } from "react-router-dom";
-
-// Constants for radio stream
-const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
-const STATION_NAME = "Piper Lee Radio";
+import UserStatus from "./UserStatus";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
-  const location = useLocation();
-  const isHomePage = location.pathname === "/";
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { isAdmin } = useAuth();
   
   return (
-    <div className="flex flex-col min-h-screen bg-radio-dark text-white">
-      <Header />
-      
-      <main className="flex-1 pt-24 pb-12">
+    <div className="flex min-h-screen flex-col">
+      <Header/>
+      <div className="hidden md:flex bg-slate-100 h-12 items-center border-b">
+        <div className="container flex justify-between">
+          <nav className="flex items-center space-x-4 lg:space-x-6">
+            <Link
+              to="/"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Home
+            </Link>
+            <Link
+              to="/sendeplan"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Sendeplan
+            </Link>
+            <Link
+              to="/podcasts"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Podcasts
+            </Link>
+            <Link
+              to="/news"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              News
+            </Link>
+            <Link
+              to="/charts"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Charts
+            </Link>
+            <Link
+              to="/kontakt"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Kontakt
+            </Link>
+            {isAdmin && (
+              <Link
+                to="/admin/panel"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Admin-Bereich
+              </Link>
+            )}
+          </nav>
+          <div>
+            <UserStatus />
+          </div>
+        </div>
+      </div>
+      <main className="flex-1">
         {children}
       </main>
-      
-      {!isHomePage && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <RadioPlayer 
-            streamUrl={STREAM_URL} 
-            stationName={STATION_NAME} 
-          />
+      <footer className="bg-slate-100 py-6 md:py-0">
+        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
+          <p className="text-xs text-gray-500">
+            © {new Date().getFullYear()} Radio Station. All rights reserved.
+          </p>
+          <nav className="flex gap-4 sm:gap-6">
+            <Link
+              to="/datenschutz"
+              className="text-xs hover:underline underline-offset-4"
+            >
+              Datenschutz
+            </Link>
+            <Link
+              to="/impressum"
+              className="text-xs hover:underline underline-offset-4"
+            >
+              Impressum
+            </Link>
+            <Link
+              to="/nutzungsbedingungen"
+              className="text-xs hover:underline underline-offset-4"
+            >
+              AGB
+            </Link>
+          </nav>
         </div>
-      )}
+      </footer>
     </div>
   );
 };
