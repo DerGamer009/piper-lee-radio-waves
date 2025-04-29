@@ -19,6 +19,7 @@ import DashboardCard from '@/components/dashboard/DashboardCard';
 import RecentUsers from '@/components/dashboard/RecentUsers';
 import UpcomingShows from '@/components/dashboard/UpcomingShows';
 import PollManagement from '@/components/dashboard/PollManagement';
+import NewsManagement from '@/components/dashboard/NewsManagement';
 import { 
   Settings, 
   Users, 
@@ -29,7 +30,8 @@ import {
   RefreshCw,
   Download,
   ArrowUpRight,
-  PieChart
+  PieChart,
+  FileText
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -164,6 +166,7 @@ const AdminPanel = () => {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="users">Benutzer</TabsTrigger>
           <TabsTrigger value="shows">Sendungen</TabsTrigger>
+          <TabsTrigger value="news">News</TabsTrigger>
           <TabsTrigger value="polls">Umfragen</TabsTrigger>
           <TabsTrigger value="settings">Einstellungen</TabsTrigger>
         </TabsList>
@@ -285,6 +288,16 @@ const AdminPanel = () => {
           <UpcomingShows />
         </TabsContent>
 
+        <TabsContent value="news">
+          <DashboardCard
+            title="News & Updates" 
+            icon={<FileText className="h-5 w-5 text-radio-purple" />}
+            headerClassName="border-b pb-4"
+          >
+            <NewsManagement />
+          </DashboardCard>
+        </TabsContent>
+        
         <TabsContent value="polls">
           <DashboardCard
             title="Umfrageverwaltung" 

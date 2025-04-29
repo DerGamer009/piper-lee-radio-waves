@@ -17,9 +17,9 @@ const NewsTeaser = () => {
       try {
         setLoading(true);
         const data = await fetchAllNews();
-        setNews(data.slice(0, 3)); // Nur die neuesten 3 News anzeigen
+        setNews(data.slice(0, 3)); // Only show the latest 3 news items
       } catch (error) {
-        console.error("Fehler beim Laden der News:", error);
+        console.error("Error loading news:", error);
       } finally {
         setLoading(false);
       }
