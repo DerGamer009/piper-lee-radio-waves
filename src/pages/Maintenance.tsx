@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Tool, Home } from 'lucide-react';
+import { AlertTriangle, Wrench, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,7 +13,7 @@ const Maintenance = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-center">
           <div className="bg-amber-900/30 p-6 rounded-full">
-            <Tool className="h-16 w-16 text-amber-500" />
+            <Wrench className="h-16 w-16 text-amber-500" />
           </div>
         </div>
 

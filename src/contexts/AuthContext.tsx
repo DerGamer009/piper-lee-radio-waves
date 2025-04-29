@@ -87,9 +87,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'app_settings' },
-        (payload) => {
-          // If maintenance_mode setting is changed
-          if (payload.new && payload.new.key === 'maintenance_mode') {
+        (payload: any) => {
+          // Fixed TypeScript error by adding proper type checking
+          if (payload.new && typeof payload.new === 'object' && 
+              'key' in payload.new && 'value' in payload.new && 
+              payload.new.key === 'maintenance_mode') {
             setIsMaintenanceMode(payload.new.value === 'true');
           }
         }
