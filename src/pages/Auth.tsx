@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,10 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const Auth = () => {
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("login");
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabParam === "register" ? "register" : "login");
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const [isFirstUser, setIsFirstUser] = useState(false);
 
@@ -131,8 +134,8 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-radio-dark to-black py-10">
+      <Card className="w-full max-w-md shadow-lg border-radio-purple">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
             {activeTab === "login" ? "Anmeldung" : "Registrierung"}
@@ -189,7 +192,7 @@ const Auth = () => {
                   )}
                 />
                 
-                <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting}>
+                <Button type="submit" className="w-full bg-radio-purple hover:bg-radio-blue" disabled={loginForm.formState.isSubmitting}>
                   {loginForm.formState.isSubmitting ? "Anmelden..." : "Anmelden"}
                 </Button>
               </form>
@@ -268,7 +271,7 @@ const Auth = () => {
                     )}
                   />
                   
-                  <Button type="submit" className="w-full" disabled={registerForm.formState.isSubmitting}>
+                  <Button type="submit" className="w-full bg-radio-purple hover:bg-radio-blue" disabled={registerForm.formState.isSubmitting}>
                     {registerForm.formState.isSubmitting ? "Registrieren..." : "Registrieren"}
                   </Button>
                   

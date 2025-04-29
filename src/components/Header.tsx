@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Radio, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import UserStatus from "./UserStatus";
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -42,13 +43,16 @@ const Header = () => {
         
         {isMobile ? (
           <>
-            <button 
-              className="text-white p-2" 
-              onClick={toggleMenu}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-            >
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            <div className="flex items-center gap-2">
+              <UserStatus />
+              <button 
+                className="text-white p-2" 
+                onClick={toggleMenu}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+              >
+                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
             
             {menuOpen && (
               <div className="absolute top-full left-0 right-0 bg-radio-dark/95 backdrop-blur-md py-4 shadow-lg">
@@ -107,50 +111,53 @@ const Header = () => {
             )}
           </>
         ) : (
-          <nav className="flex items-center gap-8">
-            <Link 
-              to="/" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              Startseite
-            </Link>
-            <Link 
-              to="/news" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              News
-            </Link>
-            <a 
-              href="#about" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              Über Uns
-            </a>
-            <a 
-              href="#schedule" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              Programmplan
-            </a>
-            <Link 
-              to="/partner" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              Partner
-            </Link>
-            <Link 
-              to="/sendeplan" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              Sendeplan
-            </Link>
-            <Link 
-              to="/kontakt" 
-              className="text-radio-light hover:text-white transition-colors"
-            >
-              Kontakt
-            </Link>
-          </nav>
+          <div className="flex items-center justify-between flex-1 ml-10">
+            <nav className="flex items-center gap-8">
+              <Link 
+                to="/" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Startseite
+              </Link>
+              <Link 
+                to="/news" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                News
+              </Link>
+              <a 
+                href="#about" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Über Uns
+              </a>
+              <a 
+                href="#schedule" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Programmplan
+              </a>
+              <Link 
+                to="/partner" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Partner
+              </Link>
+              <Link 
+                to="/sendeplan" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Sendeplan
+              </Link>
+              <Link 
+                to="/kontakt" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Kontakt
+              </Link>
+            </nav>
+            <UserStatus />
+          </div>
         )}
       </div>
     </header>

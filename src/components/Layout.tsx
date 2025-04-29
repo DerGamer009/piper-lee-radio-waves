@@ -2,7 +2,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "./Header";
-import UserStatus from "./UserStatus";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface LayoutProps {
@@ -15,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex min-h-screen flex-col">
       <Header/>
-      <div className="hidden md:flex bg-slate-100 h-12 items-center border-b">
+      <div className="hidden md:flex bg-slate-100 h-12 items-center border-b mt-20">
         <div className="container flex justify-between">
           <nav className="flex items-center space-x-4 lg:space-x-6">
             <Link
@@ -63,12 +62,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             )}
           </nav>
-          <div>
-            <UserStatus />
-          </div>
         </div>
       </div>
-      <main className="flex-1">
+      <main className="flex-1 pt-20 md:pt-32">
         {children}
       </main>
       <footer className="bg-slate-100 py-6 md:py-0">
