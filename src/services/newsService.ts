@@ -68,7 +68,7 @@ export async function fetchAllNews(): Promise<NewsItem[]> {
   }
 }
 
-export async function fetchNewsById(id: number | string): Promise<NewsItem> {
+export async function fetchNewsById(id: string): Promise<NewsItem> {
   try {
     const { data, error } = await supabase
       .from('news')
@@ -86,7 +86,7 @@ export async function fetchNewsById(id: number | string): Promise<NewsItem> {
     console.error(`Failed to fetch news item with id ${id}:`, error);
     // Return demo data as fallback for development
     return {
-      id: String(id),
+      id: id,
       title: 'Beispiel News Artikel',
       content: 'Dies ist ein Beispiel-Artikel, der angezeigt wird, wenn die Daten nicht aus der Datenbank geladen werden können. Normalerweise würden hier die Details zum angeforderten News-Eintrag stehen.',
       image_url: 'https://images.unsplash.com/photo-1516057747705-0609711c1b31?q=80&w=1000',
