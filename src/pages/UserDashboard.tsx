@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -60,16 +59,24 @@ const UserDashboard = () => {
       // Fetch votes for each option
       const optionsWithVotes = await Promise.all(
         optionsData.map(async (option) => {
-          const { data: votesData } = await supabase
+          const { count, error: votesError } = await supabase
             .from('poll_votes')
-            .select('count')
-            .eq('option_id', option.id)
-            .count();
+            .select('*', { count: 'exact', head: true })
+            .eq('option_id', option.id);
+
+          if (votesError) {
+            console.error('Error counting votes:', votesError);
+            return {
+              id: option.id,
+              text: option.option_text,
+              votes: 0
+            };
+          }
 
           return {
             id: option.id,
             text: option.option_text,
-            votes: votesData || 0
+            votes: count || 0
           };
         })
       );
