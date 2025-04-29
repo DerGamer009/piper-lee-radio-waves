@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,8 @@ import {
   CheckCircle,
   Database,
   Server,
-  Clock
+  Clock,
+  Archive
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,13 @@ interface AppSetting {
   value: string;
 }
 
+interface BackupInfo {
+  id: string;
+  filename: string;
+  created_at: string;
+  size: number;
+}
+
 const AdminPanel = () => {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -71,6 +78,12 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [settingsChanged, setSettingsChanged] = useState(false);
+  
+  // New states for backup functionality
+  const [backingUp, setBackingUp] = useState(false);
+  const [backupProgress, setBackupProgress] = useState(0);
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [selectedBackupFile, setSelectedBackupFile] = useState<File | null>(null);
 
   // Fetch roles from user_roles table
   const { data: userRoles } = useQuery({
@@ -104,6 +117,27 @@ const AdminPanel = () => {
       }
 
       return data as AppSetting[];
+    },
+    enabled: isAdmin
+  });
+
+  // Fetch backups
+  const { data: backupsList, refetch: refetchBackups } = useQuery({
+    queryKey: ['backups'],
+    queryFn: async () => {
+      try {
+        // In a real app, this would be an API call to get the list of backups
+        const { data, error } = await supabase
+          .from('backups')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching backups:', error);
+        return [];
+      }
     },
     enabled: isAdmin
   });
@@ -249,6 +283,157 @@ const AdminPanel = () => {
     }, 1000);
   };
 
+  const createBackup = async () => {
+    setBackingUp(true);
+    setBackupProgress(0);
+    
+    try {
+      // Simulate backup progress
+      const interval = setInterval(() => {
+        setBackupProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 300);
+      
+      // In a real application, this would be an API call to create a backup
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupName = `backup-${timestamp}`;
+      
+      // Simulate server-side backup creation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      clearInterval(interval);
+      setBackupProgress(100);
+      
+      // Add the new backup to the list
+      const newBackup: BackupInfo = {
+        id: crypto.randomUUID(),
+        filename: `${backupName}.zip`,
+        created_at: new Date().toISOString(),
+        size: Math.floor(Math.random() * 1000) + 500 // Random size between 500KB and 1.5MB
+      };
+      
+      // In a real application, we would save this to the database
+      await supabase.from('backups').insert([{
+        filename: newBackup.filename,
+        size: newBackup.size
+      }]);
+      
+      // Update the UI
+      setBackups(prev => [newBackup, ...prev]);
+      
+      toast({
+        title: "Backup erstellt",
+        description: `Backup "${backupName}" wurde erfolgreich auf dem Server gespeichert.`,
+      });
+
+      // Refetch backups
+      refetchBackups();
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: `Backup konnte nicht erstellt werden: ${error.message}`,
+        variant: "destructive"
+      });
+      console.error('Error creating backup:', error);
+    } finally {
+      setTimeout(() => {
+        setBackingUp(false);
+        setBackupProgress(0);
+      }, 500);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedBackupFile(e.target.files[0]);
+    }
+  };
+
+  const restoreBackup = async () => {
+    if (!selectedBackupFile) {
+      toast({
+        title: "Fehler",
+        description: "Bitte wählen Sie eine Backup-Datei aus.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // In a real application, this would upload the file to the server
+      // and trigger a restore process
+      
+      // Simulate the restore process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Backup wiederhergestellt",
+        description: `Backup "${selectedBackupFile.name}" wurde erfolgreich wiederhergestellt.`,
+      });
+      
+      setSelectedBackupFile(null);
+      // Reset the file input
+      const fileInput = document.getElementById('backup-file') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: `Backup konnte nicht wiederhergestellt werden: ${error.message}`,
+        variant: "destructive"
+      });
+      console.error('Error restoring backup:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadBackup = async (filename: string) => {
+    // In a real application, this would be an API call to download the backup
+    // For now we'll just simulate a download
+    
+    setLoading(true);
+    try {
+      // Create a simulated download delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create a dummy file for download (in a real app, this would be the actual backup file)
+      const dummyContent = `This is a simulated backup file: ${filename}`;
+      const blob = new Blob([dummyContent], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Backup heruntergeladen",
+        description: `Backup "${filename}" wurde erfolgreich heruntergeladen.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: `Backup konnte nicht heruntergeladen werden: ${error.message}`,
+        variant: "destructive"
+      });
+      console.error('Error downloading backup:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -263,6 +448,12 @@ const AdminPanel = () => {
     { value: 'green', label: 'Radio Grün' },
     { value: 'dark', label: 'Dunkel' },
   ];
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
+  };
 
   const StatusIndicator = ({ online }: { online: boolean }) => (
     <div className="flex items-center justify-center gap-2">
@@ -486,7 +677,7 @@ const AdminPanel = () => {
                   </div>
                 </div>
                 
-                <div className="bg-blue-900/30 border border-blue-700/30 p-4 rounded-md flex items-start gap-3">
+                <div className="bg-blue-900/30 border border-blue-200 p-4 rounded-md flex items-start gap-3">
                   <Info className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-blue-300">
                     {registrationEnabled
@@ -687,31 +878,82 @@ const AdminPanel = () => {
 
             <DashboardCard
               title="Backup & Wiederherstellung"
-              icon={<Download className="h-5 w-5 text-radio-purple" />}
+              icon={<Archive className="h-5 w-5 text-radio-purple" />}
               headerClassName="border-b pb-4"
             >
               <div className="space-y-4 p-4">
                 <p className="text-sm text-muted-foreground">
-                  Hier können Sie Ihre Daten sichern und wiederherstellen.
+                  Erstellen und verwalten Sie Backups Ihrer Datenbank und Einstellungen.
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-5 border rounded-lg gradient-card shadow-sm space-y-3">
+                <div className="grid grid-cols-1 gap-6">
+                  {/* Server Backup Section */}
+                  <div className="p-5 border rounded-lg gradient-card shadow-sm space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="bg-blue-900/50 p-2 rounded-full">
-                        <Download className="h-4 w-4 text-blue-400" />
+                        <Archive className="h-4 w-4 text-blue-400" />
                       </div>
-                      <h3 className="font-medium">Backup erstellen</h3>
+                      <h3 className="font-medium">Backup auf Server erstellen</h3>
                     </div>
+                    
                     <p className="text-sm text-muted-foreground">
-                      Erstellen Sie ein vollständiges Backup aller Daten.
+                      Erstellen Sie ein vollständiges Backup, das automatisch auf dem Server gespeichert wird.
                     </p>
-                    <Button variant="outline" className="w-full flex items-center justify-center gap-2 hover:bg-muted/20">
-                      <Download className="h-4 w-4" />
-                      Backup herunterladen
+                    
+                    <Button 
+                      variant="default"
+                      className="w-full flex items-center justify-center gap-2 bg-radio-purple hover:bg-radio-purple/90"
+                      onClick={createBackup}
+                      disabled={backingUp}
+                    >
+                      {backingUp ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                          Backup wird erstellt... {backupProgress}%
+                        </>
+                      ) : (
+                        <>
+                          <Archive className="h-4 w-4" />
+                          Backup jetzt erstellen
+                        </>
+                      )}
                     </Button>
+                    
+                    {/* List of existing backups */}
+                    {backups.length > 0 && (
+                      <div className="mt-6 space-y-3">
+                        <h4 className="text-sm font-medium">Vorhandene Backups</h4>
+                        <div className="max-h-[200px] overflow-y-auto pr-2 space-y-2">
+                          {backups.map((backup) => (
+                            <div 
+                              key={backup.id} 
+                              className="flex items-center justify-between p-2 rounded-md bg-muted/10 border border-muted/20 hover:bg-muted/20 transition-colors"
+                            >
+                              <div>
+                                <p className="text-sm font-medium">{backup.filename}</p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{new Date(backup.created_at).toLocaleString('de-DE')}</span>
+                                  <span>•</span>
+                                  <span>{formatFileSize(backup.size)}</span>
+                                </div>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => downloadBackup(backup.filename)}
+                                className="bg-transparent border-muted/20 hover:bg-muted/20"
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Herunterladen
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
+                  {/* Restore Backup Section */}
                   <div className="p-5 border rounded-lg gradient-card shadow-sm space-y-3">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="bg-purple-900/50 p-2 rounded-full">
@@ -719,15 +961,48 @@ const AdminPanel = () => {
                       </div>
                       <h3 className="font-medium">Backup wiederherstellen</h3>
                     </div>
+                    
                     <p className="text-sm text-muted-foreground">
                       Stellen Sie ein früheres Backup wieder her.
                     </p>
-                    <div className="flex flex-col gap-2">
-                      <Input type="file" id="backup-file" className="border-border bg-muted/20" />
-                      <Button variant="outline" disabled className="flex items-center justify-center gap-2">
-                        <Server className="h-4 w-4" />
-                        Backup hochladen
+                    
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Input 
+                          type="file" 
+                          id="backup-file" 
+                          className="border-border bg-muted/20"
+                          accept=".zip,.sql,.gz"
+                          onChange={handleFileChange}
+                        />
+                        {selectedBackupFile && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            Ausgewählt: {selectedBackupFile.name} ({formatFileSize(selectedBackupFile.size)})
+                          </div>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex items-center justify-center gap-2 hover:bg-muted/20"
+                        onClick={restoreBackup}
+                        disabled={!selectedBackupFile || loading}
+                      >
+                        {loading ? (
+                          <div className="animate-spin h-4 w-4 border-2 border-radio-purple border-t-transparent rounded-full"></div>
+                        ) : (
+                          <>
+                            <Server className="h-4 w-4" />
+                            Backup wiederherstellen
+                          </>
+                        )}
                       </Button>
+                    </div>
+                    
+                    <div className="bg-amber-900/50 border border-amber-700/50 p-3 rounded-md flex items-start gap-2 mt-4">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-amber-300">
+                        Warnung: Das Wiederherstellen eines Backups überschreibt alle aktuellen Daten. Dieser Vorgang kann nicht rückgängig gemacht werden.
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -95,4 +95,50 @@
     content: '';
     @apply absolute inset-0 rounded-full animate-pulse-ring;
   }
+
+  /* Backup progress bar animation */
+  @keyframes progress {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+  
+  .backup-progress-bar {
+    @apply relative h-1 w-full bg-muted/20 rounded-full overflow-hidden;
+  }
+  
+  .backup-progress-fill {
+    @apply absolute top-0 left-0 h-full bg-radio-purple rounded-full;
+    transition: width 0.3s ease;
+  }
+  
+  /* Backup list styling */
+  .backup-list {
+    @apply space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar;
+  }
+  
+  .backup-item {
+    @apply p-3 rounded-md border border-border/50 bg-card/40 hover:bg-card/60 transition-all flex justify-between items-center;
+  }
+  
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted/30 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted/50;
+  }
+  
+  /* File input styling */
+  input[type="file"] {
+    @apply text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-radio-purple/20 file:text-radio-purple hover:file:bg-radio-purple/30 cursor-pointer border border-muted/30 rounded-md;
+  }
 }
