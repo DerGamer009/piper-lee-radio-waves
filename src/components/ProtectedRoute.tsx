@@ -20,7 +20,7 @@ const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) =>
     return <Navigate to="/login" replace />;
   }
 
-  // Check for maintenance mode
+  // Check for maintenance mode - only admins can bypass
   if (isMaintenanceMode && !isAdmin) {
     return <Navigate to="/maintenance" replace />;
   }

@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Radio, Music, Headphones, Calendar, MessageCircle } from "lucide-react";
 import RadioPlayer from "@/components/RadioPlayer";
 import PollWidget from "@/components/PollWidget";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Constants for radio stream
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
@@ -11,11 +13,17 @@ const STATION_NAME = "Piper Lee Radio";
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const { isMaintenanceMode, isAdmin } = useAuth();
   
   useEffect(() => {
     // Set isLoaded to true after component mounts
     setIsLoaded(true);
   }, []);
+  
+  // Redirect to maintenance page if maintenance mode is active and user is not admin
+  if (isMaintenanceMode && !isAdmin) {
+    return <Navigate to="/maintenance" replace />;
+  }
   
   return (
     <>
