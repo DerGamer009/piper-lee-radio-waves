@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -121,19 +122,43 @@ const AdminPanel = () => {
     enabled: isAdmin
   });
 
-  // Fetch backups
+  // Fetch backups from app_settings
   const { data: backupsList, refetch: refetchBackups } = useQuery({
     queryKey: ['backups'],
     queryFn: async () => {
       try {
-        // In a real app, this would be an API call to get the list of backups
+        // Fetch backups from app_settings where key starts with 'backup_'
         const { data, error } = await supabase
-          .from('backups')
+          .from('app_settings')
           .select('*')
-          .order('created_at', { ascending: false });
+          .like('key', 'backup_%')
+          .order('updated_at', { ascending: false });
         
         if (error) throw error;
-        return data || [];
+        
+        // Transform app_settings entries to BackupInfo format
+        const backups: BackupInfo[] = data?.map(item => {
+          // Parse the stored JSON value
+          try {
+            const backupData = JSON.parse(item.value || '{}');
+            return {
+              id: item.id,
+              filename: backupData.filename || `backup-${new Date(item.updated_at || '').toISOString().slice(0, 10)}.zip`,
+              created_at: item.updated_at || new Date().toISOString(),
+              size: backupData.size || 0
+            };
+          } catch (e) {
+            // If JSON parsing fails, return default values
+            return {
+              id: item.id,
+              filename: `backup-${new Date(item.updated_at || '').toISOString().slice(0, 10)}.zip`,
+              created_at: item.updated_at || new Date().toISOString(),
+              size: 0
+            };
+          }
+        }) || [];
+        
+        return backups;
       } catch (error) {
         console.error('Error fetching backups:', error);
         return [];
@@ -174,6 +199,12 @@ const AdminPanel = () => {
       }
     });
   }, [appSettings]);
+
+  useEffect(() => {
+    if (backupsList) {
+      setBackups(backupsList);
+    }
+  }, [backupsList]);
 
   const updateSetting = async (key: string, value: string) => {
     setSettingsChanged(true);
@@ -299,9 +330,11 @@ const AdminPanel = () => {
         });
       }, 300);
       
-      // In a real application, this would be an API call to create a backup
+      // Create a backup entry in the app_settings table
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const backupName = `backup-${timestamp}`;
+      const filename = `${backupName}.zip`;
+      const size = Math.floor(Math.random() * 1000) + 500; // Random size between 500KB and 1.5MB
       
       // Simulate server-side backup creation
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -309,19 +342,30 @@ const AdminPanel = () => {
       clearInterval(interval);
       setBackupProgress(100);
       
-      // Add the new backup to the list
-      const newBackup: BackupInfo = {
-        id: crypto.randomUUID(),
-        filename: `${backupName}.zip`,
-        created_at: new Date().toISOString(),
-        size: Math.floor(Math.random() * 1000) + 500 // Random size between 500KB and 1.5MB
+      // Store backup info as JSON in app_settings
+      const backupData = {
+        filename,
+        size,
+        created_at: new Date().toISOString()
       };
       
-      // In a real application, we would save this to the database
-      await supabase.from('backups').insert([{
-        filename: newBackup.filename,
-        size: newBackup.size
-      }]);
+      // Save to app_settings table with 'backup_' prefix + timestamp as key
+      const { data, error } = await supabase
+        .from('app_settings')
+        .insert([{
+          key: `backup_${timestamp}`,
+          value: JSON.stringify(backupData)
+        }]);
+      
+      if (error) throw error;
+      
+      // Add the new backup to the list
+      const newBackup: BackupInfo = {
+        id: crypto.randomUUID(), // Will be updated when we refetch
+        filename,
+        created_at: new Date().toISOString(),
+        size
+      };
       
       // Update the UI
       setBackups(prev => [newBackup, ...prev]);
