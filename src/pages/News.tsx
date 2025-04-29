@@ -19,7 +19,8 @@ const NewsPage = () => {
       try {
         setLoading(true);
         if (id) {
-          const newsItem = await fetchNewsById(parseInt(id));
+          // Use the id directly as a string, no need to parse it as an integer
+          const newsItem = await fetchNewsById(id);
           setSelectedNews(newsItem);
           const allNews = await fetchAllNews();
           setNews(allNews);
