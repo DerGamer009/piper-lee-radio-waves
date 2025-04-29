@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Music, Headphones, Calendar, MessageCircle } from "lucide-react";
+import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle } from "lucide-react";
 import RadioPlayer from "@/components/RadioPlayer";
 import PollWidget from "@/components/PollWidget";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Constants for radio stream
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
@@ -27,6 +27,18 @@ const Index = () => {
   
   return (
     <>
+      {isMaintenanceMode && isAdmin && (
+        <Alert className="mb-4 border-amber-500 bg-amber-500/10">
+          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <AlertDescription className="text-amber-600">
+            Wartungsmodus ist aktiv. Normale Benutzer werden zur Wartungsseite umgeleitet.
+            <Button variant="link" asChild className="p-0 h-auto text-amber-700 font-semibold ml-2">
+              <Link to="/admin/panel">Wartungsmodus deaktivieren</Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <section 
         className={`min-h-[85vh] relative flex items-center transition-opacity duration-1000 ${
           isLoaded ? "opacity-100" : "opacity-0"
