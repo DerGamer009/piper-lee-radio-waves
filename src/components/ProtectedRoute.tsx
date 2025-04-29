@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, isModerator, roles } = useAuth();
   
   // Show loading or placeholder while auth state is being determined
   if (loading) {
@@ -21,9 +21,17 @@ const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) =>
   }
   
   // Check for required roles if specified
-  if (requiredRoles.includes("admin") && !isAdmin) {
-    // User doesn't have admin role, redirect to home
-    return <Navigate to="/" replace />;
+  if (requiredRoles.length > 0) {
+    const hasRequiredRole = requiredRoles.some(role => {
+      if (role === 'admin' && isAdmin) return true;
+      if (role === 'moderator' && isModerator) return true;
+      return roles.includes(role as any);
+    });
+
+    if (!hasRequiredRole) {
+      // User doesn't have required role, redirect to user dashboard
+      return <Navigate to="/user-dashboard" replace />;
+    }
   }
   
   // User is logged in and has required role, render the protected component

@@ -18,7 +18,9 @@ import Podcasts from "./pages/Podcasts";
 import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
+import ModeratorDashboard from "./pages/ModeratorDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import UserDashboard from "./pages/UserDashboard";
 import Auth from "./pages/Auth";
 import News from "./pages/News";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -52,6 +54,14 @@ const App = () => (
             <Route path="/charts" element={<Layout><Charts /></Layout>} />
             <Route path="/news" element={<Layout><News /></Layout>} />
             <Route path="/news/:id" element={<Layout><News /></Layout>} />
+            <Route 
+              path="/user-dashboard" 
+              element={<ProtectedRoute element={<Layout><UserDashboard /></Layout>} />} 
+            />
+            <Route 
+              path="/moderator-dashboard" 
+              element={<ProtectedRoute element={<Layout><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+            />
             <Route 
               path="/admin" 
               element={<ProtectedRoute element={<Layout><Admin /></Layout>} requiredRoles={["admin"]} />} 

@@ -18,6 +18,7 @@ import DashboardStats from '@/components/dashboard/DashboardStats';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import RecentUsers from '@/components/dashboard/RecentUsers';
 import UpcomingShows from '@/components/dashboard/UpcomingShows';
+import PollManagement from '@/components/dashboard/PollManagement';
 import { 
   Settings, 
   Users, 
@@ -27,14 +28,41 @@ import {
   Plus,
   RefreshCw,
   Download,
-  ArrowUpRight
+  ArrowUpRight,
+  PieChart
 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: string;
+}
 
 const AdminPanel = () => {
   const { user, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch roles from user_roles table
+  const { data: userRoles } = useQuery({
+    queryKey: ['user-roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        return [];
+      }
+
+      return data as UserRole[];
+    },
+    enabled: isAdmin
+  });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -89,6 +117,7 @@ const AdminPanel = () => {
 
   const handleRefreshStats = () => {
     setRefreshing(true);
+    queryClient.invalidateQueries();
     setTimeout(() => {
       toast({
         title: "Statistiken aktualisiert",
@@ -135,6 +164,7 @@ const AdminPanel = () => {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="users">Benutzer</TabsTrigger>
           <TabsTrigger value="shows">Sendungen</TabsTrigger>
+          <TabsTrigger value="polls">Umfragen</TabsTrigger>
           <TabsTrigger value="settings">Einstellungen</TabsTrigger>
         </TabsList>
         
@@ -178,9 +208,11 @@ const AdminPanel = () => {
             icon={<Users className="h-5 w-5 text-radio-purple" />}
             className="mb-6"
             actionButton={
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Neuer Benutzer
+              <Button size="sm" asChild>
+                <a href="/admin">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Benutzer verwalten
+                </a>
               </Button>
             }
           >
@@ -188,6 +220,41 @@ const AdminPanel = () => {
               <p className="text-sm text-yellow-800">
                 Eine vollständige Verwaltung aller Benutzer und deren Rechte finden Sie im <a href="/admin" className="text-radio-purple hover:underline font-medium">Admin-Bereich</a>.
               </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-medium">Benutzerrollen</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-4 rounded-md border">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium">Administratoren</h4>
+                    <Badge variant="outline" className="bg-blue-50">
+                      {userRoles?.filter(r => r.role === 'admin').length || 0}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">Voller Zugriff auf alle Funktionen</p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-md border">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium">Moderatoren</h4>
+                    <Badge variant="outline" className="bg-purple-50">
+                      {userRoles?.filter(r => r.role === 'moderator').length || 0}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">Können Sendungen und Inhalte verwalten</p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-md border">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium">Benutzer</h4>
+                    <Badge variant="outline" className="bg-green-50">
+                      {userRoles?.filter(r => r.role === 'user').length || 0}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">Standard-Zugriff auf die Plattform</p>
+                </div>
+              </div>
             </div>
           </DashboardCard>
           
@@ -200,20 +267,32 @@ const AdminPanel = () => {
             icon={<Radio className="h-5 w-5 text-radio-purple" />}
             className="mb-6"
             actionButton={
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Neue Sendung
+              <Button size="sm" asChild>
+                <a href="/moderator-dashboard">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Sendungen verwalten
+                </a>
               </Button>
             }
           >
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-md mb-4">
               <p className="text-sm text-blue-800">
-                Eine vollständige Verwaltung aller Sendungen und des Sendeplans finden Sie im <a href="/moderator" className="text-radio-purple hover:underline font-medium">Moderatoren-Bereich</a>.
+                Eine vollständige Verwaltung aller Sendungen und des Sendeplans finden Sie im <a href="/moderator-dashboard" className="text-radio-purple hover:underline font-medium">Moderatoren-Dashboard</a> oder im <a href="/moderator" className="text-radio-purple hover:underline font-medium">Sendeplan-Manager</a>.
               </p>
             </div>
           </DashboardCard>
           
           <UpcomingShows />
+        </TabsContent>
+
+        <TabsContent value="polls">
+          <DashboardCard
+            title="Umfrageverwaltung" 
+            icon={<PieChart className="h-5 w-5 text-radio-purple" />}
+            headerClassName="border-b pb-4"
+          >
+            <PollManagement />
+          </DashboardCard>
         </TabsContent>
         
         <TabsContent value="settings">
