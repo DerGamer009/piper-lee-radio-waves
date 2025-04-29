@@ -14,56 +14,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex min-h-screen flex-col">
       <Header/>
-      <div className="hidden md:flex bg-slate-100 h-12 items-center border-b mt-20">
-        <div className="container flex justify-between">
-          <nav className="flex items-center space-x-4 lg:space-x-6">
-            <Link
-              to="/"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Home
-            </Link>
-            <Link
-              to="/sendeplan"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Sendeplan
-            </Link>
-            <Link
-              to="/podcasts"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Podcasts
-            </Link>
-            <Link
-              to="/news"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              News
-            </Link>
-            <Link
-              to="/charts"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Charts
-            </Link>
-            <Link
-              to="/kontakt"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Kontakt
-            </Link>
-            {isAdmin && (
-              <Link
-                to="/admin/panel"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                Admin-Bereich
-              </Link>
-            )}
-          </nav>
-        </div>
-      </div>
       <main className="flex-1 pt-20 md:pt-32">
         {children}
       </main>

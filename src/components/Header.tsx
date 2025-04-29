@@ -65,34 +65,6 @@ const Header = () => {
                     Startseite
                   </Link>
                   <Link 
-                    to="/news" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    News
-                  </Link>
-                  <a 
-                    href="#about" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Über Uns
-                  </a>
-                  <a 
-                    href="#schedule" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Programmplan
-                  </a>
-                  <Link 
-                    to="/partner" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Partner
-                  </Link>
-                  <Link 
                     to="/sendeplan" 
                     className="text-radio-light hover:text-white transition-colors"
                     onClick={() => setMenuOpen(false)}
@@ -100,11 +72,39 @@ const Header = () => {
                     Sendeplan
                   </Link>
                   <Link 
+                    to="/podcasts" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Podcasts
+                  </Link>
+                  <Link 
+                    to="/news" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    News
+                  </Link>
+                  <Link 
+                    to="/charts" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Charts
+                  </Link>
+                  <Link 
                     to="/kontakt" 
                     className="text-radio-light hover:text-white transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
                     Kontakt
+                  </Link>
+                  <Link 
+                    to="/admin/panel" 
+                    className="text-radio-light hover:text-white transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Admin-Bereich
                   </Link>
                 </nav>
               </div>
@@ -120,40 +120,40 @@ const Header = () => {
                 Startseite
               </Link>
               <Link 
-                to="/news" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                News
-              </Link>
-              <a 
-                href="#about" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                Über Uns
-              </a>
-              <a 
-                href="#schedule" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                Programmplan
-              </a>
-              <Link 
-                to="/partner" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                Partner
-              </Link>
-              <Link 
                 to="/sendeplan" 
                 className="text-radio-light hover:text-white transition-colors"
               >
                 Sendeplan
               </Link>
               <Link 
+                to="/podcasts" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Podcasts
+              </Link>
+              <Link 
+                to="/news" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                News
+              </Link>
+              <Link 
+                to="/charts" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Charts
+              </Link>
+              <Link 
                 to="/kontakt" 
                 className="text-radio-light hover:text-white transition-colors"
               >
                 Kontakt
+              </Link>
+              <Link 
+                to="/admin/panel" 
+                className="text-radio-light hover:text-white transition-colors"
+              >
+                Admin-Bereich
               </Link>
             </nav>
             <UserStatus />
