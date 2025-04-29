@@ -22,13 +22,18 @@ import {
   Users, 
   Radio, 
   Calendar,
-  BarChart
+  BarChart,
+  Plus,
+  RefreshCw,
+  Download,
+  ArrowUpRight
 } from 'lucide-react';
 
 const AdminPanel = () => {
   const { user, isAdmin } = useAuth();
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -81,6 +86,17 @@ const AdminPanel = () => {
     }
   };
 
+  const handleRefreshStats = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      toast({
+        title: "Statistiken aktualisiert",
+        description: "Die Daten wurden erfolgreich aktualisiert.",
+      });
+      setRefreshing(false);
+    }, 1000);
+  };
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -93,13 +109,28 @@ const AdminPanel = () => {
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Settings className="h-8 w-8" />
+          <Settings className="h-8 w-8 text-radio-purple" />
           Admin-Dashboard
         </h1>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRefreshStats}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Aktualisieren
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Exportieren
+          </Button>
+        </div>
       </div>
       
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 bg-background border">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="users">Benutzer</TabsTrigger>
           <TabsTrigger value="shows">Sendungen</TabsTrigger>
@@ -112,14 +143,28 @@ const AdminPanel = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <DashboardCard
               title="Aktuelle Benutzer"
-              icon={<Users className="h-5 w-5" />}
+              icon={<Users className="h-5 w-5 text-radio-purple" />}
+              actionButton={
+                <Button variant="ghost" size="sm" asChild>
+                  <a href="/admin" className="flex items-center gap-1 text-xs">
+                    Verwalten <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </Button>
+              }
             >
               <RecentUsers />
             </DashboardCard>
             
             <DashboardCard
               title="Anstehende Sendungen"
-              icon={<Calendar className="h-5 w-5" />}
+              icon={<Calendar className="h-5 w-5 text-radio-purple" />}
+              actionButton={
+                <Button variant="ghost" size="sm" asChild>
+                  <a href="/moderator" className="flex items-center gap-1 text-xs">
+                    Verwalten <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </Button>
+              }
             >
               <UpcomingShows />
             </DashboardCard>
@@ -129,11 +174,19 @@ const AdminPanel = () => {
         <TabsContent value="users">
           <DashboardCard
             title="Benutzerverwaltung" 
-            icon={<Users className="h-5 w-5" />}
+            icon={<Users className="h-5 w-5 text-radio-purple" />}
             className="mb-6"
+            actionButton={
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Neuer Benutzer
+              </Button>
+            }
           >
-            <div className="p-4">
-              <p>Eine vollständige Liste aller Benutzer und deren Verwaltung finden Sie im <a href="/admin" className="text-radio-purple hover:underline">Admin-Bereich</a>.</p>
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
+              <p className="text-sm text-yellow-800">
+                Eine vollständige Verwaltung aller Benutzer und deren Rechte finden Sie im <a href="/admin" className="text-radio-purple hover:underline font-medium">Admin-Bereich</a>.
+              </p>
             </div>
           </DashboardCard>
           
@@ -143,11 +196,19 @@ const AdminPanel = () => {
         <TabsContent value="shows">
           <DashboardCard
             title="Sendungsverwaltung" 
-            icon={<Radio className="h-5 w-5" />}
+            icon={<Radio className="h-5 w-5 text-radio-purple" />}
             className="mb-6"
+            actionButton={
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Neue Sendung
+              </Button>
+            }
           >
-            <div className="p-4">
-              <p>Eine vollständige Liste aller Sendungen und deren Verwaltung finden Sie im <a href="/moderator" className="text-radio-purple hover:underline">Moderatoren-Bereich</a>.</p>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-md mb-4">
+              <p className="text-sm text-blue-800">
+                Eine vollständige Verwaltung aller Sendungen und des Sendeplans finden Sie im <a href="/moderator" className="text-radio-purple hover:underline font-medium">Moderatoren-Bereich</a>.
+              </p>
             </div>
           </DashboardCard>
           
@@ -158,49 +219,107 @@ const AdminPanel = () => {
           <div className="grid gap-6">
             <DashboardCard
               title="Benutzerregistrierung"
-              icon={<Settings className="h-5 w-5" />}
+              icon={<Settings className="h-5 w-5 text-radio-purple" />}
+              headerClassName="border-b pb-4"
             >
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 p-2 rounded-md bg-gray-50">
                   <Switch
                     id="registration-mode"
                     checked={registrationEnabled}
                     onCheckedChange={toggleRegistration}
                     disabled={loading}
+                    className="data-[state=checked]:bg-radio-purple"
                   />
-                  <Label htmlFor="registration-mode">
+                  <Label htmlFor="registration-mode" className="font-medium">
                     Registrierung ist {registrationEnabled ? 'aktiviert' : 'deaktiviert'}
                   </Label>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {registrationEnabled
-                    ? "Neue Benutzer können sich registrieren. Der erste Benutzer erhält automatisch Administrator-Rechte."
-                    : "Registrierung ist gesperrt. Nur bestehende Benutzer können sich anmelden."
-                  }
-                </p>
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                  <p className="text-sm text-gray-700">
+                    {registrationEnabled
+                      ? "Neue Benutzer können sich registrieren. Der erste Benutzer erhält automatisch Administrator-Rechte."
+                      : "Registrierung ist gesperrt. Nur bestehende Benutzer können sich anmelden."
+                    }
+                  </p>
+                </div>
               </div>
             </DashboardCard>
             
             <DashboardCard
               title="System-Status"
-              icon={<BarChart className="h-5 w-5" />}
+              icon={<BarChart className="h-5 w-5 text-radio-purple" />}
+              headerClassName="border-b pb-4"
             >
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span>Datenbank-Status:</span>
-                  <span className="text-green-600 font-medium">Online</span>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 rounded-md bg-gray-50">
+                  <span className="font-medium">Datenbank-Status:</span>
+                  <Badge variant="success" className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                    Online
+                  </Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>API-Status:</span>
-                  <span className="text-green-600 font-medium">Online</span>
+                <div className="flex justify-between items-center p-3 rounded-md bg-gray-50">
+                  <span className="font-medium">API-Status:</span>
+                  <Badge variant="success" className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                    Online
+                  </Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>Streaming-Server:</span>
-                  <span className="text-green-600 font-medium">Online</span>
+                <div className="flex justify-between items-center p-3 rounded-md bg-gray-50">
+                  <span className="font-medium">Streaming-Server:</span>
+                  <Badge variant="success" className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                    Online
+                  </Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>Letztes Backup:</span>
-                  <span className="font-medium">29.04.2025, 04:00 Uhr</span>
+                <div className="flex justify-between items-center p-3 rounded-md bg-gray-50">
+                  <span className="font-medium">Letztes Backup:</span>
+                  <span className="text-sm">29.04.2025, 04:00 Uhr</span>
+                </div>
+              </div>
+            </DashboardCard>
+
+            <DashboardCard
+              title="Website-Einstellungen"
+              icon={<Settings className="h-5 w-5 text-radio-purple" />}
+              headerClassName="border-b pb-4"
+            >
+              <div className="space-y-3 p-4">
+                <p className="text-sm text-gray-700 mb-4">
+                  Hier können Sie verschiedene Einstellungen für die Website vornehmen.
+                </p>
+
+                <div className="grid gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="maintenance-mode" 
+                      className="data-[state=checked]:bg-radio-purple"
+                    />
+                    <Label htmlFor="maintenance-mode" className="font-medium">Wartungsmodus</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="show-listener-count"
+                      defaultChecked
+                      className="data-[state=checked]:bg-radio-purple"
+                    />
+                    <Label htmlFor="show-listener-count" className="font-medium">Hörerzahl anzeigen</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="enable-comments"
+                      defaultChecked
+                      className="data-[state=checked]:bg-radio-purple"
+                    />
+                    <Label htmlFor="enable-comments" className="font-medium">Kommentare aktivieren</Label>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <Button>Einstellungen speichern</Button>
                 </div>
               </div>
             </DashboardCard>

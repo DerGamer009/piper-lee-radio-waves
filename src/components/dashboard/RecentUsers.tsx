@@ -2,6 +2,7 @@
 import React from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Calendar, Mail, User } from 'lucide-react';
 
 // Dummy data for recent users
 const recentUsers = [
@@ -13,16 +14,16 @@ const recentUsers = [
 
 const RecentUsers = () => {
   return (
-    <div className="rounded-lg border shadow">
-      <div className="p-4 border-b">
+    <div className="rounded-lg border shadow overflow-hidden">
+      <div className="p-4 border-b flex justify-between items-center">
         <h3 className="font-medium">Neueste Benutzer</h3>
+        <a href="/admin" className="text-sm text-radio-purple hover:underline">Alle anzeigen</a>
       </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Benutzername</TableHead>
-              <TableHead>Name</TableHead>
+              <TableHead>Benutzer</TableHead>
               <TableHead>E-Mail</TableHead>
               <TableHead>Rolle</TableHead>
               <TableHead>Registriert</TableHead>
@@ -32,13 +33,42 @@ const RecentUsers = () => {
           <TableBody>
             {recentUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.username}</TableCell>
-                <TableCell>{user.fullName}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.role}</TableCell>
-                <TableCell>{user.date}</TableCell>
                 <TableCell>
-                  <Badge variant={user.status === "Aktiv" ? "default" : "secondary"}>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-radio-purple/10 flex items-center justify-center text-radio-purple">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="font-medium">{user.fullName}</div>
+                      <div className="text-xs text-muted-foreground">{user.username}</div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Mail className="h-3 w-3 text-muted-foreground" />
+                    {user.email}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    variant={user.role === "Moderator" ? "purple" : "secondary"}
+                    size="sm"
+                  >
+                    {user.role}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    {user.date}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    variant={user.status === "Aktiv" ? "success" : "secondary"}
+                    size="sm"
+                  >
                     {user.status}
                   </Badge>
                 </TableCell>
