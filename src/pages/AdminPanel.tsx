@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,11 @@ import {
   FileText,
   Save,
   AlertTriangle,
-  Info
+  Info,
+  CheckCircle,
+  Database,
+  Server,
+  Clock
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -260,6 +263,15 @@ const AdminPanel = () => {
     { value: 'dark', label: 'Dunkel' },
   ];
 
+  const StatusIndicator = ({ online }: { online: boolean }) => (
+    <div className="flex items-center justify-center gap-2">
+      <div className={`h-2.5 w-2.5 rounded-full ${online ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+      <span className={`text-sm ${online ? 'text-green-600' : 'text-red-600'} font-medium`}>
+        {online ? 'Online' : 'Offline'}
+      </span>
+    </div>
+  );
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
@@ -449,20 +461,33 @@ const AdminPanel = () => {
               headerClassName="border-b pb-4"
             >
               <div className="space-y-4">
-                <div className="flex items-center space-x-2 p-4 rounded-lg bg-gray-50 border">
-                  <Switch
-                    id="registration-mode"
-                    checked={registrationEnabled}
-                    onCheckedChange={toggleRegistration}
-                    disabled={loading}
-                    className="data-[state=checked]:bg-radio-purple"
-                  />
-                  <Label htmlFor="registration-mode" className="font-medium">
-                    Registrierung ist {registrationEnabled ? 'aktiviert' : 'deaktiviert'}
-                  </Label>
+                <div className="flex items-center justify-between p-5 rounded-lg bg-gray-50 border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-indigo-100 p-2 rounded-full">
+                      <Users className="h-5 w-5 text-radio-purple" />
+                    </div>
+                    <Label htmlFor="registration-mode" className="font-medium text-lg">
+                      Benutzerregistrierung
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-600">
+                      {registrationEnabled ? 'Aktiviert' : 'Deaktiviert'}
+                    </span>
+                    <Switch
+                      id="registration-mode"
+                      checked={registrationEnabled}
+                      onCheckedChange={toggleRegistration}
+                      disabled={loading}
+                      className="data-[state=checked]:bg-radio-purple"
+                    />
+                  </div>
                 </div>
-                <div className="p-4 bg-gray-50 border rounded-lg">
-                  <p className="text-sm text-gray-700">
+                
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-md flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-700">
                     {registrationEnabled
                       ? "Neue Benutzer können sich registrieren. Der erste Benutzer erhält automatisch Administrator-Rechte."
                       : "Registrierung ist gesperrt. Nur bestehende Benutzer können sich anmelden."
@@ -479,29 +504,40 @@ const AdminPanel = () => {
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
-                  <span className="font-medium">Datenbank-Status:</span>
-                  <Badge variant="success" className="flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                    Online
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Database className="h-5 w-5 text-indigo-600" />
+                    <span className="font-medium">Datenbank-Status:</span>
+                  </div>
+                  <StatusIndicator online={true} />
                 </div>
+                
                 <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
-                  <span className="font-medium">API-Status:</span>
-                  <Badge variant="success" className="flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                    Online
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Server className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium">API-Status:</span>
+                  </div>
+                  <StatusIndicator online={true} />
                 </div>
+                
                 <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
-                  <span className="font-medium">Streaming-Server:</span>
-                  <Badge variant="success" className="flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                    Online
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Radio className="h-5 w-5 text-purple-600" />
+                    <span className="font-medium">Streaming-Server:</span>
+                  </div>
+                  <StatusIndicator online={true} />
                 </div>
+                
                 <div className="flex justify-between items-center p-4 rounded-lg bg-gray-50 border">
-                  <span className="font-medium">Letztes Backup:</span>
-                  <span className="text-sm">{new Date().toLocaleDateString('de-DE')} {new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})}</span>
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                    <span className="font-medium">Letztes Backup:</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">
+                      {new Date().toLocaleDateString('de-DE')} {new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
                 </div>
               </div>
             </DashboardCard>
@@ -522,7 +558,7 @@ const AdminPanel = () => {
 
                 <div className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="site-title">Website-Titel</Label>
+                    <Label htmlFor="site-title" className="text-sm font-medium">Website-Titel</Label>
                     <Input 
                       id="site-title"
                       value={siteTitle}
@@ -531,11 +567,12 @@ const AdminPanel = () => {
                         setSettingsChanged(true);
                       }}
                       placeholder="Radio Community"
+                      className="bg-gray-50"
                     />
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="site-description">Website-Beschreibung</Label>
+                    <Label htmlFor="site-description" className="text-sm font-medium">Website-Beschreibung</Label>
                     <Textarea 
                       id="site-description"
                       value={siteDescription}
@@ -544,12 +581,12 @@ const AdminPanel = () => {
                         setSettingsChanged(true);
                       }}
                       placeholder="Beschreibung der Website..."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] bg-gray-50"
                     />
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="theme-color">Farbschema</Label>
+                    <Label htmlFor="theme-color" className="text-sm font-medium">Farbschema</Label>
                     <Select 
                       value={themeColor}
                       onValueChange={(value) => {
@@ -557,7 +594,7 @@ const AdminPanel = () => {
                         setSettingsChanged(true);
                       }}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full bg-gray-50">
                         <SelectValue placeholder="Wählen Sie ein Farbschema" />
                       </SelectTrigger>
                       <SelectContent>
@@ -576,37 +613,61 @@ const AdminPanel = () => {
                 <div className="space-y-4">
                   <h3 className="font-medium">Funktionseinstellungen</h3>
                   
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border">
-                    <Label htmlFor="maintenance-mode" className="font-medium">Wartungsmodus</Label>
-                    <Switch
-                      id="maintenance-mode" 
-                      checked={maintenanceMode}
-                      onCheckedChange={() => handleToggleSetting('maintenance_mode', maintenanceMode, setMaintenanceMode)}
-                      disabled={loading}
-                      className="data-[state=checked]:bg-radio-purple"
-                    />
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      <Label htmlFor="maintenance-mode" className="font-medium">Wartungsmodus</Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-600">
+                        {maintenanceMode ? 'Aktiviert' : 'Deaktiviert'}
+                      </span>
+                      <Switch
+                        id="maintenance-mode" 
+                        checked={maintenanceMode}
+                        onCheckedChange={() => handleToggleSetting('maintenance_mode', maintenanceMode, setMaintenanceMode)}
+                        disabled={loading}
+                        className="data-[state=checked]:bg-amber-600"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border">
-                    <Label htmlFor="show-listener-count" className="font-medium">Hörerzahl anzeigen</Label>
-                    <Switch 
-                      id="show-listener-count"
-                      checked={showListenerCount}
-                      onCheckedChange={() => handleToggleSetting('show_listener_count', showListenerCount, setShowListenerCount)}
-                      disabled={loading}
-                      className="data-[state=checked]:bg-radio-purple"
-                    />
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border">
+                    <div className="flex items-center gap-3">
+                      <BarChart className="h-5 w-5 text-blue-600" />
+                      <Label htmlFor="show-listener-count" className="font-medium">Hörerzahl anzeigen</Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-600">
+                        {showListenerCount ? 'Aktiviert' : 'Deaktiviert'}
+                      </span>
+                      <Switch 
+                        id="show-listener-count"
+                        checked={showListenerCount}
+                        onCheckedChange={() => handleToggleSetting('show_listener_count', showListenerCount, setShowListenerCount)}
+                        disabled={loading}
+                        className="data-[state=checked]:bg-radio-purple"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border">
-                    <Label htmlFor="enable-comments" className="font-medium">Kommentare aktivieren</Label>
-                    <Switch 
-                      id="enable-comments"
-                      checked={enableComments}
-                      onCheckedChange={() => handleToggleSetting('enable_comments', enableComments, setEnableComments)}
-                      disabled={loading}
-                      className="data-[state=checked]:bg-radio-purple"
-                    />
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-indigo-600" />
+                      <Label htmlFor="enable-comments" className="font-medium">Kommentare aktivieren</Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-600">
+                        {enableComments ? 'Aktiviert' : 'Deaktiviert'}
+                      </span>
+                      <Switch 
+                        id="enable-comments"
+                        checked={enableComments}
+                        onCheckedChange={() => handleToggleSetting('enable_comments', enableComments, setEnableComments)}
+                        disabled={loading}
+                        className="data-[state=checked]:bg-radio-purple"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -614,7 +675,7 @@ const AdminPanel = () => {
                   <Button 
                     onClick={saveAllSettings}
                     disabled={loading || !settingsChanged}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-radio-purple hover:bg-radio-blue transition-colors"
                   >
                     <Save className="h-4 w-4" />
                     Einstellungen speichern
@@ -634,25 +695,38 @@ const AdminPanel = () => {
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <h3 className="font-medium">Backup erstellen</h3>
+                  <div className="p-5 border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-sm space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-blue-100 p-2 rounded-full">
+                        <Download className="h-4 w-4 text-blue-700" />
+                      </div>
+                      <h3 className="font-medium">Backup erstellen</h3>
+                    </div>
                     <p className="text-sm text-gray-600">
                       Erstellen Sie ein vollständiges Backup aller Daten.
                     </p>
-                    <Button variant="outline">
-                      <Download className="h-4 w-4 mr-2" />
+                    <Button variant="outline" className="w-full flex items-center justify-center gap-2 hover:bg-blue-50">
+                      <Download className="h-4 w-4" />
                       Backup herunterladen
                     </Button>
                   </div>
                   
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <h3 className="font-medium">Backup wiederherstellen</h3>
+                  <div className="p-5 border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-sm space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-purple-100 p-2 rounded-full">
+                        <Server className="h-4 w-4 text-radio-purple" />
+                      </div>
+                      <h3 className="font-medium">Backup wiederherstellen</h3>
+                    </div>
                     <p className="text-sm text-gray-600">
                       Stellen Sie ein früheres Backup wieder her.
                     </p>
                     <div className="flex flex-col gap-2">
-                      <Input type="file" id="backup-file" />
-                      <Button variant="outline" disabled>Backup hochladen</Button>
+                      <Input type="file" id="backup-file" className="border border-gray-300 bg-white" />
+                      <Button variant="outline" disabled className="flex items-center justify-center gap-2">
+                        <Server className="h-4 w-4" />
+                        Backup hochladen
+                      </Button>
                     </div>
                   </div>
                 </div>
