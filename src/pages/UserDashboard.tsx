@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
-import { Calendar, Mail, MessageCircle, User, Radio, Headphones, Bell, Music } from 'lucide-react';
+import { Calendar, Mail, MessageCircle, User, Radio, Headphones, Bell, Music, Settings } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
