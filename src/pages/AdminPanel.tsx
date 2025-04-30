@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertTriangle, Wrench, Users, Settings, Radio, ChevronRight, RefreshCw, Database } from 'lucide-react';
+import { AlertTriangle, Wrench, Users, Settings, Radio, ChevronRight, RefreshCw, Database, Archive, History, ServerCog, Trash, Download, Upload } from 'lucide-react';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import RecentUsers from '@/components/dashboard/RecentUsers';
 import UpcomingShows from '@/components/dashboard/UpcomingShows';
@@ -22,6 +22,8 @@ const AdminPanel = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [backupInProgress, setBackupInProgress] = useState(false);
   const [settingsTab, setSettingsTab] = useState('general');
+  const [restoreInProgress, setRestoreInProgress] = useState(false);
+  const [optimizingDatabase, setOptimizingDatabase] = useState(false);
 
   useEffect(() => {
     // Update local state when the maintenance mode changes in the context
@@ -82,6 +84,32 @@ const AdminPanel = () => {
         description: "Das Backup wurde erfolgreich erstellt und gespeichert.",
       });
     }, 2000);
+  };
+
+  const handleRestoreBackup = (backupDate: string) => {
+    setRestoreInProgress(true);
+    
+    // Simulate restore process
+    setTimeout(() => {
+      setRestoreInProgress(false);
+      toast({
+        title: "Backup wiederhergestellt",
+        description: `Das Backup vom ${backupDate} wurde erfolgreich wiederhergestellt.`,
+      });
+    }, 3000);
+  };
+
+  const handleOptimizeDatabase = () => {
+    setOptimizingDatabase(true);
+    
+    // Simulate database optimization
+    setTimeout(() => {
+      setOptimizingDatabase(false);
+      toast({
+        title: "Datenbank optimiert",
+        description: "Die Datenbank wurde erfolgreich optimiert und bereinigt.",
+      });
+    }, 2500);
   };
 
   if (!isAdmin) {
@@ -165,9 +193,10 @@ const AdminPanel = () => {
               </CardHeader>
               <CardContent>
                 <Tabs value={settingsTab} onValueChange={setSettingsTab} className="w-full">
-                  <TabsList className="mb-4 grid grid-cols-2 md:w-auto md:inline-flex">
+                  <TabsList className="mb-4 grid grid-cols-3 md:w-auto md:inline-flex">
                     <TabsTrigger value="general">Allgemein</TabsTrigger>
                     <TabsTrigger value="backup">Backup & Wartung</TabsTrigger>
+                    <TabsTrigger value="database">Datenbank</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="general" className="space-y-6">
@@ -260,16 +289,40 @@ const AdminPanel = () => {
                     
                     {/* Backup-Verlauf */}
                     <div className="border border-border/40 rounded-lg p-4 bg-card/50">
-                      <h3 className="font-medium mb-4">Backup-Verlauf</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium flex items-center gap-2">
+                          <History className="h-5 w-5 text-indigo-500" />
+                          Backup-Verlauf
+                        </h3>
+                        <Button variant="outline" size="sm" className="flex items-center gap-1">
+                          <Upload className="h-4 w-4" />
+                          Backup hochladen
+                        </Button>
+                      </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center p-2 border-b">
                           <div>
                             <p className="font-medium">Vollständiges Backup</p>
                             <p className="text-xs text-muted-foreground">29.04.2025 - 08:45</p>
                           </div>
-                          <div>
-                            <Button variant="outline" size="sm">
-                              Herunterladen
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleRestoreBackup("29.04.2025")} 
+                              disabled={restoreInProgress}
+                              className="flex items-center gap-1"
+                            >
+                              {restoreInProgress ? (
+                                <RefreshCw className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Archive className="h-3 w-3" />
+                              )}
+                              Wiederherstellen
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex items-center gap-1">
+                              <Download className="h-3 w-3" />
+                              Download
                             </Button>
                           </div>
                         </div>
@@ -278,9 +331,24 @@ const AdminPanel = () => {
                             <p className="font-medium">Wöchentliches Backup</p>
                             <p className="text-xs text-muted-foreground">22.04.2025 - 03:00</p>
                           </div>
-                          <div>
-                            <Button variant="outline" size="sm">
-                              Herunterladen
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleRestoreBackup("22.04.2025")}
+                              disabled={restoreInProgress}
+                              className="flex items-center gap-1"
+                            >
+                              {restoreInProgress ? (
+                                <RefreshCw className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Archive className="h-3 w-3" />
+                              )}
+                              Wiederherstellen
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex items-center gap-1">
+                              <Download className="h-3 w-3" />
+                              Download
                             </Button>
                           </div>
                         </div>
@@ -289,9 +357,24 @@ const AdminPanel = () => {
                             <p className="font-medium">Manuelles Backup</p>
                             <p className="text-xs text-muted-foreground">15.04.2025 - 14:22</p>
                           </div>
-                          <div>
-                            <Button variant="outline" size="sm">
-                              Herunterladen
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleRestoreBackup("15.04.2025")}
+                              disabled={restoreInProgress}
+                              className="flex items-center gap-1"
+                            >
+                              {restoreInProgress ? (
+                                <RefreshCw className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Archive className="h-3 w-3" />
+                              )}
+                              Wiederherstellen
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex items-center gap-1">
+                              <Download className="h-3 w-3" />
+                              Download
                             </Button>
                           </div>
                         </div>
@@ -300,7 +383,10 @@ const AdminPanel = () => {
                     
                     {/* Backup-Einstellungen */}
                     <div className="border border-border/40 rounded-lg p-4 bg-card/50">
-                      <h3 className="font-medium mb-4">Backup-Einstellungen</h3>
+                      <h3 className="font-medium mb-4 flex items-center gap-2">
+                        <ServerCog className="h-5 w-5 text-gray-500" />
+                        Backup-Einstellungen
+                      </h3>
                       <div className="grid gap-4">
                         <div className="flex items-center justify-between">
                           <div>
@@ -325,6 +411,96 @@ const AdminPanel = () => {
                             <option value="90">90 Tage</option>
                           </select>
                         </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="database" className="space-y-6">
+                    {/* Database Status */}
+                    <div className="border border-border/40 rounded-lg p-4 bg-card/50">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium flex items-center gap-2">
+                          <Database className="h-5 w-5 text-blue-500" />
+                          Datenbankstatus
+                        </h3>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleOptimizeDatabase}
+                          disabled={optimizingDatabase}
+                          className="flex items-center gap-1"
+                        >
+                          {optimizingDatabase ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                              Optimierung läuft...
+                            </>
+                          ) : (
+                            <>
+                              <ServerCog className="h-4 w-4 mr-1" />
+                              Datenbank optimieren
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        <div className="p-3 bg-background/40 border rounded-md">
+                          <p className="text-sm text-muted-foreground">Größe</p>
+                          <p className="text-xl font-medium">256 MB</p>
+                        </div>
+                        <div className="p-3 bg-background/40 border rounded-md">
+                          <p className="text-sm text-muted-foreground">Tabellen</p>
+                          <p className="text-xl font-medium">12</p>
+                        </div>
+                        <div className="p-3 bg-background/40 border rounded-md">
+                          <p className="text-sm text-muted-foreground">Status</p>
+                          <div className="flex items-center">
+                            <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
+                            <p className="font-medium">Optimal</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Database Tables */}
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Datenbanktabellen</h4>
+                      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        {['users', 'profiles', 'shows', 'podcasts', 'news', 'schedule', 'polls', 'poll_options', 'poll_votes', 'app_settings', 'user_roles'].map((table) => (
+                          <div key={table} className="flex justify-between items-center p-2 border rounded-md hover:bg-muted/50">
+                            <span className="font-mono text-sm">{table}</span>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm">
+                                Anzeigen
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-100">
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Database Maintenance */}
+                    <div className="border border-border/40 rounded-lg p-4 bg-card/50">
+                      <h3 className="font-medium mb-4">Datenbankwartung</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Button variant="outline" className="justify-start">
+                          <ServerCog className="h-4 w-4 mr-2" />
+                          Datenbank überprüfen
+                        </Button>
+                        <Button variant="outline" className="justify-start">
+                          <Archive className="h-4 w-4 mr-2" />
+                          Alte Daten archivieren
+                        </Button>
+                        <Button variant="outline" className="justify-start">
+                          <Trash className="h-4 w-4 mr-2" />
+                          Cache löschen
+                        </Button>
+                        <Button variant="outline" className="justify-start text-red-500 hover:text-red-700 hover:bg-red-100">
+                          <Trash className="h-4 w-4 mr-2" />
+                          Temporäre Dateien löschen
+                        </Button>
                       </div>
                     </div>
                   </TabsContent>
