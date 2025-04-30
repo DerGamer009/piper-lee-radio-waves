@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 const Download = () => {
   const { toast } = useToast();
   
+  // Direct link to the APK file - we can update this URL
+  const apkDownloadUrl = "https://backend.piper-lee.net/download/piper-lee-radio-app.apk";
+  
   const handleDownload = () => {
     toast({
       title: "Download gestartet",
@@ -53,9 +56,10 @@ const Download = () => {
             >
               <DownloadIcon className="h-5 w-5" />
               <a 
-                href="/download/piper-lee-radio-app.apk" 
+                href={apkDownloadUrl}
                 download="piper-lee-radio-app.apk"
                 className="flex-1"
+                type="application/vnd.android.package-archive"
               >
                 Android APK herunterladen
               </a>
