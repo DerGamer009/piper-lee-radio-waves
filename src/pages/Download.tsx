@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Download as DownloadIcon, ExternalLink, ChevronDown, Share2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Download = () => {
   const { toast } = useToast();
