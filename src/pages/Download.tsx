@@ -54,8 +54,7 @@ const Download = () => {
               <DownloadIcon className="h-5 w-5" />
               <a 
                 href="/download/piper-lee-radio-app.apk" 
-                download="piper-lee-radio-app.apk" 
-                type="application/vnd.android.package-archive"
+                download="piper-lee-radio-app.apk"
                 className="flex-1"
               >
                 Android APK herunterladen
