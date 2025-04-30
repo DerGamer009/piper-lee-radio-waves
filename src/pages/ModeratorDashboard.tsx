@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
-import { Calendar, Mic, Radio, LogOut, RefreshCw } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Calendar, Mic, Radio, LogOut, RefreshCw, Menu } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PodcastManagement from '@/components/dashboard/PodcastManagement';
@@ -49,6 +49,8 @@ const ModeratorDashboard = () => {
   const { user, isModerator, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const { isMobile } = useIsMobile();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // States for show form
   const [isAddingShow, setIsAddingShow] = useState(false);
@@ -163,41 +165,52 @@ const ModeratorDashboard = () => {
   const isLoading = showsLoading || scheduleLoading;
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Mic className="h-8 w-8 text-radio-purple" />
-          Moderator-Dashboard
+    <div className="container mx-auto py-6 md:py-8 px-4">
+      <div className="flex justify-between items-center mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+          <Mic className="h-6 w-6 md:h-8 md:w-8 text-radio-purple" />
+          <span className={isMobile ? "sr-only" : ""}>Moderator-Dashboard</span>
         </h1>
         <div className="flex items-center gap-2">
+          {isMobile && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="sm"
             onClick={handleRefresh}
             disabled={refreshing}
+            className={isMobile ? "px-2" : ""}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Aktualisieren
+            <RefreshCw className={`h-4 w-4 ${isMobile ? "" : "mr-2"} ${refreshing ? 'animate-spin' : ''}`} />
+            {!isMobile && "Aktualisieren"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Abmelden
+          <Button variant="outline" size="sm" onClick={handleLogout} className={isMobile ? "px-2" : ""}>
+            <LogOut className={`h-4 w-4 ${isMobile ? "" : "mr-2"}`} />
+            {!isMobile && "Abmelden"}
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="shows" className="space-y-6">
-        <TabsList className="mb-4 bg-background border">
-          <TabsTrigger value="shows">Sendungen</TabsTrigger>
-          <TabsTrigger value="schedule">Sendeplan</TabsTrigger>
-          <TabsTrigger value="podcasts">Podcasts</TabsTrigger>
-          <TabsTrigger value="live">Live-Sendung</TabsTrigger>
+        <TabsList className="mb-4 bg-background border overflow-x-auto flex w-full md:inline-flex">
+          <TabsTrigger value="shows" className="flex-1 md:flex-initial">Sendungen</TabsTrigger>
+          <TabsTrigger value="schedule" className="flex-1 md:flex-initial">Sendeplan</TabsTrigger>
+          <TabsTrigger value="podcasts" className="flex-1 md:flex-initial">Podcasts</TabsTrigger>
+          <TabsTrigger value="live" className="flex-1 md:flex-initial">Live</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shows" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-wrap gap-2">
                 <CardTitle>Sendungen verwalten</CardTitle>
                 {!isAddingShow && (
                   <Button onClick={() => setIsAddingShow(true)}>
@@ -308,7 +321,7 @@ const ModeratorDashboard = () => {
         <TabsContent value="schedule">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-wrap gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
                   Sendeplan
@@ -328,7 +341,7 @@ const ModeratorDashboard = () => {
                 </div>
               ) : schedule && schedule.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {schedule.map((item) => (
                       <div 
                         key={item.id}
@@ -378,9 +391,9 @@ const ModeratorDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div className="p-6 border rounded-md bg-gray-50">
-                  <h3 className="text-xl font-medium mb-4">Stream-Status</h3>
-                  <div className="flex items-center gap-4">
+                <div className="p-4 md:p-6 border rounded-md bg-gray-50">
+                  <h3 className="text-lg md:text-xl font-medium mb-4">Stream-Status</h3>
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center">
                       <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
                       <span className="font-medium">Online</span>
@@ -394,7 +407,7 @@ const ModeratorDashboard = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div>
                     <Label htmlFor="live-title">Live-Titel</Label>
                     <Input 
@@ -412,12 +425,13 @@ const ModeratorDashboard = () => {
                         id="current-song" 
                         placeholder="Titel - Interpret" 
                         defaultValue="Sunshine - The Weeknd"
+                        className="pr-24"
                       />
                       <Button 
                         className="absolute right-1 top-1 h-7" 
                         size="sm"
                       >
-                        Aktualisieren
+                        Update
                       </Button>
                     </div>
                   </div>
@@ -430,10 +444,11 @@ const ModeratorDashboard = () => {
                     placeholder="Beschreibung der Live-Sendung" 
                     className="mt-1"
                     defaultValue="Die besten Hits für Ihren Nachmittag! DJ Max bringt Sie mit den neusten Charts und den größten Klassikern durch den Tag."
+                    rows={3}
                   />
                 </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center space-x-2">
                     <Switch id="enable-chat" defaultChecked />
                     <Label htmlFor="enable-chat">Chat aktivieren</Label>
