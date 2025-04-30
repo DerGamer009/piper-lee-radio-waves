@@ -2,36 +2,47 @@
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
+const TABLET_BREAKPOINT = 1024
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [width, setWidth] = React.useState<number | undefined>(undefined)
 
   React.useEffect(() => {
-    // Function to check if the screen is mobile
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    // Function to check screen width
+    const checkWidth = () => {
+      setWidth(window.innerWidth)
     }
     
     // Initial check
-    checkMobile()
+    checkWidth()
     
     // Add event listener for resize
-    window.addEventListener("resize", checkMobile)
+    window.addEventListener("resize", checkWidth)
     
     // Also use matchMedia for better compatibility
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    mql.addEventListener("change", checkMobile)
+    const mobileMql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    mobileMql.addEventListener("change", checkWidth)
     
     // Cleanup
     return () => {
-      window.removeEventListener("resize", checkMobile)
-      mql.removeEventListener("change", checkMobile)
+      window.removeEventListener("resize", checkWidth)
+      mobileMql.removeEventListener("change", checkWidth)
     }
   }, [])
 
+  const currentWidth = width || 0
+  
   return {
-    isMobile: !!isMobile,
-    isTablet: window.innerWidth >= MOBILE_BREAKPOINT && window.innerWidth < 1024,
-    isDesktop: window.innerWidth >= 1024,
+    isMobile: currentWidth < MOBILE_BREAKPOINT,
+    isTablet: currentWidth >= MOBILE_BREAKPOINT && currentWidth < TABLET_BREAKPOINT,
+    isDesktop: currentWidth >= TABLET_BREAKPOINT,
+    // Add a simple boolean property for backward compatibility
+    value: currentWidth < MOBILE_BREAKPOINT
   }
+}
+
+// For direct boolean usage - this allows code that expects boolean to continue working
+export function useIsMobileValue(): boolean {
+  const { isMobile } = useIsMobile()
+  return isMobile
 }
