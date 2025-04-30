@@ -117,18 +117,21 @@ export type Database = {
           id: string
           option_text: string
           poll_id: string
+          votes: number | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           option_text: string
           poll_id: string
+          votes?: number | null
         }
         Update: {
           created_at?: string | null
           id?: string
           option_text?: string
           poll_id?: string
+          votes?: number | null
         }
         Relationships: [
           {
