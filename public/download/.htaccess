@@ -1,0 +1,6 @@
+
+# Set correct MIME type for APK files
+<Files *.apk>
+    ForceType application/vnd.android.package-archive
+    Header set Content-Disposition "attachment"
+</Files>
