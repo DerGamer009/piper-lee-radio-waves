@@ -25,6 +25,7 @@ import UserDashboard from "./pages/UserDashboard";
 import Auth from "./pages/Auth";
 import News from "./pages/News";
 import Maintenance from "./pages/Maintenance";
+import Download from "./pages/Download";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/charts" element={<Layout><Charts /></Layout>} />
               <Route path="/news" element={<Layout><News /></Layout>} />
               <Route path="/news/:id" element={<Layout><News /></Layout>} />
+              <Route path="/download" element={<Layout><Download /></Layout>} />
               {/* The maintenance page should be accessible to everyone without authentication */}
               <Route path="/maintenance" element={<Layout><Maintenance /></Layout>} />
               <Route 
