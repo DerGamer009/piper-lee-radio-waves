@@ -126,6 +126,40 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
+// Ensure we have a consistent initial state
+const initialState: State = { toasts: [] };
+
+// Create a global context for storing state
+const ToastContext = React.createContext<{
+  state: State;
+  dispatch: React.Dispatch<Action>;
+}>({
+  state: initialState,
+  dispatch: () => null,
+});
+
+// Create a provider component
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ 
+  children 
+}) => {
+  const [state, dispatch] = React.useReducer(reducer, initialState);
+
+  return (
+    <ToastContext.Provider value={{ state, dispatch }}>
+      {children}
+    </ToastContext.Provider>
+  );
+};
+
+// Use a custom hook to access the toast context
+const useToastContext = () => {
+  const context = React.useContext(ToastContext);
+  if (context === undefined) {
+    throw new Error("useToastContext must be used within a ToastProvider");
+  }
+  return context;
+};
+
 const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
