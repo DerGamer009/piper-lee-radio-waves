@@ -24,6 +24,15 @@ interface ScheduleItem {
   host?: string;
 }
 
+interface Partner {
+  id: string;
+  name: string;
+  description?: string;
+  website_url?: string;
+  logo_url?: string;
+  is_active?: boolean;
+}
+
 const API_URL = "https://backend.piper-lee.net/api/";
 
 export const fetchStreamInfo = async (): Promise<StreamInfo> => {
@@ -100,5 +109,83 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
     
     // Return empty array to prevent UI errors
     return [];
+  }
+};
+
+// Neue Funktion zum Abrufen der Partner aus Supabase
+export const fetchPartners = async (): Promise<Partner[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('partners')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+    
+    if (error) {
+      console.error("Fehler beim Abrufen der Partner:", error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Fehler beim Abrufen der Partner:", error);
+    return [];
+  }
+};
+
+export const createPartner = async (partner: Omit<Partner, 'id'>): Promise<Partner | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('partners')
+      .insert(partner)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Fehler beim Erstellen des Partners:", error);
+    return null;
+  }
+};
+
+export const updatePartner = async (id: string, partner: Partial<Partner>): Promise<Partner | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('partners')
+      .update(partner)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren des Partners:", error);
+    return null;
+  }
+};
+
+export const deletePartner = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('partners')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Fehler beim Löschen des Partners:", error);
+    return false;
   }
 };

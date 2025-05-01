@@ -1,10 +1,46 @@
 
+import { useState, useEffect } from "react";
 import { ArrowLeft, Radio } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
+import { fetchPartners } from "@/services/radioService";
+import { useToast } from "@/components/ui/use-toast";
+
+interface Partner {
+  id: string;
+  name: string;
+  description?: string;
+  website_url?: string;
+  logo_url?: string;
+}
 
 const Partner = () => {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const loadPartners = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchPartners();
+        setPartners(data);
+      } catch (error) {
+        console.error("Fehler beim Laden der Partner:", error);
+        toast({
+          title: "Fehler",
+          description: "Partner konnten nicht geladen werden.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPartners();
+  }, [toast]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -27,61 +63,48 @@ const Partner = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {[
-              {
-                name: "Soundwave Studios",
-                description: "Professionelle Tonstudios für Aufnahmen und Interviews.",
-                logo: "🎧",
-                website: "#"
-              },
-              {
-                name: "MusicMasters",
-                description: "Experten für Musikproduktion und Sounddesign.",
-                logo: "🎵",
-                website: "#"
-              },
-              {
-                name: "Digital Broadcast",
-                description: "Führende Technologielösungen für Radiostationen.",
-                logo: "📡",
-                website: "#"
-              },
-              {
-                name: "Media Connect",
-                description: "Werbe- und PR-Agentur für Medienunternehmen.",
-                logo: "📱",
-                website: "#"
-              },
-              {
-                name: "Event Horizon",
-                description: "Organisation und Durchführung von Live-Events.",
-                logo: "🎪",
-                website: "#"
-              },
-              {
-                name: "Global Reach",
-                description: "Internationales Netzwerk für Mediendistribution.",
-                logo: "🌐",
-                website: "#"
-              }
-            ].map((partner, index) => (
-              <div 
-                key={index} 
-                className="bg-card/50 backdrop-blur-sm p-6 rounded-lg hover:transform hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="text-4xl mb-4">{partner.logo}</div>
-                <h3 className="text-xl font-semibold mb-3">{partner.name}</h3>
-                <p className="text-radio-light/70 mb-4">{partner.description}</p>
-                <a 
-                  href={partner.website} 
-                  className="inline-block text-radio-purple hover:text-radio-blue transition-colors"
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin h-12 w-12 border-4 border-radio-purple border-t-transparent rounded-full"></div>
+            </div>
+          ) : partners.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+              {partners.map((partner) => (
+                <div 
+                  key={partner.id} 
+                  className="bg-card/50 backdrop-blur-sm p-6 rounded-lg hover:transform hover:-translate-y-1 transition-all duration-300"
                 >
-                  Website besuchen →
-                </a>
-              </div>
-            ))}
-          </div>
+                  <div className="text-4xl mb-4">{partner.logo_url ? (
+                    <img 
+                      src={partner.logo_url} 
+                      alt={partner.name}
+                      className="h-12 w-12 object-contain" 
+                    />
+                  ) : '🎧'}</div>
+                  <h3 className="text-xl font-semibold mb-3">{partner.name}</h3>
+                  <p className="text-radio-light/70 mb-4">{partner.description || 'Keine Beschreibung verfügbar.'}</p>
+                  {partner.website_url && (
+                    <a 
+                      href={partner.website_url} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-radio-purple hover:text-radio-blue transition-colors"
+                    >
+                      Website besuchen →
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold mb-2">Keine Partner gefunden</h3>
+              <p className="text-radio-light/70">
+                Derzeit sind keine Partner in unserer Datenbank verfügbar.
+              </p>
+            </div>
+          )}
           
           <div className="max-w-3xl mx-auto bg-card/20 backdrop-blur-sm p-8 rounded-lg">
             <h2 className="text-2xl font-bold mb-4">Werden Sie Partner</h2>

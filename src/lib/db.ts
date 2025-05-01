@@ -55,7 +55,15 @@ export const createUser = async (userData: CreateUserData): Promise<Omit<DBUser,
       isActive: userData.isActive ?? true
     }]);
     
-    const newUserId = result[0].insertId;
+    // Verwende sicheres Zugriffsmuster für insertId
+    const newUserId = typeof result[0] === 'object' && result[0] !== null && 'insertId' in result[0] 
+      ? result[0].insertId 
+      : -1;
+    
+    if (newUserId === -1) {
+      throw new Error("Failed to get inserted ID");
+    }
+    
     const newUser = await executeQuery("SELECT * FROM users WHERE id = ?", [newUserId]) as DBUser[];
     
     if (!newUser[0]) {
@@ -93,7 +101,13 @@ export const updateUser = async (id: number, userData: Partial<CreateUserData>):
 export const deleteUser = async (id: number): Promise<boolean> => {
   try {
     const result = await executeQuery("DELETE FROM users", [id]);
-    return result[0].affectedRows > 0;
+    
+    // Verwende sicheres Zugriffsmuster für affectedRows
+    const affectedRows = typeof result[0] === 'object' && result[0] !== null && 'affectedRows' in result[0] 
+      ? result[0].affectedRows 
+      : 0;
+    
+    return affectedRows > 0;
   } catch (error) {
     console.error("Error deleting user:", error);
     return false;

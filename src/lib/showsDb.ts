@@ -45,7 +45,15 @@ export const getShows = async (): Promise<Show[]> => {
 export const createShow = async (show: Omit<Show, 'id' | 'created_at' | 'updated_at'>): Promise<Show | null> => {
   try {
     const result = await executeQuery(`INSERT INTO shows`, [show]);
-    const newShowId = result[0].insertId;
+    
+    // Verwende sicheres Zugriffsmuster für insertId
+    const newShowId = typeof result[0] === 'object' && result[0] !== null && 'insertId' in result[0] 
+      ? result[0].insertId 
+      : -1;
+    
+    if (newShowId === -1) {
+      throw new Error("Failed to get inserted ID");
+    }
     
     const newShow = await executeQuery(`SELECT * FROM shows WHERE id = ?`, [newShowId]) as Show[];
     return newShow[0] || null;
@@ -74,7 +82,13 @@ export const deleteShow = async (id: number): Promise<boolean> => {
     
     // Then delete the show
     const result = await executeQuery(`DELETE FROM shows WHERE id = ?`, [id]);
-    return result[0].affectedRows > 0;
+    
+    // Verwende sicheres Zugriffsmuster für affectedRows
+    const affectedRows = typeof result[0] === 'object' && result[0] !== null && 'affectedRows' in result[0] 
+      ? result[0].affectedRows 
+      : 0;
+    
+    return affectedRows > 0;
   } catch (error) {
     console.error('Error deleting show:', error);
     return false;
@@ -111,7 +125,15 @@ export const getSchedule = async (): Promise<ScheduleItem[]> => {
 export const createScheduleItem = async (item: Omit<ScheduleItem, 'id' | 'created_at' | 'updated_at'>): Promise<ScheduleItem | null> => {
   try {
     const result = await executeQuery(`INSERT INTO schedule`, [item]);
-    const newItemId = result[0].insertId;
+    
+    // Verwende sicheres Zugriffsmuster für insertId
+    const newItemId = typeof result[0] === 'object' && result[0] !== null && 'insertId' in result[0] 
+      ? result[0].insertId 
+      : -1;
+    
+    if (newItemId === -1) {
+      throw new Error("Failed to get inserted ID");
+    }
     
     const newItem = await executeQuery(`SELECT * FROM schedule WHERE id = ?`, [newItemId]) as ScheduleItem[];
     return newItem[0] || null;
@@ -136,7 +158,13 @@ export const updateScheduleItem = async (id: number, item: Partial<ScheduleItem>
 export const deleteScheduleItem = async (id: number): Promise<boolean> => {
   try {
     const result = await executeQuery(`DELETE FROM schedule WHERE id = ?`, [id]);
-    return result[0].affectedRows > 0;
+    
+    // Verwende sicheres Zugriffsmuster für affectedRows
+    const affectedRows = typeof result[0] === 'object' && result[0] !== null && 'affectedRows' in result[0] 
+      ? result[0].affectedRows 
+      : 0;
+    
+    return affectedRows > 0;
   } catch (error) {
     console.error('Error deleting schedule item:', error);
     return false;
