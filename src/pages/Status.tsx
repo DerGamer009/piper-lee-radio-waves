@@ -1,14 +1,54 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { InfoIcon, AlertTriangleIcon, AlertCircleIcon, CheckCircleIcon } from "lucide-react";
+import { InfoIcon, AlertTriangleIcon, AlertCircleIcon, CheckCircleIcon, PlusCircleIcon } from "lucide-react";
 import Header from '@/components/Header';
-import { getStatusUpdates, StatusUpdate } from '@/services/apiService';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getStatusUpdates, createStatusItem, StatusUpdate } from '@/services/apiService';
+import { useAuth } from '@/contexts/AuthContext';
+
+const statusOptions = [
+  { value: 'Operational', label: 'Operational', color: 'bg-green-500' },
+  { value: 'Degraded Performance', label: 'Eingeschränkte Leistung', color: 'bg-yellow-500' },
+  { value: 'Partial Outage', label: 'Teilweiser Ausfall', color: 'bg-orange-500' },
+  { value: 'Major Outage', label: 'Größerer Ausfall', color: 'bg-red-500' }
+];
 
 const StatusPage = () => {
   const [statusItems, setStatusItems] = useState<StatusUpdate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
+  const { user, isAdmin, isModerator } = useAuth();
+  
+  const form = useForm({
+    defaultValues: {
+      system_name: '',
+      status: 'Degraded Performance',
+      description: ''
+    }
+  });
 
   useEffect(() => {
     const fetchStatusUpdates = async () => {
@@ -30,6 +70,35 @@ const StatusPage = () => {
 
     fetchStatusUpdates();
   }, [toast]);
+
+  const handleCreateIncident = async (values: any) => {
+    try {
+      await createStatusItem({
+        system_name: values.system_name,
+        status: values.status,
+        description: values.description
+      });
+      
+      // Refetch status updates
+      const data = await getStatusUpdates();
+      setStatusItems(data);
+      
+      toast({
+        title: "Vorfall erstellt",
+        description: "Der neue Vorfall wurde erfolgreich eingetragen.",
+      });
+      
+      setIsDialogOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error('Error creating incident:', error);
+      toast({
+        variant: "destructive",
+        title: "Fehler",
+        description: "Der Vorfall konnte nicht erstellt werden.",
+      });
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -82,7 +151,96 @@ const StatusPage = () => {
       
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-2">System Status</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold text-white">System Status</h1>
+            
+            {(isAdmin || isModerator) && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-1">
+                    <PlusCircleIcon className="h-4 w-4" />
+                    Vorfall melden
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Neuer Vorfall</DialogTitle>
+                    <DialogDescription>
+                      Tragen Sie einen neuen Vorfall oder Statusaktualisierung ein.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleCreateIncident)} className="space-y-4 mt-2">
+                      <FormField
+                        control={form.control}
+                        name="system_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Systemname</FormLabel>
+                            <FormControl>
+                              <Input placeholder="z.B. Website, Streaming-Dienst" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Status auswählen" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {statusOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    <div className="flex items-center">
+                                      <span className={`h-2 w-2 rounded-full ${option.color} mr-2`}></span>
+                                      {option.label}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Beschreibung (optional)</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Details zum Vorfall oder zur Statusaktualisierung" className="resize-none" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <DialogFooter>
+                        <Button type="submit">Vorfall melden</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+          
           <p className="text-gray-400 mb-8">
             Überprüfen Sie den aktuellen Status unserer Systeme und Dienste.
           </p>
@@ -129,6 +287,18 @@ const StatusPage = () => {
                       </p>
                     </div>
                   ))}
+                  
+                  {statusItems.length === 0 && (
+                    <Card>
+                      <CardContent className="flex flex-col items-center justify-center py-10">
+                        <CheckCircleIcon className="h-16 w-16 text-green-500 mb-4" />
+                        <CardTitle>Keine Vorfälle</CardTitle>
+                        <CardDescription className="text-center mt-2">
+                          Aktuell gibt es keine gemeldeten Vorfälle oder Wartungsarbeiten.
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               </div>
             </div>
