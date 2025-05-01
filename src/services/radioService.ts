@@ -73,7 +73,9 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
           title,
           description
         )
-      `);
+      `)
+      .order('day_of_week', { ascending: true })
+      .order('start_time', { ascending: true });
     
     if (error) {
       console.error("Fehler beim Abrufen des Sendeplans:", error);

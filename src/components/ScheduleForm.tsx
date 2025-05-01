@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createScheduleItem, updateScheduleItem, getSchedule, getShows, Show, ScheduleItem } from '@/services/apiService';
+import { createScheduleItem, updateScheduleItem } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 // Define form schema
@@ -24,8 +23,20 @@ const formSchema = z.object({
 type ScheduleFormValues = z.infer<typeof formSchema>;
 
 interface ScheduleFormProps {
-  scheduleItem?: ScheduleItem;
-  shows?: Show[];
+  scheduleItem?: {
+    id: string;
+    show_id: string;
+    day_of_week: string;
+    start_time: string;
+    end_time: string;
+    host_name?: string;
+    is_recurring: boolean;
+  };
+  shows?: {
+    id: string;
+    title: string;
+    description?: string;
+  }[];
   isEditing?: boolean;
   onCancel: () => void;
   onSuccess: () => void;

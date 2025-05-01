@@ -254,6 +254,7 @@ export type Database = {
           day_of_week: string
           end_time: string
           host_id: string | null
+          host_name: string | null
           id: string
           is_recurring: boolean | null
           show_id: string
@@ -265,6 +266,7 @@ export type Database = {
           day_of_week: string
           end_time: string
           host_id?: string | null
+          host_name?: string | null
           id?: string
           is_recurring?: boolean | null
           show_id: string
@@ -276,6 +278,7 @@ export type Database = {
           day_of_week?: string
           end_time?: string
           host_id?: string | null
+          host_name?: string | null
           id?: string
           is_recurring?: boolean | null
           show_id?: string
