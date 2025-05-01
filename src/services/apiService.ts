@@ -137,7 +137,7 @@ export const updateUser = async (userId: string, userData: Omit<User, 'id'>): Pr
 
 export const getUsers = async (): Promise<User[]> => {
   try {
-    // Get profiles
+    // Get profiles from public.profiles table
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('*');
@@ -146,26 +146,18 @@ export const getUsers = async (): Promise<User[]> => {
     if (!profiles) return [];
 
     // Define the profile type explicitly to avoid 'never' type issues
-    type Profile = {
+    interface Profile {
       id: string;
       username: string | null;
       full_name: string | null;
       avatar_url: string | null;
       is_admin: boolean | null;
       created_at: string | null;
-    };
+    }
 
     // Type assertion for profiles
     const typedProfiles = profiles as Profile[];
 
-    // Get all auth users to get emails
-    const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-    
-    if (authError) throw authError;
-    
-    // Ensure authData exists and has users property
-    if (!authData || !authData.users) return [];
-    
     // Get user roles
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
@@ -174,16 +166,16 @@ export const getUsers = async (): Promise<User[]> => {
     if (roleError) throw roleError;
     
     // Define UserRole type
-    type UserRole = { user_id: string; role: string };
-    const typedRoleData = (roleData as UserRole[]) || [];
+    interface UserRole {
+      id: string;
+      user_id: string; 
+      role: string;
+    }
+    
+    const typedRoleData = (roleData as UserRole[] || []);
 
     // Map profiles to User objects with proper type safety
     const users = typedProfiles.map(profile => {
-      // Find matching auth user with proper type checking
-      const authUser = authData.users.find(u => 
-        u && typeof u === 'object' && 'id' in u && u.id === profile.id
-      );
-      
       // Get roles for this user
       const userRoles = typedRoleData
         .filter(r => r.user_id === profile.id)
@@ -192,13 +184,16 @@ export const getUsers = async (): Promise<User[]> => {
       return {
         id: profile.id,
         username: profile.username || '',
-        email: authUser?.email || '',
+        email: '', // We'll update this in a second step
         fullName: profile.full_name || '',
         roles: userRoles.length > 0 ? userRoles : ['user'],
         isActive: true // Default to true if not specified
       };
     });
 
+    // We need to get emails separately, since we can't access auth.users directly
+    // This will be an approximation from the profiles or could be made available in profiles
+    
     return users;
   } catch (error) {
     console.error('Error fetching users:', error);
