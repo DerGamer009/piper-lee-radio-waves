@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -30,10 +29,17 @@ const Admin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch users from the API
-  const { data: users, isLoading, error } = useQuery<User[]>({
+  // Fetch users from the API with proper error handling
+  const { data: users, isLoading, error } = useQuery({
     queryKey: ['users'],
-    queryFn: getUsers
+    queryFn: async () => {
+      try {
+        return await getUsers();
+      } catch (err) {
+        console.error('Error in queryFn:', err);
+        throw err;
+      }
+    }
   });
 
   const [isAddingUser, setIsAddingUser] = useState(false);

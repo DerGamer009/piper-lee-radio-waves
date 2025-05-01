@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User as AuthUser, WeakPassword } from '@supabase/supabase-js';
 
@@ -150,8 +149,10 @@ export const getUsers = async (): Promise<User[]> => {
     const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
     
     if (authError) throw authError;
+    
+    // Properly type authData and check if it exists
     if (!authData || !authData.users) return [];
-
+    
     // Get user roles
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
@@ -163,24 +164,20 @@ export const getUsers = async (): Promise<User[]> => {
     type UserRole = { user_id: string; role: string };
     const typedRoleData: UserRole[] = roleData || [];
 
-    // Combine data to create user objects
+    // Combine data to create user objects with proper type safety
     const users = profiles.map(profile => {
-      // Find matching auth user - using type guard to ensure user exists and has id
-      const authUser = authData.users.find(user => {
-        return user !== null && user !== undefined && user.id === profile.id;
-      });
+      // Use a safer approach to find the matching auth user
+      const authUser = authData.users.find(u => u && typeof u === 'object' && 'id' in u && u.id === profile.id);
       
-      // Get roles for this user
-      const userRoles = typedRoleData.length > 0
-        ? typedRoleData.filter(r => r.user_id === profile.id).map(r => r.role)
-        : ['user'];
+      // Get roles for this user with proper type checking
+      const userRoles = typedRoleData.filter(r => r.user_id === profile.id).map(r => r.role);
 
       return {
         id: profile.id,
         username: profile.username || '',
         email: authUser?.email || '',
         fullName: profile.full_name || '',
-        roles: userRoles,
+        roles: userRoles.length > 0 ? userRoles : ['user'],
         isActive: true // Default to true if not specified
       };
     });
