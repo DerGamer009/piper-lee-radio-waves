@@ -313,7 +313,8 @@ export const authenticateUser = async (username: string, password: string) => {
         email: user.email,
         fullName: user.fullName,
         roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
-        isActive: user.isActive
+        isActive: user.isActive,
+        createdAt: user.created_at // Add this line to include the createdAt property
       };
     }
   }
