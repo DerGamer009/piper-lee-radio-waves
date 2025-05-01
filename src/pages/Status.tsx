@@ -148,6 +148,7 @@ const StatusPage = () => {
     }
   };
 
+  // Helper functions to determine status icon and colors
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'operational':
@@ -358,36 +359,6 @@ const StatusPage = () => {
       </main>
     </div>
   );
-
-  function getStatusIcon(status: string) {
-    switch (status.toLowerCase()) {
-      case 'operational':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
-      case 'degraded performance':
-        return <InfoIcon className="h-5 w-5 text-yellow-500" />;
-      case 'partial outage':
-        return <AlertTriangleIcon className="h-5 w-5 text-orange-500" />;
-      case 'major outage':
-        return <AlertCircleIcon className="h-5 w-5 text-red-500" />;
-      default:
-        return <InfoIcon className="h-5 w-5 text-blue-500" />;
-    }
-  }
-
-  function getStatusBadgeColor(status: string) {
-    switch (status.toLowerCase()) {
-      case 'operational':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'degraded performance':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'partial outage':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
-      case 'major outage':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      default:
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-    }
-  }
 };
 
 export default StatusPage;
