@@ -64,14 +64,6 @@ export function AdminSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Admin Panel" isActive={isActive("/admin/panel")}>
-                  <Link to="/admin/panel">
-                    <Settings className="h-4 w-4" />
-                    <span>Admin Panel</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Benutzer" isActive={isActive("/admin/users")}>
                   <Link to="/admin/users">
                     <Users className="h-4 w-4" />
@@ -135,6 +127,14 @@ export function AdminSidebar() {
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Einstellungen" isActive={isActive("/admin/settings")}>
+                  <Link to="/admin/settings">
+                    <Settings className="h-4 w-4" />
+                    <span>Einstellungen</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Datenbank">
                   <Link to="/admin/database">

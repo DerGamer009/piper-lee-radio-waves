@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -19,6 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
+import RadioCard from "@/components/dashboard/RadioCard";
+import StatusManagement from "@/components/dashboard/StatusManagement";
 
 // Constants for radio stream
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
@@ -119,146 +124,169 @@ const Admin = () => {
     }
   };
 
-  if (isLoading) return <div className="p-4">Loading users...</div>;
-  if (error) return <div className="p-4 text-red-500">Error loading users: {error instanceof Error ? error.message : 'Unknown error'}</div>;
-
   const selectedUser = users?.find(user => user.id === selectedUserId);
 
+  if (isLoading) return (
+    <>
+      <AdminSidebar />
+      <SidebarInset className="p-4">Daten werden geladen...</SidebarInset>
+    </>
+  );
+
+  if (error) return (
+    <>
+      <AdminSidebar />
+      <SidebarInset className="p-4 text-red-500">
+        Fehler beim Laden der Benutzer: {error instanceof Error ? error.message : 'Unbekannter Fehler'}
+      </SidebarInset>
+    </>
+  );
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="h-8 w-8" />
-          Admin-Bereich
-        </h1>
-        <div className="flex gap-4 items-center">
-          <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
-          <div className="flex gap-2">
-            <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              Neuer Benutzer
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Abmelden
-            </Button>
+    <>
+      <AdminSidebar />
+      <SidebarInset>
+        <div className="container mx-auto p-4">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Shield className="h-8 w-8" />
+              Admin-Bereich
+            </h1>
+            <div className="flex gap-4 items-center">
+              <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
+              <div className="flex gap-2">
+                <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Neuer Benutzer
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Abmelden
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {isAddingUser && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Neuen Benutzer hinzufügen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UserForm onCancel={() => setIsAddingUser(false)} onSuccess={handleUserFormSuccess} />
-          </CardContent>
-        </Card>
-      )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <RadioCard />
+            <StatusManagement />
+          </div>
 
-      {isEditingUser && selectedUser && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Benutzer bearbeiten</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UserForm 
-              user={selectedUser} 
-              onCancel={() => setIsEditingUser(false)} 
-              onSuccess={handleUserFormSuccess} 
-              isEditing={true}
-            />
-          </CardContent>
-        </Card>
-      )}
+          {isAddingUser && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Neuen Benutzer hinzufügen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UserForm onCancel={() => setIsAddingUser(false)} onSuccess={handleUserFormSuccess} />
+              </CardContent>
+            </Card>
+          )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Benutzer verwalten</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Benutzername</TableHead>
-                <TableHead>Vollständiger Name</TableHead>
-                <TableHead>E-Mail</TableHead>
-                <TableHead>Rollen</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users && users.length > 0 ? (
-                users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.fullName}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{Array.isArray(user.roles) ? user.roles.join(', ') : user.roles}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        className={`px-2 py-1 rounded-full text-xs ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-                        onClick={() => handleToggleUserStatus(user.id, user.isActive || false)}
-                      >
-                        {user.isActive ? "Aktiv" : "Inaktiv"}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Bearbeiten"
-                        onClick={() => handleEditUser(user.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Löschen"
-                        onClick={() => handleDeleteClick(user.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+          {isEditingUser && selectedUser && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Benutzer bearbeiten</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UserForm 
+                  user={selectedUser} 
+                  onCancel={() => setIsEditingUser(false)} 
+                  onSuccess={handleUserFormSuccess} 
+                  isEditing={true}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Benutzer verwalten</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Benutzername</TableHead>
+                    <TableHead>Vollständiger Name</TableHead>
+                    <TableHead>E-Mail</TableHead>
+                    <TableHead>Rollen</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    Keine Benutzer gefunden
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {users && users.length > 0 ? (
+                    users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.username}</TableCell>
+                        <TableCell>{user.fullName}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{Array.isArray(user.roles) ? user.roles.join(', ') : user.roles}</TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost" 
+                            className={`px-2 py-1 rounded-full text-xs ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                            onClick={() => handleToggleUserStatus(user.id, user.isActive || false)}
+                          >
+                            {user.isActive ? "Aktiv" : "Inaktiv"}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="Bearbeiten"
+                            onClick={() => handleEditUser(user.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="Löschen"
+                            onClick={() => handleDeleteClick(user.id)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center">
+                        Keine Benutzer gefunden
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Benutzer löschen</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-              Löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Benutzer löschen</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+                  Löschen
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </SidebarInset>
+    </>
   );
 };
 

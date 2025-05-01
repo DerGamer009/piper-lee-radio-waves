@@ -21,7 +21,6 @@ import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
 import Moderator from "./pages/Moderator";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
-import AdminPanel from "./pages/AdminPanel";
 import UserDashboard from "./pages/UserDashboard";
 import Auth from "./pages/Auth";
 import News from "./pages/News";
@@ -60,7 +59,7 @@ function App() {
                 <Route path="/kontakt" element={<Layout><Contact /></Layout>} />
                 <Route path="/partner" element={<Layout><Partner /></Layout>} />
                 <Route path="/sendeplan" element={<Layout><Schedule /></Layout>} />
-                <Route path="/sendeplan-admin" element={<ProtectedRoute element={<Layout><ScheduleAdmin /></Layout>} requiredRoles={["admin", "moderator"]} />} />
+                <Route path="/sendeplan-admin" element={<ProtectedRoute element={<ScheduleAdmin />} requiredRoles={["admin", "moderator"]} />} />
                 <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
                 <Route path="/charts" element={<Layout><Charts /></Layout>} />
                 <Route path="/news" element={<Layout><News /></Layout>} />
@@ -82,11 +81,7 @@ function App() {
                 />
                 <Route 
                   path="/admin" 
-                  element={<ProtectedRoute element={<Layout showSidebar={true}><Admin /></Layout>} requiredRoles={["admin"]} />} 
-                />
-                <Route 
-                  path="/admin/panel" 
-                  element={<ProtectedRoute element={<Layout showSidebar={true}><AdminPanel /></Layout>} requiredRoles={["admin"]} />} 
+                  element={<ProtectedRoute element={<Admin />} requiredRoles={["admin"]} />} 
                 />
                 <Route 
                   path="/moderator" 
