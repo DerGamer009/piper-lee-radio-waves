@@ -85,14 +85,22 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
     }
     
     // Transform the data to match the ScheduleItem interface
-    const formattedSchedule: ScheduleItem[] = scheduleData.map(item => ({
-      title: item.shows?.title || "Unbenannte Sendung",
-      description: item.shows?.description || "",
-      start_time: item.start_time,
-      end_time: item.end_time,
-      day: item.day_of_week,
-      host: item.profiles?.full_name || ""
-    }));
+    const formattedSchedule: ScheduleItem[] = scheduleData.map(item => {
+      // Safely access profiles.full_name, handling the case where the relation might not be found
+      let hostName = "";
+      if (item.profiles && 'full_name' in item.profiles) {
+        hostName = item.profiles.full_name || "";
+      }
+      
+      return {
+        title: item.shows?.title || "Unbenannte Sendung",
+        description: item.shows?.description || "",
+        start_time: item.start_time,
+        end_time: item.end_time,
+        day: item.day_of_week,
+        host: hostName
+      };
+    });
     
     return formattedSchedule;
   } catch (error) {
