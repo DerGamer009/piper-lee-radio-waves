@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Music, Users, Radio, Headphones } from "lucide-react";
 import { fetchStreamInfo } from "@/services/radioService";
+import { Progress } from "@/components/ui/progress";
 
 interface StreamInfoData {
   title?: string;
@@ -47,6 +48,19 @@ const StreamInfo = () => {
   // Extract current song information
   const currentSong = streamInfo.current_song || "Musik wird geladen...";
   
+  // Split artist and title if available
+  let artist = streamInfo.artist || "";
+  let title = streamInfo.title || "";
+  
+  // If we don't have separate artist/title but have current_song
+  if ((!artist || !title) && streamInfo.current_song) {
+    const parts = streamInfo.current_song.split(" - ");
+    if (parts.length >= 2) {
+      artist = parts[0];
+      title = parts.slice(1).join(" - ");
+    }
+  }
+  
   // Calculate progress percentage
   const progress = streamInfo.duration ? (streamInfo.elapsed! / streamInfo.duration) * 100 : 0;
 
@@ -69,17 +83,21 @@ const StreamInfo = () => {
             <h3 className="font-medium text-gray-200">Jetzt läuft:</h3>
           </div>
           
-          <p className="text-xl font-semibold text-white">{currentSong}</p>
+          <div className="space-y-1">
+            {artist && title ? (
+              <>
+                <p className="text-xl font-semibold text-white">{title}</p>
+                <p className="text-sm text-gray-300">{artist}</p>
+              </>
+            ) : (
+              <p className="text-xl font-semibold text-white">{currentSong}</p>
+            )}
+          </div>
           
           {/* Progress bar */}
           {streamInfo.duration && streamInfo.duration > 0 && (
             <div className="mt-2 space-y-1">
-              <div className="w-full bg-gray-700/50 rounded-full h-1.5">
-                <div 
-                  className="bg-purple-500 h-1.5 rounded-full" 
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
+              <Progress value={progress} className="h-1.5 bg-gray-700/50" />
               <div className="flex justify-between text-xs text-gray-400">
                 <span>{formatTime(streamInfo.elapsed || 0)}</span>
                 <span>{formatTime(streamInfo.duration)}</span>

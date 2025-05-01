@@ -80,15 +80,18 @@ export const executeQuery = async (query: string, params: any[] = []) => {
         // Handle the case where user_roles might be null, an array, or an object
         let roles = 'user'; // Default role
         
+        // Safely handle user_roles which might be null
         if (user.user_roles) {
-          // Check if it's an array
           if (Array.isArray(user.user_roles)) {
-            roles = user.user_roles.map((r: any) => r.role).join(',');
+            // If it's an array of role objects
+            roles = user.user_roles
+              .map((r: any) => r.role)
+              .filter(Boolean)
+              .join(',') || 'user';
           } 
-          // If it's an object, safely access the role property
           else if (typeof user.user_roles === 'object') {
-            const userRoleObj = user.user_roles as { role?: string };
-            roles = userRoleObj.role || 'user';
+            // If it's a single object
+            roles = (user.user_roles as any).role || 'user';
           }
         }
         
