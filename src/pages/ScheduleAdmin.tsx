@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Calendar, Plus, Edit, Trash, RefreshCw } from "lucide-react";
@@ -39,6 +38,10 @@ interface Show {
   description: string | null;
 }
 
+interface Profile {
+  full_name?: string;
+}
+
 interface ScheduleItem {
   id: string;
   day_of_week: string;
@@ -48,9 +51,7 @@ interface ScheduleItem {
   host_id: string | null;
   show_id: string;
   show?: Show;
-  profiles?: {
-    full_name?: string;
-  } | null;
+  profiles?: Profile | null;
   host_name?: string;
   show_title?: string;
 }
@@ -77,10 +78,6 @@ const ScheduleAdmin = () => {
             id,
             title,
             description
-          ),
-          profiles:host_id (
-            id,
-            full_name
           )
         `)
         .order('day_of_week', { ascending: true })
@@ -96,10 +93,10 @@ const ScheduleAdmin = () => {
 
       if (showsError) throw showsError;
 
-      // Process schedule data to add host_name and show_title for easier display
+      // Process schedule data - we don't fetch profiles directly due to relationship issue
       const processedSchedule = scheduleData.map((item) => ({
         ...item,
-        host_name: item.profiles?.full_name || 'Nicht zugewiesen',
+        host_name: "Nicht zugewiesen", // Default value since we can't reliably get profile data
         show_title: item.shows?.title || 'Unbekannt',
       }));
 

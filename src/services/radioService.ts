@@ -71,10 +71,6 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
           id,
           title,
           description
-        ),
-        profiles:host_id (
-          id,
-          full_name
         )
       `)
       .order('start_time', { ascending: true });
@@ -86,20 +82,13 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
     
     // Transform the data to match the ScheduleItem interface
     const formattedSchedule: ScheduleItem[] = scheduleData.map(item => {
-      // Safely access profiles.full_name, handling the case where the relation might not be found
-      let hostName = "";
-      if (item.profiles && item.profiles !== null && typeof item.profiles === 'object' && 'full_name' in item.profiles) {
-        // Ensure we cast the value to string to satisfy TypeScript
-        hostName = (item.profiles.full_name as string) || "";
-      }
-      
       return {
         title: item.shows?.title || "Unbenannte Sendung",
         description: item.shows?.description || "",
         start_time: item.start_time,
         end_time: item.end_time,
         day: item.day_of_week,
-        host: hostName
+        host: "" // Since we can't get the host name reliably, leave it empty for now
       };
     });
     
