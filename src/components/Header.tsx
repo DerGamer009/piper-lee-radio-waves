@@ -1,162 +1,177 @@
-
-import { useState, useEffect } from "react";
-import { Radio, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
-import UserStatus from "./UserStatus";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Menu, X, User, LogOut } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { Activity } from 'lucide-react'; // Add the Activity icon
 
 const Header = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
+  const { isMobile } = useIsMobile();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? "bg-radio-dark/90 backdrop-blur-md shadow-lg py-3" 
-          : "bg-transparent py-5"
-      }`}
-    >
-      <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Radio className="h-7 w-7 text-radio-purple" />
-          <h1 className="text-xl font-bold tracking-tight">
-            <span className="text-white">piper</span>
-            <span className="text-radio-purple">-</span>
-            <span className="text-radio-blue">lee</span>
-          </h1>
-        </div>
-        
-        {isMobile ? (
-          <>
-            <div className="flex items-center gap-2">
-              <UserStatus />
-              <button 
-                className="text-white p-2" 
-                onClick={toggleMenu}
-                aria-label={menuOpen ? "Close menu" : "Open menu"}
-              >
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-            
-            {menuOpen && (
-              <div className="absolute top-full left-0 right-0 bg-radio-dark/95 backdrop-blur-md py-4 shadow-lg">
-                <nav className="flex flex-col items-center gap-6">
-                  <Link 
-                    to="/" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Startseite
-                  </Link>
-                  <Link 
-                    to="/sendeplan" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Sendeplan
-                  </Link>
-                  <Link 
-                    to="/podcasts" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Podcasts
-                  </Link>
-                  <Link 
-                    to="/news" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    News
-                  </Link>
-                  <Link 
-                    to="/charts" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Charts
-                  </Link>
-                  <Link 
-                    to="/kontakt" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Kontakt
-                  </Link>
-                  <Link 
-                    to="/admin/panel" 
-                    className="text-radio-light hover:text-white transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Admin-Bereich
-                  </Link>
-                </nav>
-              </div>
+    <header className="fixed top-0 left-0 right-0 bg-[#252a40]/80 backdrop-blur-sm z-50 border-b border-gray-800/50">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo Section */}
+          <div className="flex items-center">
+            <Link to="/" className="text-white text-lg md:text-xl font-bold">
+              Piper-Lee Radio
+            </Link>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
+            <Link to="/" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              Startseite
+            </Link>
+            <Link to="/schedule" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              Sendeplan
+            </Link>
+            <Link to="/podcasts" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              Podcasts
+            </Link>
+            <Link to="/events" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              Events
+            </Link>
+            <Link to="/news" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              News
+            </Link>
+            <Link to="/status" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors flex items-center gap-1">
+              <Activity className="h-4 w-4" />
+              Status
+            </Link>
+            {user && (
+              <Link to="/moderator" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+                Moderator
+              </Link>
             )}
-          </>
-        ) : (
-          <div className="flex items-center justify-between flex-1 ml-10">
-            <nav className="flex items-center gap-8">
-              <Link 
-                to="/" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
+            {user?.isAdmin && (
+              <Link to="/admin" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+                Admin
+              </Link>
+            )}
+          </nav>
+
+          {/* User Menu / Mobile Menu */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0 data-[state=open]:bg-muted">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user?.avatar} alt={user?.fullName} />
+                      <AvatarFallback>{user?.fullName?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.fullName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={(event) => {
+                      event.preventDefault()
+                      signOut()
+                    }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Abmelden</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+                  Login
+                </Link>
+                <Link to="/register" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+                  Register
+                </Link>
+              </>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMobileMenu}
+              className="md:hidden text-gray-300 hover:text-white focus:outline-none p-2"
+              aria-label="Open menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-[#1c1f2f] border-t border-gray-800">
+            <div className="container px-4 py-4 space-y-2">
+              <Link to="/" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Startseite
               </Link>
-              <Link 
-                to="/sendeplan" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
+              <Link to="/schedule" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Sendeplan
               </Link>
-              <Link 
-                to="/podcasts" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
+              <Link to="/podcasts" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Podcasts
               </Link>
-              <Link 
-                to="/news" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
+              <Link to="/events" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                Events
+              </Link>
+              <Link to="/news" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 News
               </Link>
-              <Link 
-                to="/charts" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                Charts
+              <Link to="/status" className="flex items-center gap-2 px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                <Activity className="h-4 w-4" />
+                Status
               </Link>
-              <Link 
-                to="/kontakt" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                Kontakt
-              </Link>
-              <Link 
-                to="/admin/panel" 
-                className="text-radio-light hover:text-white transition-colors"
-              >
-                Admin-Bereich
-              </Link>
-            </nav>
-            <UserStatus />
+              {user && (
+                <Link to="/moderator" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                  Moderator
+                </Link>
+              )}
+              {user?.isAdmin && (
+                <Link to="/admin" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                  Admin
+                </Link>
+              )}
+              {user ? (
+                <button
+                  onClick={() => {
+                    signOut();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50"
+                >
+                  Abmelden
+                </button>
+              ) : (
+                <>
+                  <Link to="/login" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                    Login
+                  </Link>
+                  <Link to="/register" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                    Register
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -46,6 +46,16 @@ export interface LoginResponse {
   };
 }
 
+// New StatusUpdate interface
+export interface StatusUpdate {
+  id: string;
+  system_name: string;
+  status: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Auth functions
 export const login = async (username: string, password: string): Promise<LoginResponse | null> => {
   try {
@@ -256,6 +266,75 @@ export const deleteScheduleItem = async (id: string): Promise<void> => {
     }
   } catch (error) {
     console.error('Error deleting schedule item:', error);
+    throw error;
+  }
+};
+
+// Status update API functions
+export const getStatusUpdates = async (): Promise<StatusUpdate[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('status_updates')
+      .select('*')
+      .order('system_name');
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching status updates:', error);
+    throw error;
+  }
+};
+
+export const updateStatusItem = async (id: string, updates: Partial<StatusUpdate>): Promise<StatusUpdate> => {
+  try {
+    // Make sure to update the updated_at timestamp
+    const updateData = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('status_updates')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating status item:', error);
+    throw error;
+  }
+};
+
+export const createStatusItem = async (statusItem: Omit<StatusUpdate, 'id' | 'created_at' | 'updated_at'>): Promise<StatusUpdate> => {
+  try {
+    const { data, error } = await supabase
+      .from('status_updates')
+      .insert(statusItem)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating status item:', error);
+    throw error;
+  }
+};
+
+export const deleteStatusItem = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('status_updates')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error deleting status item:', error);
     throw error;
   }
 };

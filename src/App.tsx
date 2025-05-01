@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,6 +30,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SongRequests from "./pages/SongRequests";
 import Chat from "./pages/Chat";
 import Events from "./pages/Events";
+import Status from './pages/Status';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,62 +41,65 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ToastProvider>
-      <TooltipProvider>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/login" element={<Layout><Auth /></Layout>} />
-              <Route path="/datenschutz" element={<Layout><Privacy /></Layout>} />
-              <Route path="/nutzungsbedingungen" element={<Layout><Terms /></Layout>} />
-              <Route path="/impressum" element={<Layout><Imprint /></Layout>} />
-              <Route path="/kontakt" element={<Layout><Contact /></Layout>} />
-              <Route path="/partner" element={<Layout><Partner /></Layout>} />
-              <Route path="/sendeplan" element={<Layout><Schedule /></Layout>} />
-              <Route path="/sendeplan-admin" element={<ProtectedRoute element={<Layout><ScheduleAdmin /></Layout>} requiredRoles={["admin", "moderator"]} />} />
-              <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
-              <Route path="/charts" element={<Layout><Charts /></Layout>} />
-              <Route path="/news" element={<Layout><News /></Layout>} />
-              <Route path="/news/:id" element={<Layout><News /></Layout>} />
-              <Route path="/download" element={<Layout><Download /></Layout>} />
-              <Route path="/songwunsch" element={<Layout><SongRequests /></Layout>} />
-              <Route path="/chat" element={<Layout><Chat /></Layout>} />
-              <Route path="/events" element={<Layout><Events /></Layout>} />
-              {/* The maintenance page should be accessible to everyone without authentication */}
-              <Route path="/maintenance" element={<Layout><Maintenance /></Layout>} />
-              <Route 
-                path="/user-dashboard" 
-                element={<ProtectedRoute element={<Layout><UserDashboard /></Layout>} />} 
-              />
-              <Route 
-                path="/moderator-dashboard" 
-                element={<ProtectedRoute element={<Layout><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
-              />
-              <Route 
-                path="/admin" 
-                element={<ProtectedRoute element={<Layout><Admin /></Layout>} requiredRoles={["admin"]} />} 
-              />
-              <Route 
-                path="/admin/panel" 
-                element={<ProtectedRoute element={<Layout><AdminPanel /></Layout>} requiredRoles={["admin"]} />} 
-              />
-              <Route 
-                path="/moderator" 
-                element={<ProtectedRoute element={<Layout><Moderator /></Layout>} requiredRoles={["admin", "moderator"]} />} 
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<Layout><NotFound /></Layout>} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </ToastProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/login" element={<Layout><Auth /></Layout>} />
+                <Route path="/datenschutz" element={<Layout><Privacy /></Layout>} />
+                <Route path="/nutzungsbedingungen" element={<Layout><Terms /></Layout>} />
+                <Route path="/impressum" element={<Layout><Imprint /></Layout>} />
+                <Route path="/kontakt" element={<Layout><Contact /></Layout>} />
+                <Route path="/partner" element={<Layout><Partner /></Layout>} />
+                <Route path="/sendeplan" element={<Layout><Schedule /></Layout>} />
+                <Route path="/sendeplan-admin" element={<ProtectedRoute element={<Layout><ScheduleAdmin /></Layout>} requiredRoles={["admin", "moderator"]} />} />
+                <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
+                <Route path="/charts" element={<Layout><Charts /></Layout>} />
+                <Route path="/news" element={<Layout><News /></Layout>} />
+                <Route path="/news/:id" element={<Layout><News /></Layout>} />
+                <Route path="/download" element={<Layout><Download /></Layout>} />
+                <Route path="/songwunsch" element={<Layout><SongRequests /></Layout>} />
+                <Route path="/chat" element={<Layout><Chat /></Layout>} />
+                <Route path="/events" element={<Layout><Events /></Layout>} />
+                <Route path="/status" element={<Status />} />
+                {/* The maintenance page should be accessible to everyone without authentication */}
+                <Route path="/maintenance" element={<Layout><Maintenance /></Layout>} />
+                <Route 
+                  path="/user-dashboard" 
+                  element={<ProtectedRoute element={<Layout><UserDashboard /></Layout>} />} 
+                />
+                <Route 
+                  path="/moderator-dashboard" 
+                  element={<ProtectedRoute element={<Layout><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                />
+                <Route 
+                  path="/admin" 
+                  element={<ProtectedRoute element={<Layout><Admin /></Layout>} requiredRoles={["admin"]} />} 
+                />
+                <Route 
+                  path="/admin/panel" 
+                  element={<ProtectedRoute element={<Layout><AdminPanel /></Layout>} requiredRoles={["admin"]} />} 
+                />
+                <Route 
+                  path="/moderator" 
+                  element={<ProtectedRoute element={<Layout><Moderator /></Layout>} requiredRoles={["admin", "moderator"]} />} 
+                />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </TooltipProvider>
+      </ToastProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

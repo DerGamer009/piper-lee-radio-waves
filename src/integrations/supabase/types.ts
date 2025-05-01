@@ -493,6 +493,33 @@ export type Database = {
         }
         Relationships: []
       }
+      status_updates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          system_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status: string
+          system_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          system_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
