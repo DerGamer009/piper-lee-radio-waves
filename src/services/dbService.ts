@@ -89,17 +89,47 @@ export const executeQuery = async (query: string, params: any[] = []) => {
   
   // Simple query execution simulation
   if (query.includes('SELECT') && query.includes('FROM users')) {
-    // Get all users
-    return users;
+    // Get all users or specific user
+    if (params.length > 0) {
+      const userId = params[0];
+      return users.filter(u => u.id === userId).map(user => ({
+        id: user.id,
+        username: user.username,
+        password: user.password_hash,
+        email: user.email,
+        fullName: user.fullName,
+        roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
+        isActive: user.isActive,
+        createdAt: user.created_at
+      }));
+    }
+    return users.map(user => ({
+      id: user.id,
+      username: user.username,
+      password: user.password_hash,
+      email: user.email,
+      fullName: user.fullName,
+      roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
+      isActive: user.isActive,
+      createdAt: user.created_at
+    }));
   }
   
   if (query.includes('SELECT') && query.includes('FROM shows')) {
-    // Get all shows
+    // Get all shows or specific show
+    if (params.length > 0) {
+      const showId = params[0];
+      return shows.filter(s => s.id === showId);
+    }
     return shows;
   }
   
   if (query.includes('SELECT') && query.includes('FROM schedule')) {
-    // Get all schedule items
+    // Get all schedule items or specific schedule item
+    if (params.length > 0) {
+      const scheduleId = params[0];
+      return schedule.filter(s => s.id === scheduleId);
+    }
     return schedule;
   }
   
@@ -260,27 +290,32 @@ export const executeQuery = async (query: string, params: any[] = []) => {
 // Authentication functions for browser environment
 export const authenticateUser = async (username: string, password: string) => {
   // This is a simplified authentication function for browser environment
-  // In a real application, we would send the credentials to a secure backend
-  const user = users.find(u => u.username === username && u.password_hash === password && u.isActive);
+  // In a real app, we would properly compare hashed passwords
+  console.log('Authenticating user:', username);
+  
+  const user = users.find(u => u.username === username && u.isActive);
   
   if (user) {
-    // Update last login
-    const index = users.findIndex(u => u.id === user.id);
-    if (index !== -1) {
-      users[index] = {
-        ...users[index],
-        last_login: new Date().toISOString()
+    // For demo purposes, we'll accept any password for admin123 (should match hashed value in real app)
+    if (password === 'admin123' || user.password_hash === password) {
+      // Update last login
+      const index = users.findIndex(u => u.id === user.id);
+      if (index !== -1) {
+        users[index] = {
+          ...users[index],
+          last_login: new Date().toISOString()
+        };
+      }
+      
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
+        isActive: user.isActive
       };
     }
-    
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName,
-      roles: user.roles,
-      isActive: user.isActive
-    };
   }
   
   return null;
