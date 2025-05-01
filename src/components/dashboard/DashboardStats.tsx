@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Headphones, Calendar } from 'lucide-react';
@@ -62,6 +63,9 @@ const StatsCard = ({
 
 const DashboardStats = () => {
   const [liveListeners, setLiveListeners] = useState<number | null>(null);
+  const [previousListeners, setPreviousListeners] = useState<number | null>(null);
+  const [listenerChangePercent, setListenerChangePercent] = useState<number>(5); // Default to 5%
+  const [listenerChangeType, setListenerChangeType] = useState<'positive' | 'negative' | 'neutral'>('positive');
   const [liveListenersLoading, setLiveListenersLoading] = useState(true);
   const [liveListenersError, setLiveListenersError] = useState<string | null>(null);
 
@@ -108,6 +112,14 @@ const DashboardStats = () => {
     }
   });
 
+  // Load previous listeners count from localStorage on component mount
+  useEffect(() => {
+    const storedPreviousListeners = localStorage.getItem('previousLiveListeners');
+    if (storedPreviousListeners) {
+      setPreviousListeners(parseInt(storedPreviousListeners, 10));
+    }
+  }, []);
+
   // Fetch live listener data from external API
   useEffect(() => {
     const fetchLiveListeners = async () => {
@@ -123,7 +135,29 @@ const DashboardStats = () => {
         const data = await response.json();
         // Extract listeners count from API response
         if (data && data.listeners && typeof data.listeners.current === 'number') {
-          setLiveListeners(data.listeners.current);
+          const currentListeners = data.listeners.current;
+          
+          // If we have previous listeners data, calculate the change percentage
+          if (previousListeners) {
+            const changePercent = previousListeners > 0 
+              ? Math.round(((currentListeners - previousListeners) / previousListeners) * 100) 
+              : 0;
+            
+            setListenerChangePercent(Math.abs(changePercent));
+            setListenerChangeType(changePercent >= 0 ? 'positive' : 'negative');
+          }
+          
+          // Store current listeners as previous for next comparison
+          // We'll update localStorage every 30 minutes to avoid too frequent updates
+          const lastUpdateTime = localStorage.getItem('lastListenersUpdateTime');
+          const currentTime = Date.now();
+          if (!lastUpdateTime || (currentTime - parseInt(lastUpdateTime, 10)) > 30 * 60 * 1000) {
+            localStorage.setItem('previousLiveListeners', currentListeners.toString());
+            localStorage.setItem('lastListenersUpdateTime', currentTime.toString());
+            setPreviousListeners(currentListeners);
+          }
+          
+          setLiveListeners(currentListeners);
         } else {
           setLiveListeners(0);
           console.warn('Live listeners data format unexpected:', data);
@@ -147,7 +181,7 @@ const DashboardStats = () => {
     // Refresh every 2 minutes
     const interval = setInterval(fetchLiveListeners, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [previousListeners]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -163,8 +197,8 @@ const DashboardStats = () => {
       <StatsCard 
         title="Live-Hörer" 
         value={liveListenersLoading ? "..." : String(liveListeners || 0)}
-        changeText="+5% seit letzter Woche" 
-        changeType="positive"
+        changeText={`${listenerChangeType === 'positive' ? '+' : '-'}${listenerChangePercent}% seit letzter Woche`} 
+        changeType={listenerChangeType}
         icon={<Headphones className="h-5 w-5 text-green-400" />} 
         iconBgColor="bg-green-900/30" 
       />

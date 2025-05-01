@@ -34,3 +34,16 @@ export const getLatestPodcasts = async (limit = 4): Promise<Podcast[]> => {
     return [];
   }
 };
+
+// New function to track podcast downloads (for future implementation)
+export const trackPodcastDownload = async (podcastId: string): Promise<boolean> => {
+  try {
+    // In a real implementation, you would insert into a podcast_downloads table
+    // For now, we'll just log the download
+    console.log(`Podcast download tracked: ${podcastId}`);
+    return true;
+  } catch (error) {
+    console.error("Fehler beim Tracken des Podcast-Downloads:", error);
+    return false;
+  }
+};
