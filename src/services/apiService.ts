@@ -157,7 +157,15 @@ export const getUsers = async (): Promise<User[]> => {
 
     // Type assertion for profiles
     const typedProfiles = profiles as Profile[];
-
+    
+    // Get user emails by fetching auth metadata
+    // This approach gets emails for development purposes - in production
+    // this would need to be handled differently based on security requirements
+    const { data: authData, error: authError } = await supabase.auth
+      .admin.listUsers({ perPage: 1000 });
+    
+    const authUsers = authError ? [] : (authData?.users || []);
+    
     // Get user roles
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
@@ -176,6 +184,9 @@ export const getUsers = async (): Promise<User[]> => {
 
     // Map profiles to User objects with proper type safety
     const users = typedProfiles.map(profile => {
+      // Find matching auth user to get email
+      const authUser = authUsers.find(u => u.id === profile.id);
+      
       // Get roles for this user
       const userRoles = typedRoleData
         .filter(r => r.user_id === profile.id)
@@ -184,15 +195,12 @@ export const getUsers = async (): Promise<User[]> => {
       return {
         id: profile.id,
         username: profile.username || '',
-        email: '', // We'll update this in a second step
+        email: authUser?.email || '',
         fullName: profile.full_name || '',
         roles: userRoles.length > 0 ? userRoles : ['user'],
         isActive: true // Default to true if not specified
       };
     });
-
-    // We need to get emails separately, since we can't access auth.users directly
-    // This will be an approximation from the profiles or could be made available in profiles
     
     return users;
   } catch (error) {
