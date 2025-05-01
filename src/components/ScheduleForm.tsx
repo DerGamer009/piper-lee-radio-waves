@@ -17,7 +17,7 @@ const formSchema = z.object({
   day_of_week: z.string(),
   start_time: z.string(),
   end_time: z.string(),
-  host_id: z.string().optional(),
+  host_name: z.string().optional(),
   is_recurring: z.boolean().default(true),
 });
 
@@ -57,7 +57,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
       day_of_week: scheduleItem?.day_of_week || 'Montag',
       start_time: scheduleItem?.start_time || '',
       end_time: scheduleItem?.end_time || '',
-      host_id: scheduleItem?.host_id || undefined,
+      host_name: scheduleItem?.host_name || '',
       is_recurring: scheduleItem?.is_recurring !== undefined ? scheduleItem.is_recurring : true,
     },
   });
@@ -69,7 +69,8 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
         day_of_week: data.day_of_week,
         start_time: data.start_time,
         end_time: data.end_time,
-        host_id: data.host_id,
+        host_id: null, // We keep this field but set it to null as we're using host_name instead
+        host_name: data.host_name, // Store the host name directly
         is_recurring: data.is_recurring,
       };
   
@@ -183,15 +184,15 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
 
           <FormField
             control={form.control}
-            name="host_id"
+            name="host_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Moderator (optional)</FormLabel>
+                <FormLabel>Moderator / Streamer Name</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Moderator ID" 
+                    placeholder="Name des Moderators" 
                     value={field.value || ''}
-                    onChange={e => field.onChange(e.target.value || undefined)}
+                    onChange={e => field.onChange(e.target.value || '')}
                   />
                 </FormControl>
                 <FormMessage />

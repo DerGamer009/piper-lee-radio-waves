@@ -67,6 +67,7 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
         end_time,
         is_recurring,
         host_id,
+        host_name,
         shows:show_id (
           id,
           title,
@@ -87,7 +88,7 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
         start_time: item.start_time,
         end_time: item.end_time,
         day: item.day_of_week,
-        host: "" // Since we can't get the host name reliably, leave it empty for now
+        host: item.host_name || "Kein Moderator" // Use host_name field
       };
     });
     
