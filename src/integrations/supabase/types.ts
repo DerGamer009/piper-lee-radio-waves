@@ -216,25 +216,34 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          email: string | null
           full_name: string | null
           id: string
+          is_active: boolean | null
           is_admin: boolean | null
+          registered_at: string | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean | null
           is_admin?: boolean | null
+          registered_at?: string | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
           is_admin?: boolean | null
+          registered_at?: string | null
           username?: string | null
         }
         Relationships: []
@@ -336,7 +345,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_with_roles: {
+        Row: {
+          avatar_url: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          registered_at: string | null
+          roles: Database["public"]["Enums"]["app_role"][] | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
