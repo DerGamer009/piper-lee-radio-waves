@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Trash2, Plus, Edit, PieChart } from 'lucide-react';
+import { Trash2, Plus, Edit, PieChart, Clock, CalendarClock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -336,6 +335,11 @@ const PollManagement = () => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE');
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -353,32 +357,36 @@ const PollManagement = () => {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Umfragen verwalten</CardTitle>
+      <Card className="bg-[#1c1f2f] border-0 shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-800 pb-4">
+          <CardTitle className="text-xl text-white">Umfragen verwalten</CardTitle>
           {!isAddingPoll && !isEditingPoll && (
-            <Button onClick={() => setIsAddingPoll(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Neue Umfrage
+            <Button 
+              onClick={() => setIsAddingPoll(true)}
+              className="bg-[#7c4dff] hover:bg-[#9e77ff] text-white rounded-full"
+            >
+              <Plus className="h-5 w-5 mr-1" />
+              Neue Umfrage
             </Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {(isAddingPoll || isEditingPoll) ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 bg-[#252a40] p-6 rounded-lg">
               <div>
-                <Label htmlFor="question">Frage</Label>
+                <Label htmlFor="question" className="text-white mb-2 block">Frage</Label>
                 <Textarea 
                   id="question" 
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="Geben Sie Ihre Frage ein..."
                   required
-                  className="mt-1"
+                  className="bg-[#1c1f2f] border-gray-700 text-white resize-none"
                 />
               </div>
               
               <div className="space-y-3">
-                <Label>Optionen</Label>
+                <Label className="text-white block">Optionen</Label>
                 {options.map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Input
@@ -386,6 +394,7 @@ const PollManagement = () => {
                       onChange={(e) => updateOption(index, e.target.value)}
                       placeholder={`Option ${index + 1}`}
                       required
+                      className="bg-[#1c1f2f] border-gray-700 text-white"
                     />
                     <Button 
                       type="button"
@@ -393,6 +402,7 @@ const PollManagement = () => {
                       size="sm"
                       onClick={() => removeOption(index)}
                       disabled={options.length <= 2}
+                      className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -401,7 +411,7 @@ const PollManagement = () => {
                 <Button 
                   type="button"
                   variant="outline" 
-                  className="w-full mt-2"
+                  className="w-full mt-2 border-dashed border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                   onClick={addOption}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -409,24 +419,26 @@ const PollManagement = () => {
                 </Button>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 bg-[#1c1f2f] p-3 rounded-lg">
                 <Switch 
                   id="is-active"
                   checked={isActive}
                   onCheckedChange={setIsActive}
+                  className="data-[state=checked]:bg-[#7c4dff] data-[state=checked]:border-[#7c4dff]"
                 />
-                <Label htmlFor="is-active">Umfrage aktiv</Label>
+                <Label htmlFor="is-active" className="text-white">Umfrage aktiv</Label>
               </div>
               
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 border-t border-gray-800 pt-4 mt-6">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={resetForm}
+                  className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                 >
                   Abbrechen
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="bg-[#7c4dff] hover:bg-[#9e77ff] text-white">
                   {isEditingPoll ? 'Aktualisieren' : 'Erstellen'}
                 </Button>
               </div>
@@ -436,37 +448,47 @@ const PollManagement = () => {
               {polls && polls.length > 0 ? (
                 <div className="space-y-4">
                   {polls.map((poll: PollWithOptions) => (
-                    <Card key={poll.id} className="overflow-hidden">
-                      <div className="p-4 border-b flex items-center justify-between">
-                        <div className="flex items-center">
-                          <PieChart className="h-5 w-5 text-radio-purple mr-2" />
-                          <div>
-                            <h3 className="font-medium">{poll.question}</h3>
-                            <p className="text-xs text-gray-500">
-                              {new Date(poll.created_at).toLocaleDateString()} • {poll.votes} Stimmen
-                            </p>
+                    <div 
+                      key={poll.id} 
+                      className="bg-[#252a40] rounded-lg overflow-hidden border border-gray-800 transition-all hover:shadow-md"
+                    >
+                      <div className="p-4 border-b border-gray-800 flex items-center gap-3">
+                        <div className="bg-[#1c1f2f] p-2 rounded-full">
+                          <PieChart className="h-5 w-5 text-[#7c4dff]" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-white text-lg">{poll.question}</h3>
+                          <div className="flex items-center mt-1 text-xs text-gray-400">
+                            <CalendarClock className="h-3 w-3 mr-1" />
+                            <span>{formatDate(poll.created_at)}</span>
+                            <span className="mx-2">•</span>
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{poll.votes} {poll.votes === 1 ? 'Stimme' : 'Stimmen'}</span>
                           </div>
                         </div>
-                        <Badge variant={poll.is_active ? "success" : "secondary"}>
+                        <Badge variant={poll.is_active ? "default" : "secondary"} className={`${poll.is_active ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'} text-white`}>
                           {poll.is_active ? 'Aktiv' : 'Inaktiv'}
                         </Badge>
                       </div>
+                      
                       <div className="p-4">
-                        <div className="grid grid-cols-2 gap-2 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                           {poll.options.map((option, i) => (
                             <div 
                               key={option.id} 
-                              className="px-3 py-1 text-sm bg-gray-100 rounded"
+                              className="px-3 py-2 text-sm bg-[#1c1f2f] rounded text-gray-300 border border-gray-800"
                             >
                               {i+1}. {option.option_text}
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-end gap-2">
+                        
+                        <div className="flex justify-end gap-2 pt-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
                             onClick={() => handleToggleStatus(poll.id, poll.is_active)}
+                            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                           >
                             {poll.is_active ? 'Deaktivieren' : 'Aktivieren'}
                           </Button>
@@ -474,6 +496,7 @@ const PollManagement = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => handleEditPoll(poll)}
+                            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -481,21 +504,21 @@ const PollManagement = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => handleDeletePoll(poll.id)}
+                            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p>Keine Umfragen vorhanden</p>
+                <div className="text-center py-12 bg-[#252a40] rounded-lg">
+                  <p className="text-gray-400 mb-4">Keine Umfragen vorhanden</p>
                   <Button 
-                    variant="outline" 
-                    className="mt-4"
                     onClick={() => setIsAddingPoll(true)}
+                    className="bg-[#7c4dff] hover:bg-[#9e77ff] text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Umfrage erstellen
@@ -508,16 +531,21 @@ const PollManagement = () => {
       </Card>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#252a40] text-white border border-gray-800">
           <AlertDialogHeader>
-            <AlertDialogTitle>Umfrage löschen</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-white">Umfrage löschen</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
               Sind Sie sicher, dass Sie diese Umfrage löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel className="bg-transparent border border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete} 
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
               Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
