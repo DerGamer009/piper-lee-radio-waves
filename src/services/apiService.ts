@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Session, User as AuthUser, WeakPassword } from '@supabase/supabase-js';
 
 export interface User {
   id: string;
@@ -142,11 +143,13 @@ export const getUsers = async (): Promise<User[]> => {
       .select('*');
 
     if (profilesError) throw profilesError;
+    if (!profiles) return [];
 
     // Get all auth users to get emails
     const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
     
     if (authError) throw authError;
+    if (!authData || !authData.users) return [];
 
     // Get user roles
     const { data: roleData, error: roleError } = await supabase
@@ -157,7 +160,10 @@ export const getUsers = async (): Promise<User[]> => {
 
     // Combine data to create user objects
     const users = profiles.map(profile => {
+      // Find matching auth user 
       const authUser = authData.users.find(user => user.id === profile.id);
+      
+      // Get roles for this user
       const userRoles = roleData
         ? roleData.filter(r => r.user_id === profile.id).map(r => r.role)
         : ['user'];
