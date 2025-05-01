@@ -39,7 +39,7 @@ const Header = () => {
             <Link to="/" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
               Startseite
             </Link>
-            <Link to="/schedule" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+            <Link to="/sendeplan" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
               Sendeplan
             </Link>
             <Link to="/podcasts" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
@@ -61,7 +61,7 @@ const Header = () => {
               </Link>
             )}
             {isAdmin && (
-              <Link to="/admin/panel" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              <Link to="/admin" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
                 Admin
               </Link>
             )}
@@ -131,7 +131,7 @@ const Header = () => {
               <Link to="/" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Startseite
               </Link>
-              <Link to="/schedule" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/sendeplan" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Sendeplan
               </Link>
               <Link to="/podcasts" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
@@ -153,7 +153,7 @@ const Header = () => {
                 </Link>
               )}
               {isAdmin && (
-                <Link to="/admin/panel" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/admin" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                   Admin
                 </Link>
               )}
