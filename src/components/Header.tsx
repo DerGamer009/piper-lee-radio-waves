@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,16 +7,21 @@ import { Menu, X, User, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Activity } from 'lucide-react'; // Add the Activity icon
+import { Activity } from 'lucide-react';
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { isMobile } = useIsMobile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  // Get user display name from metadata if available
+  const userDisplayName = user?.user_metadata?.full_name || user?.email || '';
+  // Get initial letters for avatar fallback
+  const userInitials = userDisplayName ? userDisplayName.slice(0, 2).toUpperCase() : '';
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-[#252a40]/80 backdrop-blur-sm z-50 border-b border-gray-800/50">
@@ -54,7 +60,7 @@ const Header = () => {
                 Moderator
               </Link>
             )}
-            {user?.isAdmin && (
+            {isAdmin && (
               <Link to="/admin" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
                 Admin
               </Link>
@@ -68,15 +74,15 @@ const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0 data-[state=open]:bg-muted">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.avatar} alt={user?.fullName} />
-                      <AvatarFallback>{user?.fullName?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={user.user_metadata?.avatar_url} alt={userDisplayName} />
+                      <AvatarFallback>{userInitials}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.fullName}</p>
+                      <p className="text-sm font-medium leading-none">{userDisplayName}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>
@@ -146,7 +152,7 @@ const Header = () => {
                   Moderator
                 </Link>
               )}
-              {user?.isAdmin && (
+              {isAdmin && (
                 <Link to="/admin" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                   Admin
                 </Link>
