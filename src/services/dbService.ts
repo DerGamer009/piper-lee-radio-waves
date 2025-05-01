@@ -77,12 +77,17 @@ export const executeQuery = async (query: string, params: any[] = []) => {
       if (error) throw error;
       
       return data.map(user => {
-        // Handle the case where user_roles might be an array or an object or null
+        // Handle the case where user_roles might be null, an array, or an object
         let roles = 'user'; // Default role
+        
+        // First check if user_roles exists
         if (user.user_roles) {
+          // Then check if it's an array
           if (Array.isArray(user.user_roles)) {
             roles = user.user_roles.map((r: any) => r.role).join(',');
-          } else if (typeof user.user_roles === 'object' && user.user_roles !== null) {
+          } 
+          // Otherwise check if it's an object and not null
+          else if (typeof user.user_roles === 'object' && user.user_roles !== null) {
             roles = user.user_roles.role || 'user';
           }
         }
