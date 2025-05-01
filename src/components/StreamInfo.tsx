@@ -22,6 +22,8 @@ const StreamInfo = () => {
   const [streamInfo, setStreamInfo] = useState<StreamInfoData>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [localElapsed, setLocalElapsed] = useState<number>(0);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   useEffect(() => {
     const getStreamInfo = async () => {
@@ -30,6 +32,8 @@ const StreamInfo = () => {
       try {
         const data = await fetchStreamInfo();
         setStreamInfo(data);
+        setLocalElapsed(data.elapsed || 0);
+        setLastFetchTime(Date.now());
       } catch (error) {
         console.error("Fehler beim Laden der Stream-Informationen:", error);
         setError("Die Stream-Informationen konnten nicht geladen werden.");
@@ -40,10 +44,28 @@ const StreamInfo = () => {
 
     getStreamInfo();
     
-    // Aktualisiere alle 30 Sekunden
-    const interval = setInterval(getStreamInfo, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    // Aktualisiere alle 30 Sekunden den Stream-Info von API
+    const fetchInterval = setInterval(getStreamInfo, 30000);
+    
+    // Aktualisiere die lokale Zeit jede Sekunde
+    const secondInterval = setInterval(() => {
+      if (streamInfo.elapsed !== undefined && streamInfo.duration) {
+        // Berechne die neue verstrichene Zeit basierend auf der letzten Aktualisierung
+        const timeSinceLastFetch = (Date.now() - lastFetchTime) / 1000;
+        const newElapsed = streamInfo.elapsed + timeSinceLastFetch;
+        
+        // Stelle sicher, dass wir nicht über die Gesamtdauer hinausgehen
+        if (newElapsed <= streamInfo.duration) {
+          setLocalElapsed(newElapsed);
+        }
+      }
+    }, 1000);
+    
+    return () => {
+      clearInterval(fetchInterval);
+      clearInterval(secondInterval);
+    };
+  }, [streamInfo.elapsed, streamInfo.duration, lastFetchTime]);
 
   // Extract current song information
   const currentSong = streamInfo.current_song || "Musik wird geladen...";
@@ -61,8 +83,8 @@ const StreamInfo = () => {
     }
   }
   
-  // Calculate progress percentage
-  const progress = streamInfo.duration ? (streamInfo.elapsed! / streamInfo.duration) * 100 : 0;
+  // Calculate progress percentage based on localElapsed
+  const progress = streamInfo.duration ? (localElapsed / streamInfo.duration) * 100 : 0;
 
   return (
     <div className="bg-gradient-to-br from-[#1c1f2f] to-[#252a40] border border-gray-800/50 rounded-xl p-4 shadow-lg">
@@ -99,7 +121,7 @@ const StreamInfo = () => {
             <div className="mt-2 space-y-1">
               <Progress value={progress} className="h-1.5 bg-gray-700/50" />
               <div className="flex justify-between text-xs text-gray-400">
-                <span>{formatTime(streamInfo.elapsed || 0)}</span>
+                <span>{formatTime(localElapsed)}</span>
                 <span>{formatTime(streamInfo.duration)}</span>
               </div>
             </div>
