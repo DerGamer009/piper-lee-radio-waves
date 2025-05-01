@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { InfoIcon, AlertTriangleIcon, AlertCircleIcon, CheckCircleIcon, PlusCircleIcon, SaveIcon, DownloadIcon } from "lucide-react";
+import { InfoIcon, AlertTriangleIcon, AlertCircleIcon, CheckCircleIcon, PlusCircleIcon } from "lucide-react";
 import Header from '@/components/Header';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getStatusUpdates, createStatusItem, StatusUpdate, createBackup } from '@/services/apiService';
+import { getStatusUpdates, createStatusItem, StatusUpdate } from '@/services/apiService';
 import { useAuth } from '@/contexts/AuthContext';
 
 const statusOptions = [
@@ -38,9 +38,7 @@ const statusOptions = [
 const StatusPage = () => {
   const [statusItems, setStatusItems] = useState<StatusUpdate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [backupLoading, setBackupLoading] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [backupList, setBackupList] = useState<string[]>([]);
   const { toast } = useToast();
   const { user, isAdmin, isModerator } = useAuth();
   
@@ -102,30 +100,6 @@ const StatusPage = () => {
     }
   };
 
-  const handleCreateBackup = async () => {
-    try {
-      setBackupLoading(true);
-      const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
-      const backupName = `backup_${timestamp}`;
-      
-      await createBackup(backupName);
-      
-      toast({
-        title: "Backup erstellt",
-        description: `Backup wurde erfolgreich unter /piper-lee/backups/${backupName} gespeichert.`,
-      });
-    } catch (error) {
-      console.error('Error creating backup:', error);
-      toast({
-        variant: "destructive",
-        title: "Fehler",
-        description: "Das Backup konnte nicht erstellt werden.",
-      });
-    } finally {
-      setBackupLoading(false);
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'operational':
@@ -180,109 +154,91 @@ const StatusPage = () => {
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-bold text-white">System Status</h1>
             
-            <div className="flex space-x-2">
-              {(isAdmin || isModerator) && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-1"
-                    onClick={handleCreateBackup}
-                    disabled={backupLoading}
-                  >
-                    {backupLoading ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    ) : (
-                      <SaveIcon className="h-4 w-4" />
-                    )}
-                    Backup erstellen
+            {(isAdmin || isModerator) && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-1">
+                    <PlusCircleIcon className="h-4 w-4" />
+                    Vorfall melden
                   </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Neuer Vorfall</DialogTitle>
+                    <DialogDescription>
+                      Tragen Sie einen neuen Vorfall oder Statusaktualisierung ein.
+                    </DialogDescription>
+                  </DialogHeader>
                   
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="flex items-center gap-1">
-                        <PlusCircleIcon className="h-4 w-4" />
-                        Vorfall melden
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Neuer Vorfall</DialogTitle>
-                        <DialogDescription>
-                          Tragen Sie einen neuen Vorfall oder Statusaktualisierung ein.
-                        </DialogDescription>
-                      </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleCreateIncident)} className="space-y-4 mt-2">
+                      <FormField
+                        control={form.control}
+                        name="system_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Systemname</FormLabel>
+                            <FormControl>
+                              <Input placeholder="z.B. Website, Streaming-Dienst" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleCreateIncident)} className="space-y-4 mt-2">
-                          <FormField
-                            control={form.control}
-                            name="system_name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Systemname</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="z.B. Website, Streaming-Dienst" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="status"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Status</FormLabel>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Status auswählen" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {statusOptions.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        <div className="flex items-center">
-                                          <span className={`h-2 w-2 rounded-full ${option.color} mr-2`}></span>
-                                          {option.label}
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Beschreibung (optional)</FormLabel>
-                                <FormControl>
-                                  <Textarea placeholder="Details zum Vorfall oder zur Statusaktualisierung" className="resize-none" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <DialogFooter>
-                            <Button type="submit">Vorfall melden</Button>
-                          </DialogFooter>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
-                </>
-              )}
-            </div>
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Status auswählen" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {statusOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    <div className="flex items-center">
+                                      <span className={`h-2 w-2 rounded-full ${option.color} mr-2`}></span>
+                                      {option.label}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Beschreibung (optional)</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Details zum Vorfall oder zur Statusaktualisierung" className="resize-none" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <DialogFooter>
+                        <Button type="submit">Vorfall melden</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
           
           <p className="text-gray-400 mb-8">
@@ -307,36 +263,6 @@ const StatusPage = () => {
                   </h2>
                 </div>
               </div>
-              
-              {isAdmin && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <SaveIcon className="mr-2" /> Server-Backups
-                    </CardTitle>
-                    <CardDescription>
-                      Backups werden im Server-Verzeichnis '/piper-lee/backups/' gespeichert
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Um ein Backup zu erstellen, klicken Sie auf "Backup erstellen". Dies speichert eine Sicherungskopie der aktuellen Daten.
-                    </p>
-                    <Button 
-                      onClick={handleCreateBackup}
-                      disabled={backupLoading}
-                      className="flex items-center gap-2"
-                    >
-                      {backupLoading ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      ) : (
-                        <SaveIcon className="h-4 w-4" />
-                      )}
-                      Backup erstellen
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
 
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                 <div className="divide-y divide-gray-200 dark:divide-gray-700">

@@ -1,3 +1,4 @@
+
 export type StatusUpdate = {
   id: number;
   system_name: string;
@@ -11,6 +12,12 @@ export type StatusItemInput = {
   system_name: string;
   status: string;
   description?: string;
+};
+
+export type BackupInfo = {
+  name: string;
+  created_at: string;
+  size: string;
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
@@ -67,6 +74,53 @@ export const createBackup = async (backupName: string): Promise<void> => {
     return await response.json();
   } catch (error) {
     console.error('Error creating backup:', error);
+    throw error;
+  }
+};
+
+export const getBackups = async (): Promise<BackupInfo[]> => {
+  try {
+    const response = await fetch('/api/backups');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching backups:', error);
+    throw error;
+  }
+};
+
+export const downloadBackup = async (backupName: string): Promise<Blob> => {
+  try {
+    const response = await fetch(`/api/backups/${backupName}/download`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.blob();
+  } catch (error) {
+    console.error('Error downloading backup:', error);
+    throw error;
+  }
+};
+
+export const restoreBackup = async (backupName: string): Promise<void> => {
+  try {
+    const response = await fetch(`/api/backups/${backupName}/restore`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error restoring backup:', error);
     throw error;
   }
 };
