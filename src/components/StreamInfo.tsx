@@ -4,6 +4,7 @@ import { Music, Users, Radio, Headphones } from "lucide-react";
 import { fetchStreamInfo } from "@/services/radioService";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { WeatherWidget } from "./WeatherWidget";
 
 interface StreamInfoData {
   title?: string;
@@ -176,6 +177,11 @@ const StreamInfo = () => {
               <span className="text-red-400 text-sm">Live: {streamInfo.streamer_name || "Radio Host"}</span>
             </div>
           )}
+
+          {/* Wetterwidget unter den Stream-Infos */}
+          <div className="mt-3 pt-3 border-t border-gray-700/50">
+            <WeatherWidget />
+          </div>
         </div>
       )}
     </div>

@@ -33,6 +33,42 @@ interface Partner {
   is_active?: boolean;
 }
 
+interface SongRequest {
+  song_name: string;
+  artist_name?: string;
+  requested_by?: string;
+  message?: string;
+}
+
+interface ChatMessage {
+  user_name: string;
+  message: string;
+}
+
+interface SongHistoryItem {
+  id: string;
+  song_name: string;
+  artist_name?: string;
+  played_at: string;
+  image_url?: string;
+  duration?: number;
+}
+
+interface NewsletterSubscription {
+  email: string;
+  name?: string;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  event_date: string;
+  location?: string;
+  image_url?: string;
+  is_featured?: boolean;
+}
+
 const API_URL = "https://backend.piper-lee.net/api/";
 
 export const fetchStreamInfo = async (): Promise<StreamInfo> => {
@@ -122,7 +158,7 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
   }
 };
 
-// Neue Funktion zum Abrufen der Partner aus Supabase
+// Funktion zum Abrufen der Partner aus Supabase
 export const fetchPartners = async (): Promise<Partner[]> => {
   try {
     const { data, error } = await supabase
@@ -197,5 +233,166 @@ export const deletePartner = async (id: string): Promise<boolean> => {
   } catch (error) {
     console.error("Fehler beim Löschen des Partners:", error);
     return false;
+  }
+};
+
+// Neue Funktionen für Song-Wünsche
+export const submitSongRequest = async (request: SongRequest): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('song_requests')
+      .insert(request);
+    
+    if (error) {
+      console.error("Fehler beim Einreichen des Song-Wunsches:", error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Fehler beim Einreichen des Song-Wunsches:", error);
+    return false;
+  }
+};
+
+export const fetchSongRequests = async (): Promise<SongRequest[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('song_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Fehler beim Abrufen der Song-Wünsche:", error);
+    return [];
+  }
+};
+
+// Funktionen für Live-Chat
+export const sendChatMessage = async (message: ChatMessage): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('chat_messages')
+      .insert(message);
+    
+    if (error) {
+      console.error("Fehler beim Senden der Chat-Nachricht:", error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Fehler beim Senden der Chat-Nachricht:", error);
+    return false;
+  }
+};
+
+export const fetchChatMessages = async (limit: number = 50): Promise<ChatMessage[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('is_moderated', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Fehler beim Abrufen der Chat-Nachrichten:", error);
+    return [];
+  }
+};
+
+// Funktionen für Song-Historie
+export const fetchSongHistory = async (limit: number = 10): Promise<SongHistoryItem[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('song_history')
+      .select('*')
+      .order('played_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Fehler beim Abrufen der Song-Historie:", error);
+    return [];
+  }
+};
+
+// Funktion für Newsletter-Anmeldung
+export const subscribeToNewsletter = async (subscription: NewsletterSubscription): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('newsletter_subscribers')
+      .insert(subscription);
+    
+    if (error) {
+      if (error.code === '23505') { // Unique constraint violation (email already exists)
+        throw new Error("Diese E-Mail-Adresse ist bereits angemeldet.");
+      }
+      console.error("Fehler bei der Newsletter-Anmeldung:", error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Fehler bei der Newsletter-Anmeldung:", error);
+    throw error;
+  }
+};
+
+// Funktionen für Events/Veranstaltungen
+export const fetchEvents = async (featuredOnly: boolean = false): Promise<Event[]> => {
+  try {
+    let query = supabase
+      .from('events')
+      .select('*')
+      .order('event_date', { ascending: true });
+    
+    if (featuredOnly) {
+      query = query.eq('is_featured', true);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Fehler beim Abrufen der Events:", error);
+    return [];
+  }
+};
+
+// Fetch und speichere aktuelle Wetterdaten
+export const fetchWeatherData = async (city: string = "Berlin"): Promise<any> => {
+  try {
+    // Hier würde normalerweise ein API-Call zu einem Wetterdienst erfolgen
+    // Da wir keine echte Wetter-API verwenden, liefern wir Mock-Daten zurück
+    return {
+      city: city,
+      temperature: Math.floor(Math.random() * 15) + 10, // 10-25°C
+      condition: ["sonnig", "bewölkt", "regnerisch", "windig"][Math.floor(Math.random() * 4)],
+      humidity: Math.floor(Math.random() * 50) + 30, // 30-80%
+      updated: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Fehler beim Abrufen der Wetterdaten:", error);
+    return null;
   }
 };

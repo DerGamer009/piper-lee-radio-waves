@@ -28,6 +28,9 @@ import News from "./pages/News";
 import Maintenance from "./pages/Maintenance";
 import Download from "./pages/Download";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SongRequests from "./pages/SongRequests";
+import Chat from "./pages/Chat";
+import Events from "./pages/Events";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +64,9 @@ const App = () => (
               <Route path="/news" element={<Layout><News /></Layout>} />
               <Route path="/news/:id" element={<Layout><News /></Layout>} />
               <Route path="/download" element={<Layout><Download /></Layout>} />
+              <Route path="/songwunsch" element={<Layout><SongRequests /></Layout>} />
+              <Route path="/chat" element={<Layout><Chat /></Layout>} />
+              <Route path="/events" element={<Layout><Events /></Layout>} />
               {/* The maintenance page should be accessible to everyone without authentication */}
               <Route path="/maintenance" element={<Layout><Maintenance /></Layout>} />
               <Route 

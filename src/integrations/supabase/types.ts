@@ -30,6 +30,63 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_moderated: boolean | null
+          message: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_moderated?: boolean | null
+          message: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_moderated?: boolean | null
+          message?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          id: string
+          image_url: string | null
+          is_featured: boolean | null
+          location: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          location?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          location?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           author: string | null
@@ -63,6 +120,30 @@ export type Database = {
           published_at?: string | null
           tags?: string[] | null
           title?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string | null
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name?: string | null
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string | null
+          subscribed_at?: string
         }
         Relationships: []
       }
@@ -352,6 +433,63 @@ export type Database = {
           image_url?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      song_history: {
+        Row: {
+          artist_name: string | null
+          duration: number | null
+          id: string
+          image_url: string | null
+          played_at: string
+          song_name: string
+        }
+        Insert: {
+          artist_name?: string | null
+          duration?: number | null
+          id?: string
+          image_url?: string | null
+          played_at?: string
+          song_name: string
+        }
+        Update: {
+          artist_name?: string | null
+          duration?: number | null
+          id?: string
+          image_url?: string | null
+          played_at?: string
+          song_name?: string
+        }
+        Relationships: []
+      }
+      song_requests: {
+        Row: {
+          artist_name: string | null
+          created_at: string
+          id: string
+          is_played: boolean | null
+          message: string | null
+          requested_by: string | null
+          song_name: string
+        }
+        Insert: {
+          artist_name?: string | null
+          created_at?: string
+          id?: string
+          is_played?: boolean | null
+          message?: string | null
+          requested_by?: string | null
+          song_name: string
+        }
+        Update: {
+          artist_name?: string | null
+          created_at?: string
+          id?: string
+          is_played?: boolean | null
+          message?: string | null
+          requested_by?: string | null
+          song_name?: string
         }
         Relationships: []
       }

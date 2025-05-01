@@ -10,6 +10,11 @@ import { usePollData } from "@/hooks/usePollData";
 import { usePodcastData } from "@/hooks/usePodcastData";
 import DynamicPollWidget from "@/components/DynamicPollWidget";
 import DynamicPodcastCard from "@/components/DynamicPodcastCard";
+import { SongHistory } from "@/components/SongHistory";
+import { EventsCalendar } from "@/components/EventsCalendar";
+import { LiveChat } from "@/components/LiveChat";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
 
 // Constants for radio stream
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
@@ -84,21 +89,55 @@ const Index = () => {
                   className="border-radio-purple text-radio-purple hover:bg-radio-purple/10 rounded-full px-6"
                   asChild
                 >
-                  <Link to="/charts">Charts</Link>
+                  <Link to="/chat">Live-Chat</Link>
                 </Button>
                 <Button 
                   variant="ghost" 
                   className="text-radio-light hover:text-white rounded-full px-6"
                   asChild
                 >
-                  <Link to="/kontakt">Kontakt</Link>
+                  <Link to="/songwunsch">Song wünschen</Link>
                 </Button>
+              </div>
+              <div className="mt-4 flex justify-center lg:justify-start">
+                <DarkModeToggle />
               </div>
             </div>
             
             <div className="lg:w-1/2 flex justify-center mt-8 lg:mt-0">
               <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Neue Sektion für Live-Chat und Song-Historie */}
+      <section className="py-16 bg-gradient-to-b from-radio-dark to-radio-dark/90">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-4">Live mit uns interagieren</h2>
+            <p className="text-radio-light/70 max-w-2xl mx-auto">
+              Sei Teil unserer Community! Chatte live mit anderen Hörern, sieh dir an, was gerade gespielt wird oder schicke uns deinen Songwunsch.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+            <div className="lg:col-span-2">
+              <LiveChat />
+            </div>
+            <div className="space-y-6">
+              <SongHistory />
+              <EventsCalendar />
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <Button
+              asChild
+              className="bg-radio-purple hover:bg-radio-purple/90 text-white rounded-full px-8"
+            >
+              <Link to="/chat">Zum Live-Chat</Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -140,6 +179,27 @@ const Index = () => {
                 <p className="text-radio-light/70">Derzeit sind keine aktiven Umfragen verfügbar.</p>
               </div>
             )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div className="md:col-span-2">
+              <NewsletterSignup />
+            </div>
+            <div>
+              <Button 
+                asChild
+                variant="outline"
+                className="w-full h-full border border-gray-800/50 bg-gradient-to-br from-[#1c1f2f]/60 to-[#252a40]/60 backdrop-blur-sm rounded-lg p-8 flex flex-col items-center justify-center gap-4 hover:bg-gray-800/20 transition-colors"
+              >
+                <Link to="/songwunsch">
+                  <Music className="h-12 w-12 text-radio-purple mb-2" />
+                  <span className="text-xl font-semibold">Song wünschen</span>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Fehlt dir ein bestimmter Song? Wünsche ihn dir hier!
+                  </p>
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
