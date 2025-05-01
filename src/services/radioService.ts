@@ -57,7 +57,7 @@ export const fetchStreamInfo = async (): Promise<StreamInfo> => {
 
 export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
   try {
-    // Fetch schedule from Supabase
+    // Fetch schedule from Supabase with show information
     const { data: scheduleData, error } = await supabase
       .from('schedule')
       .select(`
@@ -72,8 +72,7 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
           title,
           description
         )
-      `)
-      .order('start_time', { ascending: true });
+      `);
     
     if (error) {
       console.error("Fehler beim Abrufen des Sendeplans:", error);
@@ -96,72 +95,7 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
   } catch (error) {
     console.error("Fehler beim Abrufen des Sendeplans:", error);
     
-    // Fallback to placeholder data if there's an error
-    return [
-      { 
-        day: "Montag", 
-        title: "Morgenmelodien", 
-        description: "Starten Sie Ihren Tag mit den besten Melodien und guter Laune.",
-        start_time: "08:00", 
-        end_time: "11:00", 
-        host: "Maria Müller"
-      },
-      { 
-        day: "Montag", 
-        title: "Mittagsbeat", 
-        description: "Energiegeladene Musik für Ihre Mittagspause.",
-        start_time: "12:00", 
-        end_time: "14:00", 
-        host: "Thomas Weber"
-      },
-      { 
-        day: "Dienstag", 
-        title: "Nachmittagsklänge", 
-        description: "Entspannte Musik für den Nachmittag.",
-        start_time: "13:00", 
-        end_time: "15:00", 
-        host: "Laura Schmidt"
-      },
-      { 
-        day: "Mittwoch", 
-        title: "Abendechos", 
-        description: "Die besten Hits zum Abend.",
-        start_time: "19:00", 
-        end_time: "21:00", 
-        host: "David König"
-      },
-      { 
-        day: "Donnerstag", 
-        title: "Nachtlounge", 
-        description: "Musik zum Entspannen und Träumen.",
-        start_time: "22:00", 
-        end_time: "00:00", 
-        host: "Sophia Becker"
-      },
-      { 
-        day: "Freitag", 
-        title: "Wochenendauftakt", 
-        description: "Feiern Sie den Start ins Wochenende mit uns.",
-        start_time: "18:00", 
-        end_time: "20:00", 
-        host: "Max Schneider"
-      },
-      { 
-        day: "Samstag", 
-        title: "Partymix", 
-        description: "Die heißesten Tracks für Ihre Wochenendparty.",
-        start_time: "20:00", 
-        end_time: "23:00", 
-        host: "Julia Fischer"
-      },
-      { 
-        day: "Sonntag", 
-        title: "Sonntagsklassiker", 
-        description: "Klassische Hits und Evergreens.",
-        start_time: "10:00", 
-        end_time: "13:00", 
-        host: "Robert Wagner"
-      }
-    ];
+    // Return empty array to prevent UI errors
+    return [];
   }
 };
