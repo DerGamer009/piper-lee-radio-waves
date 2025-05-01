@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -53,7 +54,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
     username: user?.username || '',
     email: user?.email || '',
     fullName: user?.fullName || '',
-    roles: user?.roles || ['user'],
+    // Ensure roles is always an array
+    roles: Array.isArray(user?.roles) ? user.roles : (user?.roles ? [user.roles] : ['user']),
     isActive: user?.isActive !== undefined ? user.isActive : true,
   };
 

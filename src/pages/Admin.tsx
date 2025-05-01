@@ -96,7 +96,14 @@ const Admin = () => {
 
   const handleToggleUserStatus = async (userId: string, isCurrentlyActive: boolean) => {
     try {
-      await updateUser(userId, { isActive: !isCurrentlyActive, username: '', email: '', fullName: '', roles: [] });
+      await updateUser(userId, { 
+        isActive: !isCurrentlyActive,
+        // These empty fields are required by the API but won't be used for the update
+        username: '', 
+        email: '', 
+        fullName: '', 
+        roles: [] 
+      });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Status geändert",
@@ -198,7 +205,7 @@ const Admin = () => {
                       <Button 
                         variant="ghost" 
                         className={`px-2 py-1 rounded-full text-xs ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-                        onClick={() => handleToggleUserStatus(user.id, user.isActive)}
+                        onClick={() => handleToggleUserStatus(user.id, user.isActive || false)}
                       >
                         {user.isActive ? "Aktiv" : "Inaktiv"}
                       </Button>

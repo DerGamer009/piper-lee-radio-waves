@@ -28,6 +28,7 @@ export type User = {
   roles?: string | string[];
   created_at?: string;
   updated_at?: string;
+  isActive?: boolean;
 };
 
 export type CreateUserData = {
@@ -36,6 +37,7 @@ export type CreateUserData = {
   email?: string;
   fullName?: string;
   roles?: string[];
+  isActive?: boolean;
 };
 
 export type Show = {

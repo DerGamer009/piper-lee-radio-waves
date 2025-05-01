@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserForm from '../UserForm';
 import { AlertTriangle, Check, Search, Shield, ShieldAlert, User, Users } from 'lucide-react';
-import { getUsers, deleteUser } from "@/services/apiService";
+import { getUsers, deleteUser, User as UserType } from "@/services/apiService";
 
 interface UserData {
   id: string;
@@ -41,7 +41,11 @@ const UserManagement = () => {
       const usersData = await getUsers();
       setUsers(usersData.map(user => ({
         ...user,
-        avatar_url: null // Set a default since it's not in our User type
+        avatar_url: null, // Set a default since it's not in our User type
+        // Ensure roles is always an array
+        roles: Array.isArray(user.roles) ? user.roles : (user.roles ? [user.roles] : ['user']),
+        // Set default isActive value if not provided
+        isActive: user.isActive !== undefined ? user.isActive : true
       })));
     } catch (error) {
       console.error('Error fetching users:', error);
