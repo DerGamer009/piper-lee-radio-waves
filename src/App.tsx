@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -81,15 +82,15 @@ function App() {
                 />
                 <Route 
                   path="/admin" 
-                  element={<ProtectedRoute element={<Layout><Admin /></Layout>} requiredRoles={["admin"]} />} 
+                  element={<ProtectedRoute element={<Layout showSidebar={true}><Admin /></Layout>} requiredRoles={["admin"]} />} 
                 />
                 <Route 
                   path="/admin/panel" 
-                  element={<ProtectedRoute element={<Layout><AdminPanel /></Layout>} requiredRoles={["admin"]} />} 
+                  element={<ProtectedRoute element={<Layout showSidebar={true}><AdminPanel /></Layout>} requiredRoles={["admin"]} />} 
                 />
                 <Route 
                   path="/moderator" 
-                  element={<ProtectedRoute element={<Layout><Moderator /></Layout>} requiredRoles={["admin", "moderator"]} />} 
+                  element={<ProtectedRoute element={<Layout showSidebar={true}><Moderator /></Layout>} requiredRoles={["admin", "moderator"]} />} 
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
