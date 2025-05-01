@@ -27,6 +27,43 @@ import {
 } from "@/components/ui/select";
 import { getStatusUpdates, createStatusItem, StatusUpdate } from '@/services/apiService';
 import { useAuth } from '@/contexts/AuthContext';
+import { StatusTimeline } from '@/components/StatusTimeline';
+
+// Mock data to use when API fails
+const mockStatusItems: StatusUpdate[] = [
+  {
+    id: 1,
+    system_name: 'Website',
+    status: 'Operational',
+    description: 'Website is functioning normally.',
+    created_at: new Date(Date.now() - 40 * 60000).toISOString(),
+    updated_at: new Date(Date.now() - 40 * 60000).toISOString()
+  },
+  {
+    id: 2,
+    system_name: 'Streaming Service',
+    status: 'Degraded Performance',
+    description: 'Some users may experience slower streaming.',
+    created_at: new Date(Date.now() - 30 * 60000).toISOString(),
+    updated_at: new Date(Date.now() - 30 * 60000).toISOString()
+  },
+  {
+    id: 3,
+    system_name: 'Database',
+    status: 'Partial Outage',
+    description: 'Database connectivity issues affecting some features.',
+    created_at: new Date(Date.now() - 20 * 60000).toISOString(),
+    updated_at: new Date(Date.now() - 20 * 60000).toISOString()
+  },
+  {
+    id: 4,
+    system_name: 'API',
+    status: 'Operational',
+    description: 'API services have been restored.',
+    created_at: new Date(Date.now() - 10 * 60000).toISOString(),
+    updated_at: new Date(Date.now() - 10 * 60000).toISOString()
+  }
+];
 
 const statusOptions = [
   { value: 'Operational', label: 'Operational', color: 'bg-green-500' },
@@ -58,10 +95,12 @@ const StatusPage = () => {
         setStatusItems(data);
       } catch (error) {
         console.error('Error fetching status updates:', error);
+        // Use mock data when API fails
+        setStatusItems(mockStatusItems);
         toast({
-          title: 'Fehler',
-          description: 'Status-Daten konnten nicht geladen werden.',
-          variant: 'destructive'
+          title: 'Hinweis',
+          description: 'Demo-Daten werden angezeigt, da keine Verbindung zum Server hergestellt werden konnte.',
+          variant: 'default'
         });
       } finally {
         setLoading(false);
@@ -79,9 +118,18 @@ const StatusPage = () => {
         description: values.description
       });
       
-      // Refetch status updates
-      const data = await getStatusUpdates();
-      setStatusItems(data);
+      // If API call fails, we would catch it in the catch block
+      // For now, add the new item to the local state
+      const newItem: StatusUpdate = {
+        id: Date.now(), // Mock ID
+        system_name: values.system_name,
+        status: values.status,
+        description: values.description,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      setStatusItems([...statusItems, newItem]);
       
       toast({
         title: "Vorfall erstellt",
@@ -264,6 +312,9 @@ const StatusPage = () => {
                 </div>
               </div>
 
+              {/* Status Timeline */}
+              <StatusTimeline incidents={statusItems} />
+
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                 <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {statusItems.map((item) => (
@@ -307,6 +358,36 @@ const StatusPage = () => {
       </main>
     </div>
   );
+
+  function getStatusIcon(status: string) {
+    switch (status.toLowerCase()) {
+      case 'operational':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      case 'degraded performance':
+        return <InfoIcon className="h-5 w-5 text-yellow-500" />;
+      case 'partial outage':
+        return <AlertTriangleIcon className="h-5 w-5 text-orange-500" />;
+      case 'major outage':
+        return <AlertCircleIcon className="h-5 w-5 text-red-500" />;
+      default:
+        return <InfoIcon className="h-5 w-5 text-blue-500" />;
+    }
+  }
+
+  function getStatusBadgeColor(status: string) {
+    switch (status.toLowerCase()) {
+      case 'operational':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+      case 'degraded performance':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+      case 'partial outage':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
+      case 'major outage':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      default:
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+    }
+  }
 };
 
 export default StatusPage;

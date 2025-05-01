@@ -13,7 +13,7 @@ interface TimelineSegment {
   tooltipText: string;
 }
 
-export const StatusTimeline: React.FC<TimelineProps> = ({ incidents }) => {
+export const StatusTimeline: React.FC<TimelineProps> = ({ incidents = [] }) => {
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
       case 'operational':
