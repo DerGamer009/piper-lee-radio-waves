@@ -54,6 +54,7 @@ export const createNewUser = async (userData: CreateUserData): Promise<User> => 
   });
 
   if (authError) throw authError;
+  if (!authData || !authData.user) throw new Error("User creation failed");
   
   // User roles will be created automatically via trigger for 'user' role
   // But we need to add any additional roles
@@ -164,9 +165,9 @@ export const getUsers = async (): Promise<User[]> => {
 
     // Combine data to create user objects
     const users = profiles.map(profile => {
-      // Find matching auth user 
+      // Find matching auth user - using type guard to ensure user exists and has id
       const authUser = authData.users.find(user => {
-        return user && user.id === profile.id;
+        return user !== null && user !== undefined && user.id === profile.id;
       });
       
       // Get roles for this user
