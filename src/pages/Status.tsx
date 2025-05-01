@@ -31,7 +31,7 @@ import { StatusTimeline } from '@/components/StatusTimeline';
 // Mock data to use when API fails
 const mockStatusItems: StatusUpdate[] = [
   {
-    id: 1,
+    id: "1", // Converting to string to match the type
     system_name: 'Website',
     status: 'Operational',
     description: 'Website is functioning normally.',
@@ -39,7 +39,7 @@ const mockStatusItems: StatusUpdate[] = [
     updated_at: new Date(Date.now() - 40 * 60000).toISOString()
   },
   {
-    id: 2,
+    id: "2", // Converting to string to match the type
     system_name: 'Streaming Service',
     status: 'Degraded Performance',
     description: 'Some users may experience slower streaming.',
@@ -47,7 +47,7 @@ const mockStatusItems: StatusUpdate[] = [
     updated_at: new Date(Date.now() - 30 * 60000).toISOString()
   },
   {
-    id: 3,
+    id: "3", // Converting to string to match the type
     system_name: 'Database',
     status: 'Partial Outage',
     description: 'Database connectivity issues affecting some features.',
@@ -55,7 +55,7 @@ const mockStatusItems: StatusUpdate[] = [
     updated_at: new Date(Date.now() - 20 * 60000).toISOString()
   },
   {
-    id: 4,
+    id: "4", // Converting to string to match the type
     system_name: 'API',
     status: 'Operational',
     description: 'API services have been restored.',
