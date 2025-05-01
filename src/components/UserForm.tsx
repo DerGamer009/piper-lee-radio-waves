@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -77,7 +76,16 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
   const onSubmit = async (data: UserFormValues<typeof isEditing>) => {
     try {
       if (isEditing && user) {
-        await updateUser(user.id, data as EditUserFormValues);
+        // Ensure we're passing all required fields for updateUser
+        const updateData: Omit<User, 'id'> = {
+          username: data.username,
+          email: data.email,
+          fullName: data.fullName,
+          roles: data.roles,
+          isActive: data.isActive
+        };
+        
+        await updateUser(user.id, updateData);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich aktualisiert.",

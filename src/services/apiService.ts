@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface User {
@@ -16,6 +17,23 @@ export interface CreateUserData {
   fullName: string;
   roles: string[];
   isActive: boolean;
+}
+
+export interface Show {
+  id: string;
+  title: string;
+  description?: string;
+  image_url?: string;
+}
+
+export interface ScheduleItem {
+  id: string;
+  show_id: string;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
+  is_recurring: boolean;
+  show?: Show; // Used for joined queries
 }
 
 export const createNewUser = async (userData: CreateUserData): Promise<User> => {
@@ -49,7 +67,7 @@ export const createNewUser = async (userData: CreateUserData): Promise<User> => 
       .from('user_roles')
       .insert({
         user_id: userId,
-        role: role
+        role: role as "user" | "moderator" | "admin" // Cast to match the enum type
       });
     
     if (error) throw error;
@@ -100,7 +118,7 @@ export const updateUser = async (userId: string, userData: Omit<User, 'id'>): Pr
       .from('user_roles')
       .insert({
         user_id: userId,
-        role: role
+        role: role as "user" | "moderator" | "admin" // Cast to match the enum type
       });
     
     if (error) throw error;
@@ -110,4 +128,147 @@ export const updateUser = async (userId: string, userData: Omit<User, 'id'>): Pr
     id: userId,
     ...userData
   };
+};
+
+// Add the missing functions
+
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    // Get profiles
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*');
+
+    if (profilesError) throw profilesError;
+
+    // Get all auth users to get emails
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+    
+    if (authError) throw authError;
+
+    // Get user roles
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('*');
+
+    if (roleError) throw roleError;
+
+    // Combine data to create user objects
+    const users = profiles.map(profile => {
+      const authUser = authData.users.find(user => user.id === profile.id);
+      const userRoles = roleData
+        ? roleData.filter(r => r.user_id === profile.id).map(r => r.role)
+        : ['user'];
+
+      return {
+        id: profile.id,
+        username: profile.username || '',
+        email: authUser?.email || '',
+        fullName: profile.full_name || '',
+        roles: userRoles,
+        isActive: true // Default to true if not specified
+      };
+    });
+
+    return users;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId: string): Promise<void> => {
+  try {
+    // Deleting a user from auth will cascade delete from profiles and roles
+    // due to database constraints
+    const { error } = await supabase.auth.admin.deleteUser(userId);
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+};
+
+export const login = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  
+  if (error) throw error;
+  
+  return data;
+};
+
+// Schedule related functions
+export const getSchedule = async (): Promise<ScheduleItem[]> => {
+  const { data, error } = await supabase
+    .from('schedule')
+    .select(`
+      *,
+      show:show_id (
+        id, title, description, image_url
+      )
+    `);
+  
+  if (error) throw error;
+  
+  return data || [];
+};
+
+export const getShows = async (): Promise<Show[]> => {
+  const { data, error } = await supabase
+    .from('shows')
+    .select('*');
+  
+  if (error) throw error;
+  
+  return data || [];
+};
+
+export const createScheduleItem = async (scheduleItem: Omit<ScheduleItem, 'id'>): Promise<ScheduleItem> => {
+  const { data, error } = await supabase
+    .from('schedule')
+    .insert({
+      show_id: scheduleItem.show_id,
+      day_of_week: scheduleItem.day_of_week,
+      start_time: scheduleItem.start_time,
+      end_time: scheduleItem.end_time,
+      is_recurring: scheduleItem.is_recurring
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  
+  return data;
+};
+
+export const updateScheduleItem = async (id: string, scheduleItem: Partial<ScheduleItem>): Promise<ScheduleItem> => {
+  const { data, error } = await supabase
+    .from('schedule')
+    .update({
+      show_id: scheduleItem.show_id,
+      day_of_week: scheduleItem.day_of_week,
+      start_time: scheduleItem.start_time,
+      end_time: scheduleItem.end_time,
+      is_recurring: scheduleItem.is_recurring
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  
+  return data;
+};
+
+export const deleteScheduleItem = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('schedule')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
 };

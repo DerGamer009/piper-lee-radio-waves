@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -36,7 +37,7 @@ const Admin = () => {
   });
 
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -50,12 +51,12 @@ const Admin = () => {
     navigate("/login");
   };
 
-  const handleEditUser = (userId: number) => {
+  const handleEditUser = (userId: string) => {
     setSelectedUserId(userId);
     setIsEditingUser(true);
   };
 
-  const handleDeleteClick = (userId: number) => {
+  const handleDeleteClick = (userId: string) => {
     setSelectedUserId(userId);
     setIsDeleteDialogOpen(true);
   };
@@ -87,9 +88,9 @@ const Admin = () => {
     setIsEditingUser(false);
   };
 
-  const handleToggleUserStatus = async (userId: number, isCurrentlyActive: boolean) => {
+  const handleToggleUserStatus = async (userId: string, isCurrentlyActive: boolean) => {
     try {
-      await updateUser(userId, { isActive: !isCurrentlyActive });
+      await updateUser(userId, { isActive: !isCurrentlyActive, username: '', email: '', fullName: '', roles: [] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Status geändert",
