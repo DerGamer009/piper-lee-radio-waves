@@ -1,8 +1,102 @@
+
 // This file provides the API service functions for interacting with the database.
 
 import { supabase } from "../integrations/supabase/client";
 
+// Types definitions
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+  fullName: string;
+  roles: string | string[];
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface CreateUserData {
+  username: string;
+  password: string;
+  email: string;
+  fullName: string;
+  roles: string[];
+  isActive: boolean;
+}
+
+export interface Show {
+  id: string;
+  title: string;
+  description?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+}
+
+export interface ScheduleItem {
+  id: string;
+  show_id: string;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
+  host_id?: string | null;
+  host_name?: string;
+  is_recurring: boolean;
+  show?: Show;
+  show_title?: string;
+}
+
 // Authentication functions
+export const login = async (username: string, password: string) => {
+  try {
+    // Sign in with username/email and password
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: username.includes('@') ? username : `${username}@example.com`,
+      password: password
+    });
+    
+    if (error) throw error;
+    
+    if (data.user) {
+      // Get user profile data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      // Get user roles
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id);
+      
+      let roles = ['user']; // Default role
+      if (rolesData && rolesData.length > 0) {
+        // Make sure we're accessing the data correctly
+        roles = rolesData.map(r => r.role);
+      }
+      
+      const user = {
+        id: data.user.id,
+        username: profileData?.username || username,
+        email: data.user.email,
+        fullName: profileData?.full_name || "",
+        roles: roles.join(','),
+        isActive: profileData?.is_active !== false, // Default to true if undefined
+        createdAt: profileData?.created_at || data.user.created_at
+      };
+      
+      return { user, session: data.session };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    return null;
+  }
+};
+
 export const authenticateUser = async (username: string, password: string) => {
   console.log('Authenticating user:', username);
   
@@ -50,6 +144,130 @@ export const authenticateUser = async (username: string, password: string) => {
   } catch (error) {
     console.error("Authentication error:", error);
     return null;
+  }
+};
+
+// User management functions
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('users_with_roles')
+      .select('*');
+    
+    if (error) throw error;
+    
+    return data.map(user => ({
+      id: user.id,
+      username: user.username || '',
+      email: user.email || '',
+      fullName: user.full_name || '',
+      roles: user.roles || ['user'],
+      isActive: user.is_active !== false
+    }));
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+};
+
+export const createNewUser = async (userData: CreateUserData): Promise<{ insertId: string } | null> => {
+  try {
+    const result = await executeQuery('insert into users', [userData]);
+    return result && result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+export const updateUser = async (userId: string, userData: Partial<User>): Promise<{ affectedRows: number } | null> => {
+  try {
+    const result = await executeQuery('update users', [userData, userId]);
+    return result && result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId: string): Promise<{ affectedRows: number } | null> => {
+  try {
+    const result = await executeQuery('delete from users', [userId]);
+    return result && result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+};
+
+// Schedule management functions
+export const getSchedule = async (): Promise<ScheduleItem[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('schedule')
+      .select(`
+        *,
+        shows:show_id (
+          id,
+          title,
+          description
+        )
+      `);
+    
+    if (error) throw error;
+    
+    return data.map(item => ({
+      ...item,
+      show_title: item.shows?.title || 'Unknown',
+    }));
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+    return [];
+  }
+};
+
+export const getShows = async (): Promise<Show[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('shows')
+      .select('*');
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching shows:', error);
+    return [];
+  }
+};
+
+export const createScheduleItem = async (scheduleData: Omit<ScheduleItem, 'id'>): Promise<{ insertId: string, show_title?: string } | null> => {
+  try {
+    const result = await executeQuery('insert into schedule', [scheduleData]);
+    return result && result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error creating schedule item:', error);
+    throw error;
+  }
+};
+
+export const updateScheduleItem = async (scheduleId: string, scheduleData: Partial<ScheduleItem>): Promise<{ affectedRows: number } | null> => {
+  try {
+    const result = await executeQuery('update schedule', [scheduleData, scheduleId]);
+    return result && result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error updating schedule item:', error);
+    throw error;
+  }
+};
+
+export const deleteScheduleItem = async (scheduleId: string): Promise<{ affectedRows: number } | null> => {
+  try {
+    const result = await executeQuery('delete from schedule', [scheduleId]);
+    return result && result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error('Error deleting schedule item:', error);
+    throw error;
   }
 };
 
@@ -424,7 +642,7 @@ export const createStatusItem = async (statusData: Omit<StatusUpdate, 'id' | 'cr
 };
 
 // Update an existing status update
-export const updateStatusItem = async (id: number | string, statusData: Partial<Omit<StatusUpdate, 'id' | 'created_at' | 'updated_at'>>): Promise<StatusUpdate> => {
+export const updateStatusItem = async (id: string, statusData: Partial<Omit<StatusUpdate, 'id' | 'created_at' | 'updated_at'>>): Promise<StatusUpdate> => {
   try {
     const { data, error } = await supabase
       .from('status_updates')
@@ -442,7 +660,7 @@ export const updateStatusItem = async (id: number | string, statusData: Partial<
 };
 
 // Delete a status update
-export const deleteStatusItem = async (id: number | string): Promise<void> => {
+export const deleteStatusItem = async (id: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from('status_updates')
@@ -456,11 +674,53 @@ export const deleteStatusItem = async (id: number | string): Promise<void> => {
   }
 };
 
+// Mock implementation of backup-related functions to prevent errors
+export const createBackup = async () => {
+  console.warn('createBackup is not implemented yet');
+  return { id: 'mock-backup-id', created_at: new Date().toISOString() };
+};
+
+export const getBackups = async () => {
+  console.warn('getBackups is not implemented yet');
+  return [];
+};
+
+export const downloadBackup = async () => {
+  console.warn('downloadBackup is not implemented yet');
+  return null;
+};
+
+export const restoreBackup = async () => {
+  console.warn('restoreBackup is not implemented yet');
+  return { success: false, message: 'Not implemented' };
+};
+
+export interface BackupInfo {
+  id: string;
+  created_at: string;
+  size?: number;
+  name?: string;
+}
+
 export default {
   authenticateUser,
   executeQuery,
   getStatusUpdates,
   createStatusItem,
   updateStatusItem,
-  deleteStatusItem
+  deleteStatusItem,
+  login,
+  getUsers,
+  createNewUser,
+  updateUser,
+  deleteUser,
+  getSchedule,
+  getShows,
+  createScheduleItem,
+  updateScheduleItem,
+  deleteScheduleItem,
+  createBackup,
+  getBackups,
+  downloadBackup,
+  restoreBackup
 };

@@ -30,12 +30,12 @@ const Moderator = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const { data: scheduleItems, isLoading: scheduleLoading } = useQuery({
+  const { data: scheduleItems = [], isLoading: scheduleLoading } = useQuery({
     queryKey: ['schedule'],
     queryFn: getSchedule
   });
 
-  const { data: shows, isLoading: showsLoading } = useQuery({
+  const { data: shows = [], isLoading: showsLoading } = useQuery({
     queryKey: ['shows'],
     queryFn: getShows
   });
