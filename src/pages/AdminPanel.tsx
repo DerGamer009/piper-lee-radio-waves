@@ -65,7 +65,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { RadioCard } from "@/components/dashboard/RadioCard";
+import RadioCard from "@/components/dashboard/RadioCard";
 import StatusManagement from "@/components/dashboard/StatusManagement";
 
 const AdminPanel = () => {
@@ -104,14 +104,17 @@ const AdminPanel = () => {
   const { refetch: refetchBackups } = useQuery({
     queryKey: ["backups"],
     queryFn: getBackups,
-    onSuccess: (data) => {
-      setBackupList(data);
-    },
   });
 
+  // Set up effect to update backupList whenever data changes
   useEffect(() => {
-    refetchBackups();
-  }, [refetchBackups]);
+    const fetchBackups = async () => {
+      const data = await getBackups();
+      setBackupList(data);
+    };
+    
+    fetchBackups();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -251,7 +254,9 @@ const AdminPanel = () => {
       const result = await createBackup();
       console.log("Backup created:", result);
 
-      refetchBackups();
+      // Manually update backup list after creation
+      const data = await getBackups();
+      setBackupList(data);
 
       toast({
         title: "Backup erstellt",
@@ -321,6 +326,23 @@ const AdminPanel = () => {
       setRestoringBackup(false);
       setIsRestoreDialogOpen(false);
     }
+  };
+
+  // Add handler for the refetch button
+  const handleRefetchBackups = () => {
+    const fetchBackups = async () => {
+      try {
+        setBackupLoading(true);
+        const data = await getBackups();
+        setBackupList(data);
+      } catch (error) {
+        console.error("Error fetching backups:", error);
+      } finally {
+        setBackupLoading(false);
+      }
+    };
+    
+    fetchBackups();
   };
 
   if (isLoading) return <div className="p-4">Daten werden geladen...</div>;
@@ -422,7 +444,7 @@ const AdminPanel = () => {
             </Button>
             <Button
               variant="outline"
-              onClick={refetchBackups}
+              onClick={handleRefetchBackups}
               disabled={backupLoading}
               className="flex items-center gap-2"
             >
@@ -471,6 +493,7 @@ const AdminPanel = () => {
       </Card>
 
       {/* Modals and Dialogs */}
+      {/* Add user dialog */}
       <Dialog open={isAddingUser} onOpenChange={setIsAddingUser}>
         <DialogContent>
           <DialogHeader>
@@ -570,6 +593,7 @@ const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Edit user dialog */}
       <Dialog open={isEditingUser} onOpenChange={setIsEditingUser}>
         <DialogContent>
           <DialogHeader>
@@ -656,6 +680,7 @@ const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Delete user confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -674,6 +699,7 @@ const AdminPanel = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Restore backup confirmation */}
       <AlertDialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

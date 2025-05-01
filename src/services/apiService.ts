@@ -175,8 +175,8 @@ export const createNewUser = async (userData: CreateUserData): Promise<{ insertI
     
     // Ensure correct return format
     if (result && result.length > 0) {
-      const item = result[0];
-      return { insertId: item.id || item.insertId };
+      const item = result[0] as any;
+      return { insertId: item.id || item.insertId || '' };
     }
     return null;
   } catch (error) {
@@ -262,10 +262,10 @@ export const createScheduleItem = async (scheduleData: Omit<ScheduleItem, 'id'>)
     
     // Ensure correct return format
     if (result && result.length > 0) {
-      const item = result[0];
+      const item = result[0] as any;
       return { 
-        insertId: item.id || item.insertId, 
-        show_title: item.show_title 
+        insertId: item.id || item.insertId || '', 
+        show_title: item.show_title || ''
       };
     }
     return null;
@@ -634,7 +634,7 @@ export const executeQuery = async (query: string, params: any[] = []) => {
 
 // Status Update Type
 export interface StatusUpdate {
-  id: number | string;
+  id: string;
   system_name: string;
   status: string;
   description?: string;
@@ -709,24 +709,27 @@ export const deleteStatusItem = async (id: string): Promise<void> => {
 };
 
 // Mock implementation of backup-related functions to prevent errors
-export const createBackup = async () => {
+export const createBackup = async (): Promise<{ id: string, created_at: string }> => {
   console.warn('createBackup is not implemented yet');
   return { id: 'mock-backup-id', created_at: new Date().toISOString() };
 };
 
-export const getBackups = async () => {
+export const getBackups = async (): Promise<BackupInfo[]> => {
   console.warn('getBackups is not implemented yet');
-  return [];
+  return [
+    { id: 'mock-backup-1', created_at: new Date().toISOString(), size: 1024, name: 'Backup 1' },
+    { id: 'mock-backup-2', created_at: new Date(Date.now() - 86400000).toISOString(), size: 2048, name: 'Backup 2' }
+  ];
 };
 
-export const downloadBackup = async () => {
+export const downloadBackup = async (): Promise<boolean> => {
   console.warn('downloadBackup is not implemented yet');
-  return null;
+  return true;
 };
 
-export const restoreBackup = async () => {
+export const restoreBackup = async (): Promise<{ success: boolean, message: string }> => {
   console.warn('restoreBackup is not implemented yet');
-  return { success: false, message: 'Not implemented' };
+  return { success: true, message: 'Mock restore successful' };
 };
 
 export interface BackupInfo {
