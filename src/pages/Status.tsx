@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { InfoIcon, AlertTriangleIcon, AlertCircleIcon, CheckCircleIcon, PlusCircleIcon } from "lucide-react";
@@ -112,24 +111,14 @@ const StatusPage = () => {
 
   const handleCreateIncident = async (values: any) => {
     try {
-      await createStatusItem({
+      const newItem = await createStatusItem({
         system_name: values.system_name,
         status: values.status,
         description: values.description
       });
       
-      // If API call fails, we would catch it in the catch block
-      // For now, add the new item to the local state
-      const newItem: StatusUpdate = {
-        id: Date.now(), // Mock ID
-        system_name: values.system_name,
-        status: values.status,
-        description: values.description,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      setStatusItems([...statusItems, newItem]);
+      // Update the state with the newly created item
+      setStatusItems(prevItems => [newItem, ...prevItems]);
       
       toast({
         title: "Vorfall erstellt",
