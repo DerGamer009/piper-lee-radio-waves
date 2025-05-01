@@ -177,7 +177,6 @@ const UserManagement = () => {
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="text-xs font-medium text-left p-2 pl-4">Benutzer</th>
-                    <th className="text-xs font-medium text-left p-2">Email</th>
                     <th className="text-xs font-medium text-left p-2">Rolle</th>
                     <th className="text-xs font-medium text-left p-2">Status</th>
                     <th className="text-xs font-medium text-left p-2">Aktionen</th>
@@ -197,9 +196,6 @@ const UserManagement = () => {
                             <div className="text-xs text-muted-foreground">@{user.username || 'unbekannt'}</div>
                           </div>
                         </div>
-                      </td>
-                      <td className="p-2">
-                        <div className="text-sm">{user.email}</div>
                       </td>
                       <td className="p-2">
                         <div className="flex items-center gap-1.5">
