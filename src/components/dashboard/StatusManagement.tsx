@@ -117,7 +117,7 @@ const StatusManagement: React.FC = () => {
     if (!currentStatus) return;
     
     try {
-      await updateStatusItem(currentStatus.id, {
+      await updateStatusItem(String(currentStatus.id), {
         system_name: formData.system_name,
         status: formData.status,
         description: formData.description
@@ -144,7 +144,7 @@ const StatusManagement: React.FC = () => {
     if (!currentStatus) return;
     
     try {
-      await deleteStatusItem(currentStatus.id);
+      await deleteStatusItem(String(currentStatus.id));
       
       queryClient.invalidateQueries({ queryKey: ['status-updates'] });
       toast({

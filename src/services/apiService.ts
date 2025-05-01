@@ -1,4 +1,3 @@
-
 // This file provides the API service functions for interacting with the database.
 
 import { supabase } from "../integrations/supabase/client";
@@ -173,7 +172,13 @@ export const getUsers = async (): Promise<User[]> => {
 export const createNewUser = async (userData: CreateUserData): Promise<{ insertId: string } | null> => {
   try {
     const result = await executeQuery('insert into users', [userData]);
-    return result && result.length > 0 ? result[0] : null;
+    
+    // Ensure correct return format
+    if (result && result.length > 0) {
+      const item = result[0];
+      return { insertId: item.id || item.insertId };
+    }
+    return null;
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;
@@ -183,7 +188,12 @@ export const createNewUser = async (userData: CreateUserData): Promise<{ insertI
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<{ affectedRows: number } | null> => {
   try {
     const result = await executeQuery('update users', [userData, userId]);
-    return result && result.length > 0 ? result[0] : null;
+    
+    // Ensure correct return format
+    if (result && result.length > 0) {
+      return { affectedRows: 1 }; // Return expected format
+    }
+    return null;
   } catch (error) {
     console.error('Error updating user:', error);
     throw error;
@@ -193,7 +203,12 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
 export const deleteUser = async (userId: string): Promise<{ affectedRows: number } | null> => {
   try {
     const result = await executeQuery('delete from users', [userId]);
-    return result && result.length > 0 ? result[0] : null;
+    
+    // Ensure correct return format
+    if (result && result.length > 0) {
+      return { affectedRows: 1 }; // Return expected format
+    }
+    return null;
   } catch (error) {
     console.error('Error deleting user:', error);
     throw error;
@@ -244,7 +259,16 @@ export const getShows = async (): Promise<Show[]> => {
 export const createScheduleItem = async (scheduleData: Omit<ScheduleItem, 'id'>): Promise<{ insertId: string, show_title?: string } | null> => {
   try {
     const result = await executeQuery('insert into schedule', [scheduleData]);
-    return result && result.length > 0 ? result[0] : null;
+    
+    // Ensure correct return format
+    if (result && result.length > 0) {
+      const item = result[0];
+      return { 
+        insertId: item.id || item.insertId, 
+        show_title: item.show_title 
+      };
+    }
+    return null;
   } catch (error) {
     console.error('Error creating schedule item:', error);
     throw error;
@@ -254,7 +278,12 @@ export const createScheduleItem = async (scheduleData: Omit<ScheduleItem, 'id'>)
 export const updateScheduleItem = async (scheduleId: string, scheduleData: Partial<ScheduleItem>): Promise<{ affectedRows: number } | null> => {
   try {
     const result = await executeQuery('update schedule', [scheduleData, scheduleId]);
-    return result && result.length > 0 ? result[0] : null;
+    
+    // Ensure correct return format
+    if (result && result.length > 0) {
+      return { affectedRows: 1 }; // Return expected format
+    }
+    return null;
   } catch (error) {
     console.error('Error updating schedule item:', error);
     throw error;
@@ -264,7 +293,12 @@ export const updateScheduleItem = async (scheduleId: string, scheduleData: Parti
 export const deleteScheduleItem = async (scheduleId: string): Promise<{ affectedRows: number } | null> => {
   try {
     const result = await executeQuery('delete from schedule', [scheduleId]);
-    return result && result.length > 0 ? result[0] : null;
+    
+    // Ensure correct return format
+    if (result && result.length > 0) {
+      return { affectedRows: 1 }; // Return expected format
+    }
+    return null;
   } catch (error) {
     console.error('Error deleting schedule item:', error);
     throw error;
