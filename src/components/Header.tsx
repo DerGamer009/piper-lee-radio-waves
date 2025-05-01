@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Activity } from 'lucide-react';
 
 const Header = () => {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, isModerator } = useAuth();
   const { isMobile } = useIsMobile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -55,13 +55,13 @@ const Header = () => {
               <Activity className="h-4 w-4" />
               Status
             </Link>
-            {user && (
-              <Link to="/moderator" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+            {user && isModerator && (
+              <Link to="/moderator-dashboard" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
                 Moderator
               </Link>
             )}
             {isAdmin && (
-              <Link to="/admin" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
+              <Link to="/admin/panel" className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">
                 Admin
               </Link>
             )}
@@ -147,13 +147,13 @@ const Header = () => {
                 <Activity className="h-4 w-4" />
                 Status
               </Link>
-              {user && (
-                <Link to="/moderator" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+              {user && isModerator && (
+                <Link to="/moderator-dashboard" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                   Moderator
                 </Link>
               )}
               {isAdmin && (
-                <Link to="/admin" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link to="/admin/panel" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                   Admin
                 </Link>
               )}
