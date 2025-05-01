@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +33,7 @@ import RecentUsers from '@/components/dashboard/RecentUsers';
 import UpcomingShows from '@/components/dashboard/UpcomingShows';
 import PollManagement from '@/components/dashboard/PollManagement';
 import NewsManagement from '@/components/dashboard/NewsManagement';
+import UserManagement from '@/components/dashboard/UserManagement';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const AdminPanel = () => {
@@ -303,25 +303,7 @@ const AdminPanel = () => {
         </TabsContent>
 
         <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                Benutzerverwaltung
-              </CardTitle>
-              <CardDescription>
-                Hier können Sie Benutzer verwalten und ihre Rollen ändern.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Die Benutzerverwaltung wird derzeit implementiert. Bitte schauen Sie später noch einmal vorbei.
-              </p>
-              <Button variant="outline" size={isMobile ? "sm" : "default"}>
-                Benutzer anzeigen <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
+          <UserManagement />
         </TabsContent>
 
         <TabsContent value="content">
