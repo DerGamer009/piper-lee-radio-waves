@@ -33,7 +33,7 @@ import {
 
 export function AdminSidebar() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -159,7 +159,7 @@ export function AdminSidebar() {
       <SidebarFooter className="border-t border-border p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Abmelden" onClick={() => logout()}>
+            <SidebarMenuButton asChild tooltip="Abmelden" onClick={() => signOut()}>
               <button className="w-full">
                 <LogOut className="h-4 w-4" />
                 <span>Abmelden</span>
