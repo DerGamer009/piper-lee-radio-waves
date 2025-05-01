@@ -31,8 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ScheduleForm from "@/components/ScheduleForm";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import { SidebarInset } from "@/components/ui/sidebar";
-import Layout from "@/components/Layout";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 interface Show {
   id: string;
@@ -186,164 +185,168 @@ const ScheduleAdmin = () => {
   });
 
   if (loading) return (
-    <Layout showSidebar>
-      <AdminSidebar />
-      <SidebarInset className="p-4">Daten werden geladen...</SidebarInset>
-    </Layout>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AdminSidebar />
+        <SidebarInset className="p-4">Daten werden geladen...</SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 
   return (
-    <Layout showSidebar>
-      <AdminSidebar />
-      <SidebarInset>
-        <div className="container mx-auto p-4">
-          <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button asChild variant="ghost" className="text-white hover:text-white/80">
-                <Link to="/" className="flex items-center gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Zurück zur Startseite
-                </Link>
-              </Button>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AdminSidebar />
+        <SidebarInset>
+          <div className="container mx-auto p-4">
+            <div className="mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button asChild variant="ghost" className="text-white hover:text-white/80">
+                  <Link to="/" className="flex items-center gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    Zurück zur Startseite
+                  </Link>
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={fetchData}
+                  disabled={loading}
+                  className="border-gray-600"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Aktualisieren
+                </Button>
+                <Button 
+                  onClick={() => setIsAdding(true)} 
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Neuer Eintrag
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline"
-                onClick={fetchData}
-                disabled={loading}
-                className="border-gray-600"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Aktualisieren
-              </Button>
-              <Button 
-                onClick={() => setIsAdding(true)} 
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Neuer Eintrag
-              </Button>
+            
+            <div className="text-center mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white flex items-center justify-center gap-2">
+                <Calendar className="h-8 w-8 text-purple-500" />
+                Sendeplan Verwaltung
+              </h1>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Hier können Sie den Sendeplan verwalten, neue Einträge hinzufügen, bearbeiten oder löschen.
+              </p>
             </div>
-          </div>
-          
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white flex items-center justify-center gap-2">
-              <Calendar className="h-8 w-8 text-purple-500" />
-              Sendeplan Verwaltung
-            </h1>
-            <p className="text-gray-300 max-w-2xl mx-auto">
-              Hier können Sie den Sendeplan verwalten, neue Einträge hinzufügen, bearbeiten oder löschen.
-            </p>
-          </div>
-          
-          {(isAdding || isEditing) && (
-            <Card className="mb-8 bg-[#252a40]/80 border-gray-700 text-white">
+            
+            {(isAdding || isEditing) && (
+              <Card className="mb-8 bg-[#252a40]/80 border-gray-700 text-white">
+                <CardHeader>
+                  <CardTitle>{isEditing ? "Sendeplaneintrag bearbeiten" : "Neuen Sendeplaneintrag hinzufügen"}</CardTitle>
+                  <CardDescription className="text-gray-300">
+                    Füllen Sie alle Felder aus, um einen {isEditing ? "Sendeplaneintrag zu aktualisieren" : "neuen Sendeplaneintrag zu erstellen"}.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScheduleForm 
+                    scheduleItem={selectedItem || undefined}
+                    shows={shows}
+                    isEditing={isEditing}
+                    onCancel={handleFormCancel}
+                    onSuccess={handleFormSuccess}
+                  />
+                </CardContent>
+              </Card>
+            )}
+            
+            <Card className="bg-[#252a40]/80 border-gray-700 shadow-lg">
               <CardHeader>
-                <CardTitle>{isEditing ? "Sendeplaneintrag bearbeiten" : "Neuen Sendeplaneintrag hinzufügen"}</CardTitle>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-purple-500" />
+                  Sendeplan Übersicht
+                </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Füllen Sie alle Felder aus, um einen {isEditing ? "Sendeplaneintrag zu aktualisieren" : "neuen Sendeplaneintrag zu erstellen"}.
+                  Eine Übersicht aller geplanten Sendungen und ihrer Details.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ScheduleForm 
-                  scheduleItem={selectedItem || undefined}
-                  shows={shows}
-                  isEditing={isEditing}
-                  onCancel={handleFormCancel}
-                  onSuccess={handleFormSuccess}
-                />
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin h-12 w-12 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+                  </div>
+                ) : sortedSchedule.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-gray-700/50">
+                          <TableHead className="text-white">Tag</TableHead>
+                          <TableHead className="text-white">Zeit</TableHead>
+                          <TableHead className="text-white">Sendung</TableHead>
+                          <TableHead className="text-white">Moderator</TableHead>
+                          <TableHead className="text-white">Wiederkehrend</TableHead>
+                          <TableHead className="text-white">Aktionen</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sortedSchedule.map((item) => (
+                          <TableRow 
+                            key={item.id}
+                            className="border-b border-gray-700/50 hover:bg-gray-800/20"
+                          >
+                            <TableCell className="font-medium text-gray-200">{item.day_of_week}</TableCell>
+                            <TableCell className="text-gray-300">{item.start_time} - {item.end_time} Uhr</TableCell>
+                            <TableCell className="text-white">{item.show_title}</TableCell>
+                            <TableCell className="text-gray-300">{item.host_name}</TableCell>
+                            <TableCell>
+                              {item.is_recurring ? (
+                                <span className="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">Ja</span>
+                              ) : (
+                                <span className="px-2 py-1 rounded-full text-xs bg-yellow-500/20 text-yellow-400">Nein</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => handleEditItem(item)}
+                                  className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => handleOpenDeleteDialog(item)}
+                                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-300 mb-4">Keine Sendepläne gefunden</p>
+                    <Button 
+                      onClick={() => setIsAdding(true)}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Ersten Eintrag hinzufügen
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
-          
-          <Card className="bg-[#252a40]/80 border-gray-700 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-500" />
-                Sendeplan Übersicht
-              </CardTitle>
-              <CardDescription className="text-gray-300">
-                Eine Übersicht aller geplanten Sendungen und ihrer Details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin h-12 w-12 border-4 border-purple-500 border-t-transparent rounded-full"></div>
-                </div>
-              ) : sortedSchedule.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-b border-gray-700/50">
-                        <TableHead className="text-white">Tag</TableHead>
-                        <TableHead className="text-white">Zeit</TableHead>
-                        <TableHead className="text-white">Sendung</TableHead>
-                        <TableHead className="text-white">Moderator</TableHead>
-                        <TableHead className="text-white">Wiederkehrend</TableHead>
-                        <TableHead className="text-white">Aktionen</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedSchedule.map((item) => (
-                        <TableRow 
-                          key={item.id}
-                          className="border-b border-gray-700/50 hover:bg-gray-800/20"
-                        >
-                          <TableCell className="font-medium text-gray-200">{item.day_of_week}</TableCell>
-                          <TableCell className="text-gray-300">{item.start_time} - {item.end_time} Uhr</TableCell>
-                          <TableCell className="text-white">{item.show_title}</TableCell>
-                          <TableCell className="text-gray-300">{item.host_name}</TableCell>
-                          <TableCell>
-                            {item.is_recurring ? (
-                              <span className="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">Ja</span>
-                            ) : (
-                              <span className="px-2 py-1 rounded-full text-xs bg-yellow-500/20 text-yellow-400">Nein</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleEditItem(item)}
-                                className="h-8 w-8 p-0 text-gray-400 hover:text-white"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleOpenDeleteDialog(item)}
-                                className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-300 mb-4">Keine Sendepläne gefunden</p>
-                  <Button 
-                    onClick={() => setIsAdding(true)}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Ersten Eintrag hinzufügen
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </SidebarInset>
-    </Layout>
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 };
 

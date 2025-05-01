@@ -85,7 +85,7 @@ function App() {
                 />
                 <Route 
                   path="/moderator" 
-                  element={<ProtectedRoute element={<Layout showSidebar={true}><Moderator /></Layout>} requiredRoles={["admin", "moderator"]} />} 
+                  element={<ProtectedRoute element={<Moderator />} requiredRoles={["admin", "moderator"]} />} 
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
