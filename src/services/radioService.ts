@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 interface StreamInfo {
   title?: string;
   artist?: string;
@@ -55,10 +57,48 @@ export const fetchStreamInfo = async (): Promise<StreamInfo> => {
 
 export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
   try {
-    // This is a fallback schedule since the actual API endpoint isn't specified
-    // Replace ${API_URL}schedule with the actual endpoint when available
+    // Fetch schedule from Supabase
+    const { data: scheduleData, error } = await supabase
+      .from('schedule')
+      .select(`
+        id,
+        day_of_week,
+        start_time,
+        end_time,
+        is_recurring,
+        host_id,
+        shows:show_id (
+          id,
+          title,
+          description
+        ),
+        profiles:host_id (
+          id,
+          full_name
+        )
+      `)
+      .order('start_time', { ascending: true });
     
-    // Placeholder schedule data
+    if (error) {
+      console.error("Fehler beim Abrufen des Sendeplans:", error);
+      throw error;
+    }
+    
+    // Transform the data to match the ScheduleItem interface
+    const formattedSchedule: ScheduleItem[] = scheduleData.map(item => ({
+      title: item.shows?.title || "Unbenannte Sendung",
+      description: item.shows?.description || "",
+      start_time: item.start_time,
+      end_time: item.end_time,
+      day: item.day_of_week,
+      host: item.profiles?.full_name || ""
+    }));
+    
+    return formattedSchedule;
+  } catch (error) {
+    console.error("Fehler beim Abrufen des Sendeplans:", error);
+    
+    // Fallback to placeholder data if there's an error
     return [
       { 
         day: "Montag", 
@@ -125,8 +165,5 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
         host: "Robert Wagner"
       }
     ];
-  } catch (error) {
-    console.error("Fehler beim Abrufen des Sendeplans:", error);
-    return [];
   }
 };
