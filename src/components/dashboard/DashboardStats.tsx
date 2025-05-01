@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Headphones, Calendar } from 'lucide-react';
@@ -68,6 +67,11 @@ const DashboardStats = () => {
   const [listenerChangeType, setListenerChangeType] = useState<'positive' | 'negative' | 'neutral'>('positive');
   const [liveListenersLoading, setLiveListenersLoading] = useState(true);
   const [liveListenersError, setLiveListenersError] = useState<string | null>(null);
+  
+  // New state for active users tracking
+  const [previousActiveUsers, setPreviousActiveUsers] = useState<number | null>(null);
+  const [userChangePercent, setUserChangePercent] = useState<number>(12); // Default to 12%
+  const [userChangeType, setUserChangeType] = useState<'positive' | 'negative' | 'neutral'>('positive');
 
   // Fetch active users count
   const { data: activeUsers, isLoading: loadingUsers } = useQuery({
@@ -78,7 +82,32 @@ const DashboardStats = () => {
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
-      return count || 0;
+      
+      const currentUsers = count || 0;
+      
+      // Calculate change percentage if we have previous data
+      const storedPreviousUsers = localStorage.getItem('previousActiveUsers');
+      if (storedPreviousUsers) {
+        const prevUsers = parseInt(storedPreviousUsers, 10);
+        const changePercent = prevUsers > 0 
+          ? Math.round(((currentUsers - prevUsers) / prevUsers) * 100) 
+          : 0;
+        
+        setUserChangePercent(Math.abs(changePercent));
+        setUserChangeType(changePercent >= 0 ? 'positive' : 'negative');
+      }
+      
+      // Store current users count as previous for next comparison
+      // We'll update localStorage once per day to track daily changes
+      const lastUserUpdateTime = localStorage.getItem('lastUsersUpdateTime');
+      const currentTime = Date.now();
+      if (!lastUserUpdateTime || (currentTime - parseInt(lastUserUpdateTime, 10)) > 24 * 60 * 60 * 1000) {
+        localStorage.setItem('previousActiveUsers', currentUsers.toString());
+        localStorage.setItem('lastUsersUpdateTime', currentTime.toString());
+        setPreviousActiveUsers(currentUsers);
+      }
+      
+      return currentUsers;
     }
   });
 
@@ -117,6 +146,11 @@ const DashboardStats = () => {
     const storedPreviousListeners = localStorage.getItem('previousLiveListeners');
     if (storedPreviousListeners) {
       setPreviousListeners(parseInt(storedPreviousListeners, 10));
+    }
+    
+    const storedPreviousUsers = localStorage.getItem('previousActiveUsers');
+    if (storedPreviousUsers) {
+      setPreviousActiveUsers(parseInt(storedPreviousUsers, 10));
     }
   }, []);
 
@@ -188,8 +222,8 @@ const DashboardStats = () => {
       <StatsCard 
         title="Aktive Benutzer" 
         value={loadingUsers ? "..." : String(activeUsers || 0)}
-        changeText="+12% seit letztem Monat" 
-        changeType="positive"
+        changeText={`${userChangeType === 'positive' ? '+' : '-'}${userChangePercent}% seit letztem Monat`} 
+        changeType={userChangeType}
         icon={<Users className="h-5 w-5 text-purple-400" />} 
         iconBgColor="bg-purple-900/30" 
       />
