@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface StreamInfo {
@@ -36,7 +37,16 @@ const API_URL = "https://backend.piper-lee.net/api/";
 
 export const fetchStreamInfo = async (): Promise<StreamInfo> => {
   try {
-    const response = await fetch(`${API_URL}nowplaying/1`);
+    // Set timeout to avoid long hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(`${API_URL}nowplaying/1`, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
       throw new Error(`Fehler beim Abrufen der Stream-Informationen: ${response.status}`);
     }
@@ -59,6 +69,7 @@ export const fetchStreamInfo = async (): Promise<StreamInfo> => {
     };
   } catch (error) {
     console.error("Fehler beim Abrufen der Stream-Informationen:", error);
+    // Return empty object when fetch fails
     return {};
   }
 };
