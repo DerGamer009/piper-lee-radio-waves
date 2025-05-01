@@ -28,9 +28,11 @@ import {
   Home,
   ChevronDown,
   Layers,
-  PieChart
+  PieChart,
+  Mic
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Link } from 'react-router-dom';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import RecentUsers from '@/components/dashboard/RecentUsers';
 import UpcomingShows from '@/components/dashboard/UpcomingShows';
@@ -157,6 +159,19 @@ const AdminPanel = () => {
         </h1>
         
         <div className="flex items-center gap-2">
+          {/* Add Moderator Dashboard Link */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            asChild
+            className="h-8 md:w-auto border-gray-700 bg-[#252a40] text-white hover:bg-[#323854]"
+          >
+            <Link to="/moderator-dashboard">
+              <Mic className="h-4 w-4 mr-0 md:mr-2" />
+              {!isMobile && "Moderator-Dashboard"}
+            </Link>
+          </Button>
+          
           {isMobile && (
             <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
               <SheetTrigger asChild>
