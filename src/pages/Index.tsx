@@ -16,8 +16,8 @@ import { LiveChat } from "@/components/LiveChat";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 
-// Constants for radio stream
-const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
+// Öffentlich verfügbarer Webradio-Stream als Beispiel
+const STREAM_URL = "https://streams.90s90s.de/90s90s/mp3-192/liveonlineradio/";
 const STATION_NAME = "Piper Lee Radio";
 
 const Index = () => {
