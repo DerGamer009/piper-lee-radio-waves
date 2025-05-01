@@ -165,7 +165,9 @@ export const getUsers = async (): Promise<User[]> => {
     // Combine data to create user objects
     const users = profiles.map(profile => {
       // Find matching auth user 
-      const authUser = authData.users.find(user => user.id === profile.id);
+      const authUser = authData.users.find(user => {
+        return user && user.id === profile.id;
+      });
       
       // Get roles for this user
       const userRoles = typedRoleData.length > 0
