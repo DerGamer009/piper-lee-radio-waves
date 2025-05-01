@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Headphones, Calendar } from 'lucide-react';
@@ -70,36 +69,27 @@ const DashboardStats = () => {
   const { data: activeUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ['active-users-count'],
     queryFn: async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
       const { count, error } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_sign_in_at', thirtyDaysAgo.toISOString());
+        .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
       return count || 0;
     }
   });
 
-  // Fetch podcast downloads
+  // Fetch podcast downloads - using podcasts table count instead of podcast_downloads
   const { data: podcastDownloads, isLoading: loadingPodcasts } = useQuery({
     queryKey: ['podcast-downloads-count'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('podcast_downloads')
-        .select('count')
-        .single();
+      const { count, error } = await supabase
+        .from('podcasts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_published', true);
       
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return 0; // No data found
-        }
-        throw error;
-      }
+      if (error) throw error;
       
-      return data?.count || 0;
+      return count || 0;
     }
   });
 
@@ -107,15 +97,11 @@ const DashboardStats = () => {
   const { data: upcomingShows, isLoading: loadingShows } = useQuery({
     queryKey: ['upcoming-shows-count'],
     queryFn: async () => {
-      const today = new Date();
-      const nextWeek = new Date(today);
-      nextWeek.setDate(today.getDate() + 7);
+      const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
       
       const { count, error } = await supabase
         .from('schedule')
-        .select('*', { count: 'exact', head: true })
-        .gte('date', today.toISOString())
-        .lte('date', nextWeek.toISOString());
+        .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
       return count || 0;
@@ -186,8 +172,8 @@ const DashboardStats = () => {
       <StatsCard 
         title="Podcast Downloads" 
         value={loadingPodcasts ? "..." : String(podcastDownloads || 0)}
-        changeText="-2% seit letztem Monat" 
-        changeType="negative"
+        changeText="Veröffentlichte Podcasts" 
+        changeType="neutral"
         icon={<Headphones className="h-5 w-5 text-blue-400" />} 
         iconBgColor="bg-blue-900/30" 
       />
@@ -195,7 +181,7 @@ const DashboardStats = () => {
       <StatsCard 
         title="Geplante Sendungen" 
         value={loadingShows ? "..." : String(upcomingShows || 0)}
-        subText="Für die nächste Woche"
+        subText="Insgesamt geplant"
         icon={<Calendar className="h-5 w-5 text-pink-400" />} 
         iconBgColor="bg-pink-900/30" 
       />
