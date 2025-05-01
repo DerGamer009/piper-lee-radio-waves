@@ -77,12 +77,12 @@ export const executeQuery = async (query: string, params: any[] = []) => {
       if (error) throw error;
       
       return data.map(user => {
-        // Handle the case where user_roles might be an array or an object
+        // Handle the case where user_roles might be an array or an object or null
         let roles = 'user'; // Default role
         if (user.user_roles) {
           if (Array.isArray(user.user_roles)) {
             roles = user.user_roles.map((r: any) => r.role).join(',');
-          } else if (typeof user.user_roles === 'object') {
+          } else if (typeof user.user_roles === 'object' && user.user_roles !== null) {
             roles = user.user_roles.role || 'user';
           }
         }

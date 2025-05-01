@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { authenticateUser, createUser, deleteUser as deleteUserFromDb, getAllUsers, updateUser as updateUserInDb } from "@/lib/db";
 
@@ -114,9 +113,8 @@ export const createNewUser = async (userData: CreateUserData): Promise<User> => 
 
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    // Convert string id to number for DB operation
-    const id = parseInt(userId, 10);
-    if (isNaN(id)) {
+    // The id is now a string in the updated DB interface, so we don't need to parse it
+    if (!userId) {
       throw new Error("Invalid user ID");
     }
     
@@ -126,7 +124,7 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
       dbUpdateData.roles = userData.roles.join(',');
     }
     
-    const updatedUser = await updateUserInDb(id, dbUpdateData);
+    const updatedUser = await updateUserInDb(userId, dbUpdateData);
     if (!updatedUser) return null;
     
     return {
@@ -145,13 +143,12 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
 
 export const deleteUser = async (userId: string): Promise<boolean> => {
   try {
-    // Convert string id to number for DB operation
-    const id = parseInt(userId, 10);
-    if (isNaN(id)) {
+    // The id is now a string in the updated DB interface, so we don't need to parse it
+    if (!userId) {
       throw new Error("Invalid user ID");
     }
     
-    return await deleteUserFromDb(id);
+    return await deleteUserFromDb(userId);
   } catch (error) {
     console.error("Error deleting user:", error);
     throw error;
@@ -262,4 +259,3 @@ export const deleteScheduleItem = async (id: string): Promise<void> => {
 };
 
 // Add other API functions here as needed
-
