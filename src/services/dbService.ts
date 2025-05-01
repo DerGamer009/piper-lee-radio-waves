@@ -1,4 +1,3 @@
-
 // This file handles database operations using Supabase
 
 import { supabase } from "../integrations/supabase/client";
@@ -30,7 +29,11 @@ export const authenticateUser = async (username: string, password: string) => {
         .select('role')
         .eq('user_id', data.user.id);
       
-      const roles = rolesData ? rolesData.map(r => r.role) : ['user'];
+      let roles = ['user']; // Default role
+      if (rolesData && rolesData.length > 0) {
+        // Make sure we're accessing the data correctly
+        roles = rolesData.map(r => r.role);
+      }
       
       return {
         id: data.user.id,
@@ -73,18 +76,28 @@ export const executeQuery = async (query: string, params: any[] = []) => {
       
       if (error) throw error;
       
-      return data.map(user => ({
-        id: user.id,
-        username: user.username,
-        password: 'REDACTED', // Password hash not exposed
-        email: user.email,
-        fullName: user.full_name,
-        roles: Array.isArray(user.user_roles) 
-          ? user.user_roles.map(r => r.role).join(',') 
-          : (user.user_roles ? user.user_roles.role : 'user'),
-        isActive: user.is_active,
-        createdAt: user.created_at
-      }));
+      return data.map(user => {
+        // Handle the case where user_roles might be an array or an object
+        let roles = 'user'; // Default role
+        if (user.user_roles) {
+          if (Array.isArray(user.user_roles)) {
+            roles = user.user_roles.map((r: any) => r.role).join(',');
+          } else if (typeof user.user_roles === 'object') {
+            roles = user.user_roles.role || 'user';
+          }
+        }
+        
+        return {
+          id: user.id,
+          username: user.username,
+          password: 'REDACTED', // Password hash not exposed
+          email: user.email,
+          fullName: user.full_name,
+          roles: roles,
+          isActive: user.is_active,
+          createdAt: user.created_at
+        };
+      });
     }
     
     if (queryLower.includes('select') && queryLower.includes('from shows')) {

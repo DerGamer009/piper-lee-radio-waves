@@ -2,23 +2,23 @@
 import { executeQuery } from "../services/dbService";
 
 export interface Show {
-  id: number;
+  id: string; // Changed from number to string to match Supabase UUID format
   title: string;
   description: string;
   image_url?: string;
-  created_by?: number;
+  created_by?: string; // Changed from number to string
   created_at?: string;
   updated_at?: string;
   creator_name?: string;
 }
 
 export interface ScheduleItem {
-  id: number;
-  show_id: number;
+  id: string; // Changed from number to string
+  show_id: string; // Changed from number to string
   day_of_week: string;
   start_time: string;
   end_time: string;
-  host_id?: number;
+  host_id?: string; // Changed from number to string
   is_recurring: boolean;
   created_at?: string;
   updated_at?: string;
@@ -29,11 +29,12 @@ export interface ScheduleItem {
 
 export const getShows = async (): Promise<Show[]> => {
   try {
+    // Use type assertion to help TypeScript understand the return type
     const shows = await executeQuery(`
       SELECT s.*, u.fullName as creator_name
       FROM shows s
       LEFT JOIN users u ON s.created_by = u.id
-    `) as Show[];
+    `) as unknown as Show[];
     
     return shows;
   } catch (error) {
@@ -49,13 +50,14 @@ export const createShow = async (show: Omit<Show, 'id' | 'created_at' | 'updated
     // Verwende sicheres Zugriffsmuster für insertId
     const newShowId = typeof result[0] === 'object' && result[0] !== null && 'insertId' in result[0] 
       ? result[0].insertId 
-      : -1;
+      : null;
     
-    if (newShowId === -1) {
+    if (newShowId === null) {
       throw new Error("Failed to get inserted ID");
     }
     
-    const newShow = await executeQuery(`SELECT * FROM shows WHERE id = ?`, [newShowId]) as Show[];
+    // Use type assertion to help TypeScript understand the return type
+    const newShow = await executeQuery(`SELECT * FROM shows WHERE id = ?`, [newShowId]) as unknown as Show[];
     return newShow[0] || null;
   } catch (error) {
     console.error('Error creating show:', error);
@@ -63,11 +65,12 @@ export const createShow = async (show: Omit<Show, 'id' | 'created_at' | 'updated
   }
 };
 
-export const updateShow = async (id: number, show: Partial<Show>): Promise<Show | null> => {
+export const updateShow = async (id: string, show: Partial<Show>): Promise<Show | null> => {
   try {
     await executeQuery(`UPDATE shows`, [show, id]);
     
-    const updatedShow = await executeQuery(`SELECT * FROM shows WHERE id = ?`, [id]) as Show[];
+    // Use type assertion to help TypeScript understand the return type
+    const updatedShow = await executeQuery(`SELECT * FROM shows WHERE id = ?`, [id]) as unknown as Show[];
     return updatedShow[0] || null;
   } catch (error) {
     console.error('Error updating show:', error);
@@ -75,7 +78,7 @@ export const updateShow = async (id: number, show: Partial<Show>): Promise<Show 
   }
 };
 
-export const deleteShow = async (id: number): Promise<boolean> => {
+export const deleteShow = async (id: string): Promise<boolean> => {
   try {
     // Delete related schedule items first
     await executeQuery(`DELETE FROM schedule WHERE show_id = ?`, [id]);
@@ -97,6 +100,7 @@ export const deleteShow = async (id: number): Promise<boolean> => {
 
 export const getSchedule = async (): Promise<ScheduleItem[]> => {
   try {
+    // Use type assertion to help TypeScript understand the return type
     const schedule = await executeQuery(`
       SELECT s.*, sh.title as show_title, sh.description as show_description,
              u.fullName as host_name
@@ -113,7 +117,7 @@ export const getSchedule = async (): Promise<ScheduleItem[]> => {
           WHEN 'Samstag' THEN 6
           WHEN 'Sonntag' THEN 7
         END, s.start_time
-    `) as (ScheduleItem & { show_title?: string; show_description?: string; host_name?: string; })[];
+    `) as unknown as (ScheduleItem & { show_title?: string; show_description?: string; host_name?: string; })[];
     
     return schedule;
   } catch (error) {
@@ -129,13 +133,14 @@ export const createScheduleItem = async (item: Omit<ScheduleItem, 'id' | 'create
     // Verwende sicheres Zugriffsmuster für insertId
     const newItemId = typeof result[0] === 'object' && result[0] !== null && 'insertId' in result[0] 
       ? result[0].insertId 
-      : -1;
+      : null;
     
-    if (newItemId === -1) {
+    if (newItemId === null) {
       throw new Error("Failed to get inserted ID");
     }
     
-    const newItem = await executeQuery(`SELECT * FROM schedule WHERE id = ?`, [newItemId]) as ScheduleItem[];
+    // Use type assertion to help TypeScript understand the return type
+    const newItem = await executeQuery(`SELECT * FROM schedule WHERE id = ?`, [newItemId]) as unknown as ScheduleItem[];
     return newItem[0] || null;
   } catch (error) {
     console.error('Error creating schedule item:', error);
@@ -143,11 +148,12 @@ export const createScheduleItem = async (item: Omit<ScheduleItem, 'id' | 'create
   }
 };
 
-export const updateScheduleItem = async (id: number, item: Partial<ScheduleItem>): Promise<ScheduleItem | null> => {
+export const updateScheduleItem = async (id: string, item: Partial<ScheduleItem>): Promise<ScheduleItem | null> => {
   try {
     await executeQuery(`UPDATE schedule`, [item, id]);
     
-    const updatedItem = await executeQuery(`SELECT * FROM schedule WHERE id = ?`, [id]) as ScheduleItem[];
+    // Use type assertion to help TypeScript understand the return type
+    const updatedItem = await executeQuery(`SELECT * FROM schedule WHERE id = ?`, [id]) as unknown as ScheduleItem[];
     return updatedItem[0] || null;
   } catch (error) {
     console.error('Error updating schedule item:', error);
@@ -155,7 +161,7 @@ export const updateScheduleItem = async (id: number, item: Partial<ScheduleItem>
   }
 };
 
-export const deleteScheduleItem = async (id: number): Promise<boolean> => {
+export const deleteScheduleItem = async (id: string): Promise<boolean> => {
   try {
     const result = await executeQuery(`DELETE FROM schedule WHERE id = ?`, [id]);
     

@@ -3,7 +3,7 @@ import { executeQuery, authenticateUser as authUser } from "../services/dbServic
 
 // Type definitions
 export interface DBUser {
-  id: number;
+  id: string; // Changed from number to string to match Supabase UUID format
   username: string;
   password?: string;
   fullName?: string;
@@ -35,7 +35,8 @@ export const authenticateUser = async (username: string, password: string): Prom
 // Get all users
 export const getAllUsers = async (): Promise<Omit<DBUser, 'password'>[]> => {
   try {
-    const users = await executeQuery("SELECT * FROM users") as DBUser[];
+    // Use type assertion to help TypeScript understand the return type
+    const users = await executeQuery("SELECT * FROM users") as unknown as DBUser[];
     return users.map(({ password, ...user }) => user);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -64,7 +65,8 @@ export const createUser = async (userData: CreateUserData): Promise<Omit<DBUser,
       throw new Error("Failed to get inserted ID");
     }
     
-    const newUser = await executeQuery("SELECT * FROM users WHERE id = ?", [newUserId]) as DBUser[];
+    // Use type assertion to help TypeScript understand the return type
+    const newUser = await executeQuery("SELECT * FROM users WHERE id = ?", [newUserId]) as unknown as DBUser[];
     
     if (!newUser[0]) {
       throw new Error("Failed to retrieve created user");
@@ -79,11 +81,12 @@ export const createUser = async (userData: CreateUserData): Promise<Omit<DBUser,
 };
 
 // Update user
-export const updateUser = async (id: number, userData: Partial<CreateUserData>): Promise<Omit<DBUser, 'password'> | null> => {
+export const updateUser = async (id: string, userData: Partial<CreateUserData>): Promise<Omit<DBUser, 'password'> | null> => {
   try {
     await executeQuery("UPDATE users", [userData, id]);
     
-    const updatedUser = await executeQuery("SELECT * FROM users WHERE id = ?", [id]) as DBUser[];
+    // Use type assertion to help TypeScript understand the return type
+    const updatedUser = await executeQuery("SELECT * FROM users WHERE id = ?", [id]) as unknown as DBUser[];
     
     if (!updatedUser[0]) {
       return null;
@@ -98,7 +101,7 @@ export const updateUser = async (id: number, userData: Partial<CreateUserData>):
 };
 
 // Delete user
-export const deleteUser = async (id: number): Promise<boolean> => {
+export const deleteUser = async (id: string): Promise<boolean> => {
   try {
     const result = await executeQuery("DELETE FROM users", [id]);
     
