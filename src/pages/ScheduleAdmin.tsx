@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Calendar, Plus, Edit, Trash, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -32,6 +30,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ScheduleForm from "@/components/ScheduleForm";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
+import Layout from "@/components/Layout";
 
 interface Show {
   id: string;
@@ -184,12 +185,18 @@ const ScheduleAdmin = () => {
     return a.start_time.localeCompare(b.start_time);
   });
 
+  if (loading) return (
+    <Layout showSidebar>
+      <AdminSidebar />
+      <SidebarInset className="p-4">Daten werden geladen...</SidebarInset>
+    </Layout>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#1c1f2f]">
-      <Header />
-      
-      <main className="flex-1 pt-24 pb-12">
-        <div className="container mx-auto px-4">
+    <Layout showSidebar>
+      <AdminSidebar />
+      <SidebarInset>
+        <div className="container mx-auto p-4">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button asChild variant="ghost" className="text-white hover:text-white/80">
@@ -335,28 +342,8 @@ const ScheduleAdmin = () => {
             </CardContent>
           </Card>
         </div>
-      </main>
-      
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sendeplaneintrag löschen</AlertDialogTitle>
-            <AlertDialogDescription>
-              Sind Sie sicher, dass Sie diesen Sendeplaneintrag löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteItem}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      </SidebarInset>
+    </Layout>
   );
 };
 

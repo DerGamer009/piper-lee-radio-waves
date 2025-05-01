@@ -36,10 +36,10 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = false }) => {
   
   return (
     <div className="flex min-h-screen flex-col">
-      <Header/>
+      {!showSidebar && <Header/>}
       {showSidebar ? (
         <SidebarProvider>
-          <div className="flex min-h-screen w-full pt-16">
+          <div className="flex min-h-screen w-full">
             {children}
           </div>
         </SidebarProvider>
