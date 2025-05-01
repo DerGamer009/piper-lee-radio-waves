@@ -21,11 +21,11 @@ const Chat = () => {
       
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-4">Community-Richtlinien</h2>
-        <div className="bg-card/30 backdrop-blur-sm p-6 rounded-lg">
-          <p className="text-radio-light/70 mb-4">
+        <div className="bg-card/30 backdrop-blur-sm p-6 rounded-lg dark:bg-card/50">
+          <p className="text-foreground/70 mb-4">
             Um eine freundliche und respektvolle Atmosphäre in unserem Chat zu gewährleisten, bitten wir dich, folgende Richtlinien zu beachten:
           </p>
-          <ul className="list-disc pl-5 space-y-2 text-radio-light/70">
+          <ul className="list-disc pl-5 space-y-2 text-foreground/70">
             <li>Sei respektvoll zu anderen Chat-Teilnehmern.</li>
             <li>Keine Beleidigungen, Hassrede oder diskriminierende Äußerungen.</li>
             <li>Verzichte auf Spam und übermäßige Großschreibung.</li>

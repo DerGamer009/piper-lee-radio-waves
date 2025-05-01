@@ -5,6 +5,40 @@
 
 @layer base {
   :root {
+    /* Light theme variables */
+    --background: 0 0% 98%;
+    --foreground: 229 30% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 229 30% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 229 30% 14%;
+
+    --primary: 262 83% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 199 94% 48%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 229 15% 90%;
+    --muted-foreground: 229 15% 30%;
+
+    --accent: 291 86% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 229 20% 85%;
+    --input: 229 20% 85%;
+    --ring: 262 83% 65%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Dark theme variables */
     --background: 229 30% 14%;
     --foreground: 0 0% 98%;
 
@@ -27,13 +61,11 @@
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
     --border: 229 20% 25%;
     --input: 229 20% 25%;
     --ring: 262 83% 65%;
-
-    --radius: 0.75rem;
   }
 }
 
@@ -43,8 +75,16 @@
   }
 
   body {
-    @apply bg-radio-dark text-radio-light;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-family: 'Inter', sans-serif;
+  }
+
+  .theme-dark {
+    @apply bg-radio-dark text-radio-light;
+  }
+  
+  .theme-light {
+    @apply bg-gray-100 text-gray-900;
   }
 }
 
