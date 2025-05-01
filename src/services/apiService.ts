@@ -157,6 +157,10 @@ export const getUsers = async (): Promise<User[]> => {
       .select('*');
 
     if (roleError) throw roleError;
+    
+    // Type the role data to avoid 'never' type issues
+    type UserRole = { user_id: string; role: string };
+    const typedRoleData: UserRole[] = roleData || [];
 
     // Combine data to create user objects
     const users = profiles.map(profile => {
@@ -164,8 +168,8 @@ export const getUsers = async (): Promise<User[]> => {
       const authUser = authData.users.find(user => user.id === profile.id);
       
       // Get roles for this user
-      const userRoles = roleData
-        ? roleData.filter(r => r.user_id === profile.id).map(r => r.role)
+      const userRoles = typedRoleData.length > 0
+        ? typedRoleData.filter(r => r.user_id === profile.id).map(r => r.role)
         : ['user'];
 
       return {
