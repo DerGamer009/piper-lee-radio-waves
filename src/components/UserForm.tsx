@@ -76,16 +76,17 @@ const UserForm: React.FC<UserFormProps> = ({ user, isEditing = false, onCancel, 
   const onSubmit = async (data: UserFormValues<typeof isEditing>) => {
     try {
       if (isEditing && user) {
+        console.log("Updating user:", user.id, "with data:", data);
+        
         // Ensure we're passing all required fields for updateUser
-        const updateData: Omit<User, 'id'> = {
+        await updateUser(user.id, {
           username: data.username,
           email: data.email,
           fullName: data.fullName,
           roles: data.roles,
           isActive: data.isActive
-        };
+        });
         
-        await updateUser(user.id, updateData);
         toast({
           title: "Erfolg!",
           description: "Benutzer wurde erfolgreich aktualisiert.",

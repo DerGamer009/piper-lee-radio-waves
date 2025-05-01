@@ -113,7 +113,7 @@ export const createNewUser = async (userData: CreateUserData): Promise<User> => 
 
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    // The id is now a string in the updated DB interface, so we don't need to parse it
+    // Ensure we're passing all required fields for updateUser
     if (!userId) {
       throw new Error("Invalid user ID");
     }
@@ -121,8 +121,10 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
     // Map roles array to comma-separated string if provided
     const dbUpdateData: any = {...userData};
     if (userData.roles) {
-      dbUpdateData.roles = userData.roles.join(',');
+      dbUpdateData.roles = userData.roles;
     }
+    
+    console.log("Updating user with data:", dbUpdateData);
     
     const updatedUser = await updateUserInDb(userId, dbUpdateData);
     if (!updatedUser) return null;
