@@ -25,8 +25,8 @@ const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) =>
     return <Navigate to="/maintenance" replace />;
   }
   
-  // Check for required roles if specified
-  if (requiredRoles.length > 0) {
+  // Check for required roles if specified - but always allow admins to access any protected route
+  if (requiredRoles.length > 0 && !isAdmin) {
     const hasRequiredRole = requiredRoles.some(role => {
       if (role === 'admin' && isAdmin) return true;
       if (role === 'moderator' && isModerator) return true;
@@ -39,7 +39,7 @@ const ProtectedRoute = ({ element, requiredRoles = [] }: ProtectedRouteProps) =>
     }
   }
   
-  // User is logged in and has required role, render the protected component
+  // User is logged in and has required role (or is admin), render the protected component
   return <>{element}</>;
 };
 
