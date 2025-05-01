@@ -145,12 +145,25 @@ export const getUsers = async (): Promise<User[]> => {
     if (profilesError) throw profilesError;
     if (!profiles) return [];
 
+    // Define the profile type explicitly to avoid 'never' type issues
+    type Profile = {
+      id: string;
+      username: string | null;
+      full_name: string | null;
+      avatar_url: string | null;
+      is_admin: boolean | null;
+      created_at: string | null;
+    };
+
+    // Type assertion for profiles
+    const typedProfiles = profiles as Profile[];
+
     // Get all auth users to get emails
     const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
     
     if (authError) throw authError;
     
-    // Properly type authData and check if it exists
+    // Ensure authData exists and has users property
     if (!authData || !authData.users) return [];
     
     // Get user roles
@@ -160,17 +173,21 @@ export const getUsers = async (): Promise<User[]> => {
 
     if (roleError) throw roleError;
     
-    // Type the role data to avoid 'never' type issues
+    // Define UserRole type
     type UserRole = { user_id: string; role: string };
-    const typedRoleData: UserRole[] = roleData || [];
+    const typedRoleData = (roleData as UserRole[]) || [];
 
-    // Combine data to create user objects with proper type safety
-    const users = profiles.map(profile => {
-      // Use a safer approach to find the matching auth user
-      const authUser = authData.users.find(u => u && typeof u === 'object' && 'id' in u && u.id === profile.id);
+    // Map profiles to User objects with proper type safety
+    const users = typedProfiles.map(profile => {
+      // Find matching auth user with proper type checking
+      const authUser = authData.users.find(u => 
+        u && typeof u === 'object' && 'id' in u && u.id === profile.id
+      );
       
-      // Get roles for this user with proper type checking
-      const userRoles = typedRoleData.filter(r => r.user_id === profile.id).map(r => r.role);
+      // Get roles for this user
+      const userRoles = typedRoleData
+        .filter(r => r.user_id === profile.id)
+        .map(r => r.role);
 
       return {
         id: profile.id,
