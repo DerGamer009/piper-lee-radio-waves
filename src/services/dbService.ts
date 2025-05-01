@@ -87,8 +87,10 @@ export const executeQuery = async (query: string, params: any[] = []) => {
             roles = user.user_roles.map((r: any) => r.role).join(',');
           } 
           // Otherwise check if it's an object and not null
-          else if (typeof user.user_roles === 'object' && user.user_roles !== null) {
-            roles = user.user_roles.role || 'user';
+          else if (typeof user.user_roles === 'object') {
+            // Safely access role property
+            const userRoleObj = user.user_roles as { role?: string };
+            roles = userRoleObj.role || 'user';
           }
         }
         
