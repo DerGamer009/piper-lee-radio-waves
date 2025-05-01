@@ -29,7 +29,8 @@ import {
   ChevronDown,
   Layers,
   PieChart,
-  Mic
+  Mic,
+  Handshake
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Link } from 'react-router-dom';
@@ -39,6 +40,7 @@ import UpcomingShows from '@/components/dashboard/UpcomingShows';
 import PollManagement from '@/components/dashboard/PollManagement';
 import NewsManagement from '@/components/dashboard/NewsManagement';
 import UserManagement from '@/components/dashboard/UserManagement';
+import PartnerManagement from '@/components/dashboard/PartnerManagement';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const AdminPanel = () => {
@@ -222,6 +224,17 @@ const AdminPanel = () => {
                       <Layers className="mr-2 h-4 w-4" />
                       Inhalte
                     </Button>
+                    <Button 
+                      variant={activeTab === 'partners' ? "default" : "ghost"}
+                      className={`w-full justify-start ${activeTab === 'partners' ? 'bg-[#7c4dff] text-white hover:bg-[#8f5fff]' : 'text-gray-300 hover:text-white hover:bg-[#323854]'}`}
+                      onClick={() => {
+                        setActiveTab('partners');
+                        setShowMobileMenu(false);
+                      }}
+                    >
+                      <Handshake className="mr-2 h-4 w-4" />
+                      Partner
+                    </Button>
                     
                     {/* Settings with submenu */}
                     <div className="space-y-1">
@@ -322,6 +335,12 @@ const AdminPanel = () => {
             Inhalte
           </TabsTrigger>
           <TabsTrigger 
+            value="partners" 
+            className="data-[state=active]:bg-[#7c4dff] data-[state=active]:text-white text-gray-300"
+          >
+            Partner
+          </TabsTrigger>
+          <TabsTrigger 
             value="settings" 
             className="data-[state=active]:bg-[#7c4dff] data-[state=active]:text-white text-gray-300"
           >
@@ -349,6 +368,10 @@ const AdminPanel = () => {
             <PollManagement />
             <NewsManagement />
           </div>
+        </TabsContent>
+
+        <TabsContent value="partners">
+          <PartnerManagement />
         </TabsContent>
 
         <TabsContent value="settings">
