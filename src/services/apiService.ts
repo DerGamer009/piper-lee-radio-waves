@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { authenticateUser, createUser, deleteUser as deleteUserFromDb, getAllUsers, updateUser as updateUserInDb } from "@/lib/db";
 
 // Types
 export interface ScheduleItem {
@@ -20,6 +21,142 @@ export interface Show {
   title: string;
   description: string | null;
 }
+
+export interface User {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  roles: string[];
+  isActive: boolean;
+}
+
+export interface CreateUserData {
+  username: string;
+  password: string;
+  email: string;
+  fullName: string;
+  roles: string[];
+  isActive?: boolean;
+}
+
+export interface LoginResponse {
+  user: User;
+  session?: {
+    access_token?: string;
+  };
+}
+
+// Auth functions
+export const login = async (username: string, password: string): Promise<LoginResponse | null> => {
+  try {
+    const user = await authenticateUser(username, password);
+    
+    if (!user) {
+      return null;
+    }
+    
+    const userData: User = {
+      id: user.id.toString(),
+      username: user.username,
+      fullName: user.fullName || "",
+      email: user.email || "",
+      roles: user.roles ? user.roles.split(',') : [],
+      isActive: user.isActive
+    };
+    
+    return {
+      user: userData,
+      session: {
+        access_token: "dummy-token-" + Math.random().toString(36).substring(2)
+      }
+    };
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
+  }
+};
+
+// User management functions
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    const users = await getAllUsers();
+    return users.map(user => ({
+      id: user.id.toString(),
+      username: user.username,
+      fullName: user.fullName || "",
+      email: user.email || "",
+      roles: user.roles ? user.roles.split(',') : [],
+      isActive: user.isActive
+    }));
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+};
+
+export const createNewUser = async (userData: CreateUserData): Promise<User> => {
+  try {
+    const newUser = await createUser(userData);
+    return {
+      id: newUser.id.toString(),
+      username: newUser.username,
+      fullName: newUser.fullName || "",
+      email: newUser.email || "",
+      roles: newUser.roles ? newUser.roles.split(',') : [],
+      isActive: newUser.isActive
+    };
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};
+
+export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
+  try {
+    // Convert string id to number for DB operation
+    const id = parseInt(userId, 10);
+    if (isNaN(id)) {
+      throw new Error("Invalid user ID");
+    }
+    
+    // Map roles array to comma-separated string if provided
+    const dbUpdateData: any = {...userData};
+    if (userData.roles) {
+      dbUpdateData.roles = userData.roles.join(',');
+    }
+    
+    const updatedUser = await updateUserInDb(id, dbUpdateData);
+    if (!updatedUser) return null;
+    
+    return {
+      id: updatedUser.id.toString(),
+      username: updatedUser.username,
+      fullName: updatedUser.fullName || "",
+      email: updatedUser.email || "",
+      roles: updatedUser.roles ? updatedUser.roles.split(',') : [],
+      isActive: updatedUser.isActive
+    };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId: string): Promise<boolean> => {
+  try {
+    // Convert string id to number for DB operation
+    const id = parseInt(userId, 10);
+    if (isNaN(id)) {
+      throw new Error("Invalid user ID");
+    }
+    
+    return await deleteUserFromDb(id);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw error;
+  }
+};
 
 // Schedule API functions
 export const getSchedule = async (): Promise<ScheduleItem[]> => {
@@ -125,3 +262,4 @@ export const deleteScheduleItem = async (id: string): Promise<void> => {
 };
 
 // Add other API functions here as needed
+
