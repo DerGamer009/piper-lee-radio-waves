@@ -14,7 +14,7 @@ import { getUsers, deleteUser, User as UserType } from "@/services/apiService";
 interface UserData {
   id: string;
   username: string;
-  email: string;
+  email?: string; // Changed from required to optional to match API data
   fullName: string;
   avatar_url: string | null;
   isActive: boolean;
@@ -40,11 +40,12 @@ const UserManagement = () => {
     try {
       const usersData = await getUsers();
       setUsers(usersData.map(user => ({
-        ...user,
+        id: user.id,
+        username: user.username || '',
+        email: user.email || '',
+        fullName: user.fullName || '',
         avatar_url: null, // Set a default since it's not in our User type
-        // Ensure roles is always an array
         roles: Array.isArray(user.roles) ? user.roles : (user.roles ? [user.roles] : ['user']),
-        // Set default isActive value if not provided
         isActive: user.isActive !== undefined ? user.isActive : true
       })));
     } catch (error) {
@@ -96,7 +97,7 @@ const UserManagement = () => {
     // Filter by search query
     const matchesSearch = 
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
       user.fullName.toLowerCase().includes(searchQuery.toLowerCase());
     
     // Filter by tab
