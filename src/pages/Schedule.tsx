@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Radio, Clock, User } from "lucide-react";
+import { ArrowLeft, Radio, Clock, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import { fetchSchedule } from "@/services/radioService";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ const Schedule = () => {
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState<string>("Montag");
   const { toast } = useToast();
+  const { user, isModerator, isAdmin } = useAuth();
 
   const days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
@@ -67,13 +69,27 @@ const Schedule = () => {
       
       <main className="flex-1 pt-24 pb-12">
         <div className="container mx-auto px-4">
-          <div className="mb-8 md:mb-12 flex items-center">
+          <div className="mb-8 md:mb-12 flex items-center justify-between flex-wrap gap-4">
             <Button asChild variant="ghost" className="text-white hover:text-white/80">
               <Link to="/" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Zurück zur Startseite
               </Link>
             </Button>
+            
+            {(isModerator || isAdmin) && (
+              <Button 
+                asChild
+                variant="outline" 
+                size="sm"
+                className="border-gray-600 hover:border-purple-500"
+              >
+                <Link to="/sendeplan-admin" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Sendeplan verwalten
+                </Link>
+              </Button>
+            )}
           </div>
           
           <div className="text-center mb-12">

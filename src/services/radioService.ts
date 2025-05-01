@@ -88,7 +88,7 @@ export const fetchSchedule = async (): Promise<ScheduleItem[]> => {
     const formattedSchedule: ScheduleItem[] = scheduleData.map(item => {
       // Safely access profiles.full_name, handling the case where the relation might not be found
       let hostName = "";
-      if (item.profiles && typeof item.profiles === 'object' && 'full_name' in item.profiles) {
+      if (item.profiles && item.profiles !== null && typeof item.profiles === 'object' && 'full_name' in item.profiles) {
         // Ensure we cast the value to string to satisfy TypeScript
         hostName = (item.profiles.full_name as string) || "";
       }
