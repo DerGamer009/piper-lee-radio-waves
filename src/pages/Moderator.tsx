@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -5,7 +6,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Mic, Calendar, Plus, Edit, Trash, LogOut } from "lucide-react";
-import { getSchedule, getShows, deleteScheduleItem, Show as ApiShow, ScheduleItem } from "@/services/apiService";
+import { getSchedule, getShows, deleteScheduleItem, Show, ScheduleItem } from "@/services/apiService";
 import ScheduleForm from "@/components/ScheduleForm";
 import { useToast } from "@/hooks/use-toast";
 import RadioPlayer from "@/components/RadioPlayer";
@@ -20,14 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Show {
-  id: number;
-  title: string;
-  description: string;
-  imageUrl?: string;
-  createdBy: number;
-}
-
+// Constants for radio stream
 const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 const STATION_NAME = "Piper Lee Radio";
 
@@ -41,26 +35,14 @@ const Moderator = () => {
     queryFn: getSchedule
   });
 
-  const { data: apiShows, isLoading: showsLoading } = useQuery({
+  const { data: shows, isLoading: showsLoading } = useQuery({
     queryKey: ['shows'],
     queryFn: getShows
   });
 
-  const shows: Show[] = React.useMemo(() => {
-    if (!apiShows || !Array.isArray(apiShows)) return [];
-    
-    return apiShows.map((show: ApiShow) => ({
-      id: show.id,
-      title: show.title,
-      description: show.description,
-      imageUrl: show.image_url,
-      createdBy: show.created_by || 0,
-    }));
-  }, [apiShows]);
-
   const [isAddingSchedule, setIsAddingSchedule] = useState(false);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
-  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleLogout = () => {
@@ -73,12 +55,12 @@ const Moderator = () => {
     navigate("/login");
   };
 
-  const handleEditSchedule = (scheduleId: number) => {
+  const handleEditSchedule = (scheduleId: string) => {
     setSelectedScheduleId(scheduleId);
     setIsEditingSchedule(true);
   };
 
-  const handleDeleteClick = (scheduleId: number) => {
+  const handleDeleteClick = (scheduleId: string) => {
     setSelectedScheduleId(scheduleId);
     setIsDeleteDialogOpen(true);
   };
@@ -229,10 +211,10 @@ const Moderator = () => {
                     <TableCell>{item.day_of_week}</TableCell>
                     <TableCell>{item.start_time}</TableCell>
                     <TableCell>{item.end_time}</TableCell>
-                    <TableCell>{item.show_title}</TableCell>
+                    <TableCell>{item.show?.title || item.show_title || 'Unknown'}</TableCell>
                     <TableCell>{item.host_name || 'Nicht zugewiesen'}</TableCell>
                     <TableCell>
-                      {(item.is_recurring !== undefined ? item.is_recurring : item.is_recurring) ? (
+                      {item.is_recurring ? (
                         <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Ja</span>
                       ) : (
                         <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Nein</span>

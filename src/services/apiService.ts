@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface User {
@@ -24,6 +23,7 @@ export interface Show {
   title: string;
   description?: string;
   image_url?: string;
+  created_by?: string;
 }
 
 export interface ScheduleItem {
@@ -32,8 +32,11 @@ export interface ScheduleItem {
   day_of_week: string;
   start_time: string;
   end_time: string;
+  host_id?: string;
   is_recurring: boolean;
   show?: Show; // Used for joined queries
+  show_title?: string; // Used for display in UI
+  host_name?: string; // Used for display in UI
 }
 
 export const createNewUser = async (userData: CreateUserData): Promise<User> => {
@@ -130,8 +133,6 @@ export const updateUser = async (userId: string, userData: Omit<User, 'id'>): Pr
   };
 };
 
-// Add the missing functions
-
 export const getUsers = async (): Promise<User[]> => {
   try {
     // Get profiles
@@ -198,7 +199,20 @@ export const login = async (email: string, password: string) => {
   
   if (error) throw error;
   
-  return data;
+  // Extract user metadata for our custom User object
+  const userData: User = {
+    id: data.user?.id || '',
+    username: data.user?.user_metadata?.username || '',
+    email: data.user?.email || '',
+    fullName: data.user?.user_metadata?.full_name || '',
+    roles: data.user?.user_metadata?.roles || ['user'],
+    isActive: true
+  };
+  
+  return {
+    user: userData,
+    session: data.session
+  };
 };
 
 // Schedule related functions
@@ -235,6 +249,7 @@ export const createScheduleItem = async (scheduleItem: Omit<ScheduleItem, 'id'>)
       day_of_week: scheduleItem.day_of_week,
       start_time: scheduleItem.start_time,
       end_time: scheduleItem.end_time,
+      host_id: scheduleItem.host_id,
       is_recurring: scheduleItem.is_recurring
     })
     .select()
@@ -253,6 +268,7 @@ export const updateScheduleItem = async (id: string, scheduleItem: Partial<Sched
       day_of_week: scheduleItem.day_of_week,
       start_time: scheduleItem.start_time,
       end_time: scheduleItem.end_time,
+      host_id: scheduleItem.host_id,
       is_recurring: scheduleItem.is_recurring
     })
     .eq('id', id)

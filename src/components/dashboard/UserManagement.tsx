@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UserForm from '../UserForm';
 import { AlertTriangle, Check, Search, Shield, ShieldAlert, User, Users } from 'lucide-react';
+import { getUsers, deleteUser } from "@/services/apiService";
 
 interface UserData {
   id: string;
@@ -20,7 +20,7 @@ interface UserData {
   avatar_url: string | null;
   isActive: boolean;
   roles: string[];
-  created_at: string;
+  created_at?: string;
 }
 
 const UserManagement = () => {
@@ -39,45 +39,11 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch users from profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) throw profilesError;
-
-      // Fetch user roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-
-      if (rolesError) throw rolesError;
-
-      // Fetch auth users for email
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
-
-      // Combine data
-      const mappedUsers: UserData[] = profiles.map(profile => {
-        const roles = userRoles
-          .filter(role => role.user_id === profile.id)
-          .map(role => role.role);
-        
-        const authUser = authUsers.users.find(user => user.id === profile.id);
-        
-        return {
-          id: profile.id,
-          username: profile.username || '',
-          email: authUser?.email || '',
-          fullName: profile.full_name || '',
-          avatar_url: profile.avatar_url,
-          isActive: true, // Default to true if not available
-          roles: roles,
-          created_at: profile.created_at
-        };
-      });
-
-      setUsers(mappedUsers);
+      const usersData = await getUsers();
+      setUsers(usersData.map(user => ({
+        ...user,
+        avatar_url: null // Set a default since it's not in our User type
+      })));
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -94,12 +60,7 @@ const UserManagement = () => {
     if (!confirm('Sind Sie sicher, dass Sie diesen Benutzer löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
     
     try {
-      // Delete user from auth
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (error) throw error;
-      
-      // The trigger will automatically delete the profile and roles due to CASCADE
+      await deleteUser(userId);
       
       toast({
         title: "Benutzer gelöscht",

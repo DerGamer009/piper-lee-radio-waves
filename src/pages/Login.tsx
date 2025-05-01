@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,10 @@ const Login = () => {
 
       if (result) {
         localStorage.setItem("user", JSON.stringify(result.user));
-        localStorage.setItem("token", result.token || "");
+        // Store session token if needed
+        if (result.session) {
+          localStorage.setItem("token", result.session.access_token || "");
+        }
         
         const userRoles = parseRoles(result.user.roles);
 

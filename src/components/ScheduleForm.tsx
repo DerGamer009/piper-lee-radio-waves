@@ -13,11 +13,11 @@ import { useToast } from '@/hooks/use-toast';
 
 // Define form schema
 const formSchema = z.object({
-  show_id: z.number(),
+  show_id: z.string(),
   day_of_week: z.string(),
   start_time: z.string(),
   end_time: z.string(),
-  host_id: z.number().optional(),
+  host_id: z.string().optional(),
   is_recurring: z.boolean().default(true),
 });
 
@@ -53,7 +53,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      show_id: scheduleItem?.show_id || 0,
+      show_id: scheduleItem?.show_id || '',
       day_of_week: scheduleItem?.day_of_week || 'Montag',
       start_time: scheduleItem?.start_time || '',
       end_time: scheduleItem?.end_time || '',
@@ -109,7 +109,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Sendung</FormLabel>
-                <Select onValueChange={value => field.onChange(Number(value))} defaultValue={String(field.value)}>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Sendung auswählen" />
@@ -117,7 +117,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                   </FormControl>
                   <SelectContent>
                     {shows.map((show) => (
-                      <SelectItem key={show.id} value={String(show.id)}>
+                      <SelectItem key={show.id} value={show.id}>
                         {show.title}
                       </SelectItem>
                     ))}
@@ -190,9 +190,8 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                 <FormControl>
                   <Input 
                     placeholder="Moderator ID" 
-                    type="number" 
                     value={field.value || ''}
-                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={e => field.onChange(e.target.value || undefined)}
                   />
                 </FormControl>
                 <FormMessage />
