@@ -60,10 +60,25 @@ export const getActivePolls = async (limit = 2): Promise<Poll[]> => {
 
 export const voteForOption = async (optionId: string): Promise<boolean> => {
   try {
-    // Stimme in der Datenbank erhöhen
+    // Hole den aktuellen Stimmwert
+    const { data: currentOption, error: fetchError } = await supabase
+      .from('poll_options')
+      .select('votes')
+      .eq('id', optionId)
+      .single();
+    
+    if (fetchError || !currentOption) {
+      console.error("Fehler beim Abrufen der Option:", fetchError);
+      return false;
+    }
+    
+    // Erhöhe den Stimmwert um 1
+    const newVoteCount = (currentOption.votes || 0) + 1;
+    
+    // Aktualisiere die Stimmen in der Datenbank
     const { error } = await supabase
       .from('poll_options')
-      .update({ votes: supabase.rpc('increment', { x: 1 }) })
+      .update({ votes: newVoteCount })
       .eq('id', optionId);
     
     if (error) {
