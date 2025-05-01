@@ -6,6 +6,11 @@ interface StreamInfo {
   current_song?: string;
   show_name?: string;
   show_host?: string;
+  is_live?: boolean;
+  streamer_name?: string;
+  elapsed?: number;
+  duration?: number;
+  remaining?: number;
 }
 
 interface ScheduleItem {
@@ -35,7 +40,12 @@ export const fetchStreamInfo = async (): Promise<StreamInfo> => {
       listeners: data.listeners?.current || 0,
       current_song: data.now_playing?.song?.text || "",
       show_name: data.live?.is_live ? data.live?.streamer_name : "",
-      show_host: ""
+      show_host: "",
+      is_live: data.live?.is_live || false,
+      streamer_name: data.live?.streamer_name || "",
+      elapsed: data.now_playing?.elapsed || 0,
+      duration: data.now_playing?.duration || 0,
+      remaining: data.now_playing?.remaining || 0
     };
   } catch (error) {
     console.error("Fehler beim Abrufen der Stream-Informationen:", error);
