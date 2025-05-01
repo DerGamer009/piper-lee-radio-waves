@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +45,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getStatusUpdates, updateStatusItem, createStatusItem, deleteStatusItem, StatusUpdate } from '@/services/apiService';
-import { StatusTimeline } from '@/components/StatusTimeline';
 
 const statusOptions = [
   { value: 'Operational', label: 'Operational', color: 'bg-green-500' },
@@ -248,57 +248,50 @@ const StatusManagement: React.FC = () => {
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
           </div>
         ) : statusItems.length > 0 ? (
-          <div className="space-y-6">
-            {/* Add timeline visualization */}
-            <div className="bg-black rounded-lg p-4 shadow-lg mb-6">
-              <StatusTimeline incidents={statusItems} />
-            </div>
-            
-            <div className="space-y-4">
-              {statusItems.map((item) => (
-                <div key={item.id} className="p-4 border rounded-lg shadow-sm bg-card hover:bg-accent/10">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      {item.status === 'Operational' ? (
-                        <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                      ) : (
-                        <AlertTriangleIcon className="h-5 w-5 text-yellow-500 mr-2" />
-                      )}
-                      <h3 className="font-medium">{item.system_name}</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(item.status)}
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(item)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <EditIcon className="h-4 w-4" />
-                          <span className="sr-only">Bearbeiten</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openDeleteDialog(item)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/90"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                          <span className="sr-only">Löschen</span>
-                        </Button>
-                      </div>
-                    </div>
+          <div className="space-y-4">
+            {statusItems.map((item) => (
+              <div key={item.id} className="p-4 border rounded-lg shadow-sm bg-card hover:bg-accent/10">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    {item.status === 'Operational' ? (
+                      <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                    ) : (
+                      <AlertTriangleIcon className="h-5 w-5 text-yellow-500 mr-2" />
+                    )}
+                    <h3 className="font-medium">{item.system_name}</h3>
                   </div>
-                  {item.description && (
-                    <p className="text-sm text-muted-foreground mt-2">{item.description}</p>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Zuletzt aktualisiert: {new Date(item.updated_at).toLocaleString('de-DE')}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(item.status)}
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(item)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <EditIcon className="h-4 w-4" />
+                        <span className="sr-only">Bearbeiten</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(item)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/90"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="sr-only">Löschen</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+                {item.description && (
+                  <p className="text-sm text-muted-foreground mt-2">{item.description}</p>
+                )}
+                <div className="text-xs text-muted-foreground mt-2">
+                  Zuletzt aktualisiert: {new Date(item.updated_at).toLocaleString('de-DE')}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="text-center py-10">

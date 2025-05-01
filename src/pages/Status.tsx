@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { InfoIcon, AlertTriangleIcon, AlertCircleIcon, CheckCircleIcon, PlusCircleIcon } from "lucide-react";
@@ -26,7 +27,6 @@ import {
 } from "@/components/ui/select";
 import { getStatusUpdates, createStatusItem, StatusUpdate } from '@/services/apiService';
 import { useAuth } from '@/contexts/AuthContext';
-import { StatusTimeline } from '@/components/StatusTimeline';
 
 const statusOptions = [
   { value: 'Operational', label: 'Operational', color: 'bg-green-500' },
@@ -251,11 +251,6 @@ const StatusPage = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              {/* Timeline component */}
-              <div className="bg-black rounded-lg p-4 shadow-lg">
-                <StatusTimeline incidents={statusItems} />
-              </div>
-
               <div className={`p-4 rounded-lg ${allOperational ? 'bg-green-100 dark:bg-green-900/20' : 'bg-yellow-100 dark:bg-yellow-900/20'}`}>
                 <div className="flex items-center">
                   {allOperational ? (
