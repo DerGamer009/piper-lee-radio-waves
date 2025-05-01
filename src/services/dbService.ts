@@ -1,323 +1,365 @@
 
-// This file simulates database operations in the browser
+// This file handles database operations using Supabase
 
-// Mock data storage
-let users = [
-  {
-    id: 1,
-    username: 'admin',
-    password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
-    email: 'admin@example.com',
-    fullName: 'Administrator',
-    roles: ['admin'],
-    isActive: true,
-    last_login: '2023-01-01T00:00:00.000Z',
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
-  },
-  {
-    id: 2,
-    username: 'moderator',
-    password_hash: '$2y$10$xLRsIkyaCv5g.QVMn9KJTOELcB9QLsRXpV3Sn1d9S1hcZ6F04Mzx2', // admin123
-    email: 'moderator@example.com',
-    fullName: 'Moderator User',
-    roles: ['moderator'],
-    isActive: true,
-    last_login: '2023-01-01T00:00:00.000Z',
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
+import { supabase } from "../integrations/supabase/client";
+
+// Authentication functions
+export const authenticateUser = async (username: string, password: string) => {
+  console.log('Authenticating user:', username);
+  
+  try {
+    // Sign in with username/email and password
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: username.includes('@') ? username : `${username}@example.com`,
+      password: password
+    });
+    
+    if (error) throw error;
+    
+    if (data.user) {
+      // Get user profile data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      // Get user roles
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id);
+      
+      const roles = rolesData ? rolesData.map(r => r.role) : ['user'];
+      
+      return {
+        id: data.user.id,
+        username: profileData?.username || username,
+        email: data.user.email,
+        fullName: profileData?.full_name || "",
+        roles: roles.join(','),
+        isActive: profileData?.is_active !== false, // Default to true if undefined
+        createdAt: profileData?.created_at || data.user.created_at
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    return null;
   }
-];
+};
 
-let shows = [
-  {
-    id: 1,
-    title: 'Morning Show',
-    description: 'Wake up with our morning show',
-    image_url: '/placeholder.svg',
-    created_by: 1,
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z',
-    creator_name: 'Administrator'
-  },
-  {
-    id: 2,
-    title: 'Afternoon Relaxation',
-    description: 'Relax with smooth tunes in the afternoon',
-    image_url: '/placeholder.svg',
-    created_by: 2,
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z',
-    creator_name: 'Moderator User'
-  }
-];
-
-let schedule = [
-  {
-    id: 1,
-    show_id: 1,
-    day_of_week: 'Montag',
-    start_time: '08:00',
-    end_time: '10:00',
-    host_id: 1,
-    is_recurring: true,
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z',
-    show_title: 'Morning Show',
-    show_description: 'Wake up with our morning show',
-    host_name: 'Administrator'
-  },
-  {
-    id: 2,
-    show_id: 2,
-    day_of_week: 'Dienstag',
-    start_time: '14:00',
-    end_time: '16:00',
-    host_id: 2,
-    is_recurring: true,
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z',
-    show_title: 'Afternoon Relaxation',
-    show_description: 'Relax with smooth tunes in the afternoon',
-    host_name: 'Moderator User'
-  }
-];
-
-// Mock function to execute queries
+// Query execution function that now uses Supabase
 export const executeQuery = async (query: string, params: any[] = []) => {
   console.log('Executing query:', query, 'with params:', params);
   
-  // Simple query execution simulation
-  if (query.includes('SELECT') && query.includes('FROM users')) {
-    // Get all users or specific user
-    if (params.length > 0) {
-      const userId = params[0];
-      return users.filter(u => u.id === userId).map(user => ({
+  // Parse query to determine what operation to perform
+  const queryLower = query.toLowerCase();
+  
+  try {
+    if (queryLower.includes('select') && queryLower.includes('from users')) {
+      // Get all users or specific user from profiles and user_roles
+      let queryBuilder = supabase
+        .from('profiles')
+        .select('*, user_roles(role)');
+      
+      if (params.length > 0 && queryLower.includes('where id =')) {
+        const userId = params[0];
+        queryBuilder = queryBuilder.eq('id', userId);
+      }
+      
+      const { data, error } = await queryBuilder;
+      
+      if (error) throw error;
+      
+      return data.map(user => ({
         id: user.id,
         username: user.username,
-        password: user.password_hash,
+        password: 'REDACTED', // Password hash not exposed
         email: user.email,
-        fullName: user.fullName,
-        roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
-        isActive: user.isActive,
+        fullName: user.full_name,
+        roles: Array.isArray(user.user_roles) 
+          ? user.user_roles.map(r => r.role).join(',') 
+          : (user.user_roles ? user.user_roles.role : 'user'),
+        isActive: user.is_active,
         createdAt: user.created_at
       }));
     }
-    return users.map(user => ({
-      id: user.id,
-      username: user.username,
-      password: user.password_hash,
-      email: user.email,
-      fullName: user.fullName,
-      roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
-      isActive: user.isActive,
-      createdAt: user.created_at
-    }));
-  }
-  
-  if (query.includes('SELECT') && query.includes('FROM shows')) {
-    // Get all shows or specific show
-    if (params.length > 0) {
+    
+    if (queryLower.includes('select') && queryLower.includes('from shows')) {
+      // Get all shows or specific show
+      let queryBuilder = supabase.from('shows').select('*');
+      
+      if (params.length > 0 && queryLower.includes('where id =')) {
+        const showId = params[0];
+        queryBuilder = queryBuilder.eq('id', showId);
+      }
+      
+      const { data, error } = await queryBuilder;
+      
+      if (error) throw error;
+      
+      return data;
+    }
+    
+    if (queryLower.includes('select') && queryLower.includes('from schedule')) {
+      // Get all schedule items or specific schedule item
+      let queryBuilder = supabase
+        .from('schedule')
+        .select(`
+          *,
+          shows:show_id (
+            id,
+            title,
+            description
+          )
+        `);
+      
+      if (params.length > 0 && queryLower.includes('where id =')) {
+        const scheduleId = params[0];
+        queryBuilder = queryBuilder.eq('id', scheduleId);
+      }
+      
+      const { data, error } = await queryBuilder;
+      
+      if (error) throw error;
+      
+      return data.map(item => ({
+        ...item,
+        show_title: item.shows?.title || 'Unknown',
+        show_description: item.shows?.description || ''
+      }));
+    }
+    
+    if (queryLower.includes('insert into users')) {
+      const userData = params[0];
+      
+      // Create auth user first
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email || `${userData.username}@example.com`,
+        password: userData.password
+      });
+      
+      if (authError) throw authError;
+      
+      if (!authData.user) throw new Error("Failed to create user");
+      
+      // Create profile
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          username: userData.username,
+          full_name: userData.fullName || null,
+          email: userData.email || null,
+          is_active: userData.isActive !== undefined ? userData.isActive : true
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Add roles
+      if (userData.roles && Array.isArray(userData.roles)) {
+        const rolePromises = userData.roles.map(role => 
+          supabase
+            .from('user_roles')
+            .insert({
+              user_id: authData.user!.id,
+              role: role
+            })
+        );
+        
+        await Promise.all(rolePromises);
+      }
+      
+      return [{ insertId: authData.user.id }];
+    }
+    
+    if (queryLower.includes('update users')) {
+      const userData = params[0];
+      const id = params[1];
+      
+      // Update profile
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          username: userData.username,
+          full_name: userData.fullName,
+          email: userData.email,
+          is_active: userData.isActive
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update roles if provided
+      if (userData.roles) {
+        // First delete all existing roles
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', id);
+        
+        // Then insert new roles
+        const roles = Array.isArray(userData.roles) ? userData.roles : userData.roles.split(',');
+        const rolePromises = roles.map(role => 
+          supabase
+            .from('user_roles')
+            .insert({
+              user_id: id,
+              role: role.trim()
+            })
+        );
+        
+        await Promise.all(rolePromises);
+      }
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    if (queryLower.includes('delete from users')) {
+      const userId = params[0];
+      
+      // Delete from auth.users will cascade to profiles and user_roles
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) throw error;
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    if (queryLower.includes('insert into shows')) {
+      const showData = params[0];
+      
+      const { data, error } = await supabase
+        .from('shows')
+        .insert(showData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return [{ insertId: data.id }];
+    }
+    
+    if (queryLower.includes('update shows')) {
+      const showData = params[0];
+      const id = params[1];
+      
+      const { data, error } = await supabase
+        .from('shows')
+        .update(showData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return [{ affectedRows: 1 }];
+    }
+    
+    if (queryLower.includes('delete from shows')) {
       const showId = params[0];
-      return shows.filter(s => s.id === showId);
-    }
-    return shows;
-  }
-  
-  if (query.includes('SELECT') && query.includes('FROM schedule')) {
-    // Get all schedule items or specific schedule item
-    if (params.length > 0) {
-      const scheduleId = params[0];
-      return schedule.filter(s => s.id === scheduleId);
-    }
-    return schedule;
-  }
-  
-  if (query.includes('INSERT INTO users')) {
-    const userData = params[0];
-    const newUser = {
-      id: users.length + 1,
-      username: userData.username,
-      password_hash: userData.password, // In a real app, we would hash this
-      email: userData.email || null,
-      fullName: userData.fullName || null,
-      roles: userData.roles,
-      isActive: userData.isActive !== undefined ? userData.isActive : true,
-      last_login: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    return [{ insertId: newUser.id }];
-  }
-  
-  if (query.includes('UPDATE users')) {
-    const userData = params[0];
-    const id = params[1];
-    const index = users.findIndex(u => u.id === id);
-    
-    if (index !== -1) {
-      users[index] = {
-        ...users[index],
-        ...userData,
-        updated_at: new Date().toISOString()
-      };
+      
+      // Delete the show
+      const { error } = await supabase
+        .from('shows')
+        .delete()
+        .eq('id', showId);
+      
+      if (error) throw error;
+      
+      // Delete related schedule items
+      await supabase
+        .from('schedule')
+        .delete()
+        .eq('show_id', showId);
       
       return [{ affectedRows: 1 }];
     }
     
-    return [{ affectedRows: 0 }];
-  }
-  
-  if (query.includes('DELETE FROM users')) {
-    const userId = params[0];
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== userId);
-    
-    return [{ affectedRows: initialLength - users.length }];
-  }
-  
-  if (query.includes('INSERT INTO shows')) {
-    const showData = params[0];
-    const newShow = {
-      id: shows.length + 1,
-      ...showData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    shows.push(newShow);
-    return [{ insertId: newShow.id }];
-  }
-  
-  if (query.includes('UPDATE shows')) {
-    const showData = params[0];
-    const id = params[1];
-    const index = shows.findIndex(s => s.id === id);
-    
-    if (index !== -1) {
-      shows[index] = {
-        ...shows[index],
-        ...showData,
-        updated_at: new Date().toISOString()
-      };
+    if (queryLower.includes('insert into schedule')) {
+      const scheduleData = params[0];
       
-      return [{ affectedRows: 1 }];
-    }
-    
-    return [{ affectedRows: 0 }];
-  }
-  
-  if (query.includes('DELETE FROM shows')) {
-    const showId = params[0];
-    const initialLength = shows.length;
-    shows = shows.filter(s => s.id !== showId);
-    // Also delete related schedule items
-    schedule = schedule.filter(s => s.show_id !== showId);
-    
-    return [{ affectedRows: initialLength - shows.length }];
-  }
-  
-  if (query.includes('INSERT INTO schedule')) {
-    const scheduleData = params[0];
-    const relatedShow = shows.find(s => s.id === scheduleData.show_id);
-    const host = users.find(u => u.id === scheduleData.host_id);
-    
-    const newScheduleItem = {
-      id: schedule.length + 1,
-      ...scheduleData,
-      show_title: relatedShow ? relatedShow.title : null,
-      show_description: relatedShow ? relatedShow.description : null,
-      host_name: host ? host.fullName : null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    schedule.push(newScheduleItem);
-    return [{ insertId: newScheduleItem.id }];
-  }
-  
-  if (query.includes('UPDATE schedule')) {
-    const scheduleData = params[0];
-    const id = params[1];
-    const index = schedule.findIndex(s => s.id === id);
-    
-    if (index !== -1) {
-      // Get updated related data if needed
-      let showTitle = schedule[index].show_title;
-      let showDescription = schedule[index].show_description;
-      let hostName = schedule[index].host_name;
+      const { data, error } = await supabase
+        .from('schedule')
+        .insert(scheduleData)
+        .select()
+        .single();
       
-      if (scheduleData.show_id) {
-        const relatedShow = shows.find(s => s.id === scheduleData.show_id);
-        showTitle = relatedShow ? relatedShow.title : null;
-        showDescription = relatedShow ? relatedShow.description : null;
-      }
+      if (error) throw error;
       
+      // Get related show and host information
+      const { data: showData } = await supabase
+        .from('shows')
+        .select('title, description')
+        .eq('id', scheduleData.show_id)
+        .single();
+      
+      let hostName = 'Nicht zugewiesen';
       if (scheduleData.host_id) {
-        const host = users.find(u => u.id === scheduleData.host_id);
-        hostName = host ? host.fullName : null;
+        const { data: hostData } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', scheduleData.host_id)
+          .single();
+        
+        if (hostData) {
+          hostName = hostData.full_name;
+        }
       }
       
-      schedule[index] = {
-        ...schedule[index],
-        ...scheduleData,
-        show_title: showTitle,
-        show_description: showDescription,
-        host_name: hostName,
-        updated_at: new Date().toISOString()
-      };
+      // Return the created item with additional information
+      return [{
+        insertId: data.id,
+        show_title: showData?.title || null,
+        show_description: showData?.description || null,
+        host_name: hostName
+      }];
+    }
+    
+    if (queryLower.includes('update schedule')) {
+      const scheduleData = params[0];
+      const id = params[1];
+      
+      const { data, error } = await supabase
+        .from('schedule')
+        .update(scheduleData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
       
       return [{ affectedRows: 1 }];
     }
     
-    return [{ affectedRows: 0 }];
-  }
-  
-  if (query.includes('DELETE FROM schedule')) {
-    const scheduleId = params[0];
-    const initialLength = schedule.length;
-    schedule = schedule.filter(s => s.id !== scheduleId);
+    if (queryLower.includes('delete from schedule')) {
+      const scheduleId = params[0];
+      
+      const { error } = await supabase
+        .from('schedule')
+        .delete()
+        .eq('id', scheduleId);
+      
+      if (error) throw error;
+      
+      return [{ affectedRows: 1 }];
+    }
     
-    return [{ affectedRows: initialLength - schedule.length }];
+    // Default fallback for unsupported queries
+    console.warn('Unsupported query:', query);
+    return [];
+    
+  } catch (error) {
+    console.error("Database error:", error);
+    throw error;
   }
-  
-  // Default fallback
-  return [];
 };
 
-// Authentication functions for browser environment
-export const authenticateUser = async (username: string, password: string) => {
-  // This is a simplified authentication function for browser environment
-  // In a real app, we would properly compare hashed passwords
-  console.log('Authenticating user:', username);
-  
-  const user = users.find(u => u.username === username && u.isActive);
-  
-  if (user) {
-    // For demo purposes, we'll accept any password for admin123 (should match hashed value in real app)
-    if (password === 'admin123' || user.password_hash === password) {
-      // Update last login
-      const index = users.findIndex(u => u.id === user.id);
-      if (index !== -1) {
-        users[index] = {
-          ...users[index],
-          last_login: new Date().toISOString()
-        };
-      }
-      
-      return {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        roles: Array.isArray(user.roles) ? user.roles.join(',') : user.roles,
-        isActive: user.isActive,
-        createdAt: user.created_at // Add this line to include the createdAt property
-      };
-    }
-  }
-  
-  return null;
+export default {
+  authenticateUser,
+  executeQuery
 };
