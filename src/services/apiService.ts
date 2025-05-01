@@ -64,7 +64,8 @@ export type ScheduleItem = {
   show_title?: string;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+// Use import.meta.env instead of process.env
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 // Status Updates API functions
 export const getStatusUpdates = async (): Promise<StatusUpdate[]> => {
