@@ -21,6 +21,9 @@ const Admin = () => {
     shows: 42,
     listeners: 3890
   };
+  
+  // Stream URL for the radio station
+  const streamUrl = "https://stream.radio-piper-lee.com/live";
 
   if (!user || !isAdmin) {
     return <Navigate to="/login" replace />;
@@ -114,7 +117,7 @@ const Admin = () => {
                     <span>System Status</span>
                   </h2>
                 </div>
-                <AdminStatusPanel />
+                <AdminStatusPanel streamUrl={streamUrl} />
               </Card>
             </div>
             
