@@ -56,18 +56,18 @@ const Index = () => {
         }`}
       >
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-radio-purple/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-radio-purple/10 to-transparent dark:from-radio-purple/5 pointer-events-none" />
         
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2 text-center lg:text-left">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                <span className="text-white">Live Radio</span>{" "}
+                <span className="text-foreground">Live Radio</span>{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-radio-purple to-radio-blue">
                   Erlebnis
                 </span>
               </h1>
-              <p className="text-xl text-radio-light/80 mb-8 max-w-lg mx-auto lg:mx-0">
+              <p className="text-xl text-foreground/80 mb-8 max-w-lg mx-auto lg:mx-0">
                 Hören Sie Piper Lee Radio - wir bringen Ihnen die beste Musik und Unterhaltung, rund um die Uhr.
               </p>
               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-4 justify-center lg:justify-start">
@@ -93,7 +93,7 @@ const Index = () => {
                 </Button>
                 <Button 
                   variant="ghost" 
-                  className="text-radio-light hover:text-white rounded-full px-6"
+                  className="text-foreground hover:text-foreground/80 rounded-full px-6"
                   asChild
                 >
                   <Link to="/songwunsch">Song wünschen</Link>
@@ -112,11 +112,11 @@ const Index = () => {
       </section>
 
       {/* Neue Sektion für Live-Chat und Song-Historie */}
-      <section className="py-16 bg-gradient-to-b from-radio-dark to-radio-dark/90">
+      <section className="py-16 bg-card/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-4">Live mit uns interagieren</h2>
-            <p className="text-radio-light/70 max-w-2xl mx-auto">
+            <p className="text-foreground/70 max-w-2xl mx-auto">
               Sei Teil unserer Community! Chatte live mit anderen Hörern, sieh dir an, was gerade gespielt wird oder schicke uns deinen Songwunsch.
             </p>
           </div>
@@ -142,11 +142,11 @@ const Index = () => {
         </div>
       </section>
       
-      <section id="feedback" className="py-16 bg-gradient-to-b from-radio-dark/50 to-radio-dark">
+      <section id="feedback" className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Ihre Meinung zählt</h2>
-            <p className="text-radio-light/70 max-w-2xl mx-auto">
+            <p className="text-foreground/70 max-w-2xl mx-auto">
               Nehmen Sie an unseren Umfragen teil und gestalten Sie Ihr Radioprogramm mit!
             </p>
           </div>
@@ -176,7 +176,7 @@ const Index = () => {
             ) : (
               // Zeige Nachricht, wenn keine Umfragen verfügbar sind
               <div className="md:col-span-2 text-center p-6 bg-card/30 backdrop-blur-sm rounded-lg">
-                <p className="text-radio-light/70">Derzeit sind keine aktiven Umfragen verfügbar.</p>
+                <p className="text-foreground/70">Derzeit sind keine aktiven Umfragen verfügbar.</p>
               </div>
             )}
           </div>
@@ -189,12 +189,12 @@ const Index = () => {
               <Button 
                 asChild
                 variant="outline"
-                className="w-full h-full border border-gray-800/50 bg-gradient-to-br from-[#1c1f2f]/60 to-[#252a40]/60 backdrop-blur-sm rounded-lg p-8 flex flex-col items-center justify-center gap-4 hover:bg-gray-800/20 transition-colors"
+                className="w-full h-full border border-border/50 bg-card/60 backdrop-blur-sm rounded-lg p-8 flex flex-col items-center justify-center gap-4 hover:bg-muted/20 transition-colors"
               >
                 <Link to="/songwunsch">
                   <Music className="h-12 w-12 text-radio-purple mb-2" />
                   <span className="text-xl font-semibold">Song wünschen</span>
-                  <p className="text-sm text-gray-400 mt-2">
+                  <p className="text-sm text-foreground/60 mt-2">
                     Fehlt dir ein bestimmter Song? Wünsche ihn dir hier!
                   </p>
                 </Link>
@@ -204,11 +204,11 @@ const Index = () => {
         </div>
       </section>
       
-      <section id="about" className="py-16 bg-gradient-to-b from-radio-dark to-radio-dark/90">
+      <section id="about" className="py-16 bg-card/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Über Unseren Sender</h2>
-            <p className="text-radio-light/70 max-w-2xl mx-auto">
+            <p className="text-foreground/70 max-w-2xl mx-auto">
               Piper Lee Radio widmet sich der feinsten Auswahl an Musik und Unterhaltung. 
               Unser Sender sendet rund um die Uhr und bietet eine vielfältige Auswahl an Genres und ansprechenden Programmen.
             </p>
@@ -247,7 +247,7 @@ const Index = () => {
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-center">{item.title}</h3>
-                <p className="text-radio-light/70 text-center">{item.description}</p>
+                <p className="text-foreground/70 text-center">{item.description}</p>
               </div>
             ))}
           </div>
@@ -258,7 +258,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Programmplan</h2>
-            <p className="text-radio-light/70 max-w-2xl mx-auto">
+            <p className="text-foreground/70 max-w-2xl mx-auto">
               Sehen Sie sich unsere wöchentliche Aufstellung von Shows und Programmen an. Es gibt etwas für jeden!
             </p>
           </div>
@@ -281,7 +281,7 @@ const Index = () => {
                   <div className="text-radio-purple font-semibold">{item.day}</div>
                   <div className="font-medium">{item.show}</div>
                 </div>
-                <div className="text-radio-light/70">{item.time}</div>
+                <div className="text-foreground/70">{item.time}</div>
               </div>
             ))}
           </div>
@@ -297,11 +297,11 @@ const Index = () => {
         </div>
       </section>
       
-      <section id="podcasts-preview" className="py-16 bg-gradient-to-b from-radio-dark/90 to-radio-dark">
+      <section id="podcasts-preview" className="py-16 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Aktuelle Podcasts</h2>
-            <p className="text-radio-light/70 max-w-2xl mx-auto">
+            <p className="text-foreground/70 max-w-2xl mx-auto">
               Entdecken Sie unsere neuesten Podcasts und Aufzeichnungen vergangener Sendungen. Hören Sie nach, was Sie verpasst haben!
             </p>
           </div>
@@ -326,7 +326,7 @@ const Index = () => {
             ) : (
               // Zeige Nachricht, wenn keine Podcasts verfügbar sind
               <div className="lg:col-span-4 text-center p-6 bg-card/30 backdrop-blur-sm rounded-lg">
-                <p className="text-radio-light/70">Derzeit sind keine Podcasts verfügbar.</p>
+                <p className="text-foreground/70">Derzeit sind keine Podcasts verfügbar.</p>
               </div>
             )}
           </div>
@@ -343,43 +343,43 @@ const Index = () => {
         </div>
       </section>
 
-      <footer className="bg-radio-dark/80 backdrop-blur-sm border-t border-white/10 py-8">
+      <footer className="bg-card backdrop-blur-sm border-t border-border py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <Radio className="h-5 w-5 text-radio-purple" />
-              <p className="text-sm text-radio-light/70">
+              <p className="text-sm text-foreground/70">
                 © 2025 Piper Lee Radio. Alle Rechte vorbehalten.
               </p>
             </div>
             
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/datenschutz" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/datenschutz" className="text-foreground/70 hover:text-foreground transition-colors">
                 Datenschutz
               </Link>
-              <Link to="/nutzungsbedingungen" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/nutzungsbedingungen" className="text-foreground/70 hover:text-foreground transition-colors">
                 Nutzungsbedingungen
               </Link>
-              <Link to="/impressum" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/impressum" className="text-foreground/70 hover:text-foreground transition-colors">
                 Impressum
               </Link>
-              <Link to="/kontakt" className="text-radio-light/70 hover:text-white transition-colors">
+              <Link to="/kontakt" className="text-foreground/70 hover:text-foreground transition-colors">
                 Kontakt
               </Link>
             </div>
           </div>
           
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <Link to="/sendeplan" className="text-radio-light/70 hover:text-white transition-colors text-sm">
+            <Link to="/sendeplan" className="text-foreground/70 hover:text-foreground transition-colors text-sm">
               Sendeplan
             </Link>
-            <Link to="/podcasts" className="text-radio-light/70 hover:text-white transition-colors text-sm">
+            <Link to="/podcasts" className="text-foreground/70 hover:text-foreground transition-colors text-sm">
               Podcasts
             </Link>
-            <Link to="/charts" className="text-radio-light/70 hover:text-white transition-colors text-sm">
+            <Link to="/charts" className="text-foreground/70 hover:text-foreground transition-colors text-sm">
               Charts
             </Link>
-            <Link to="/partner" className="text-radio-light/70 hover:text-white transition-colors text-sm">
+            <Link to="/partner" className="text-foreground/70 hover:text-foreground transition-colors text-sm">
               Partner
             </Link>
           </div>

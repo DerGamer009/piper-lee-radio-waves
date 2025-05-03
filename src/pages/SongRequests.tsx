@@ -36,7 +36,7 @@ const SongRequests = () => {
         <div className="bg-card/30 backdrop-blur-sm p-6 rounded-lg">
           {activeTab === 'request' ? (
             <div>
-              <p className="text-radio-light/70 mb-6">
+              <p className="text-foreground/70 mb-6">
                 Fehlt dir ein bestimmter Song im Programm? Hier kannst du deinen Musikwunsch einreichen.
                 Unser DJ-Team wird versuchen, deinen Wunsch so bald wie möglich ins Programm zu nehmen.
               </p>
@@ -44,7 +44,7 @@ const SongRequests = () => {
             </div>
           ) : (
             <div>
-              <p className="text-radio-light/70 mb-6">
+              <p className="text-foreground/70 mb-6">
                 Hier siehst du die zuletzt gespielten Songs in unserem Radioprogramm.
                 Falls du einen verpasst hast, findest du ihn hier.
               </p>
