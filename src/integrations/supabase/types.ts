@@ -406,6 +406,66 @@ export type Database = {
           },
         ]
       }
+      security_activities: {
+        Row: {
+          activity_type: string
+          description: string
+          id: string
+          ip_address: string | null
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          description: string
+          id?: string
+          ip_address?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          description?: string
+          id?: string
+          ip_address?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      security_status: {
+        Row: {
+          failed_logins_count: number | null
+          id: string
+          last_scan: string | null
+          security_score: number | null
+          updated_at: string
+          updates_available: number | null
+          vulnerabilities_count: number | null
+        }
+        Insert: {
+          failed_logins_count?: number | null
+          id?: string
+          last_scan?: string | null
+          security_score?: number | null
+          updated_at?: string
+          updates_available?: number | null
+          vulnerabilities_count?: number | null
+        }
+        Update: {
+          failed_logins_count?: number | null
+          id?: string
+          last_scan?: string | null
+          security_score?: number | null
+          updated_at?: string
+          updates_available?: number | null
+          vulnerabilities_count?: number | null
+        }
+        Relationships: []
+      }
       shows: {
         Row: {
           created_at: string | null
@@ -517,6 +577,30 @@ export type Database = {
           status?: string
           system_name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_logs: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          message: string
+          time: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          message: string
+          time?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          time?: string
         }
         Relationships: []
       }

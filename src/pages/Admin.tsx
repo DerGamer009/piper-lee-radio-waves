@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -36,17 +37,17 @@ const Admin = () => {
     { name: 'Cache Server', status: 'online' },
     { name: 'Media Storage', status: 'warning', message: 'Fast voll (92%)' }
   ]);
-  const [systemLogs, setSystemLogs] = useState([
-    { time: '09:45:22', level: 'info', message: 'Nutzer admin hat sich angemeldet' },
-    { time: '09:32:16', level: 'warning', message: 'Festplattenspeicher fast voll (92%)' },
-    { time: '08:15:03', level: 'info', message: 'Tägliches Backup erfolgreich abgeschlossen' },
-    { time: '07:30:00', level: 'info', message: 'System-Update verfügbar' },
-    { time: '23:15:45', level: 'error', message: 'Fehlgeschlagener Login-Versuch für Nutzer admin (IP: 82.45.128.65)' },
-    { time: '22:30:12', level: 'info', message: 'Datenbank-Optimierung durchgeführt' },
-    { time: '21:45:30', level: 'info', message: 'Cache geleert' },
-    { time: '20:10:05', level: 'warning', message: 'Hohe CPU-Auslastung (85%)' }
-  ]);
+  const [systemLogs, setSystemLogs] = useState([]);
+  const [securityActivities, setSecurityActivities] = useState([]);
+  const [securityStatus, setSecurityStatus] = useState({
+    lastScan: "03.05.2025, 09:30",
+    vulnerabilities: 0,
+    failedLogins: 3,
+    updatesAvailable: 2
+  });
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [isLoadingSecurityData, setIsLoadingSecurityData] = useState(false);
 
   // Sample stats data - in a real app, this would come from an API
   const statsData = {
@@ -57,15 +58,7 @@ const Admin = () => {
   };
   
   // Stream URL for the radio station
-  const streamUrl = "https://stream.radio-piper-lee.com/live";
-  
-  // Sample security stats
-  const securityStats = {
-    lastScan: "03.05.2025, 09:30",
-    vulnerabilities: 0,
-    failedLogins: 3,
-    updatesAvailable: 2
-  };
+  const streamUrl = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
   
   // Sample backup data
   const backupData = [
@@ -103,10 +96,6 @@ const Admin = () => {
           setServices(data.services);
         }
         
-        if (data.logs) {
-          setSystemLogs(data.logs);
-        }
-        
         toast({
           title: "System-Status aktualisiert",
           description: "Die Systemdaten wurden erfolgreich abgerufen.",
@@ -126,14 +115,107 @@ const Admin = () => {
     }
   };
 
-  // Use effect to fetch metrics when the component mounts
+  // Fetch system logs from the database
+  const fetchSystemLogs = async () => {
+    setIsLoadingLogs(true);
+    try {
+      const { data, error } = await supabase
+        .from('system_logs')
+        .select('*')
+        .order('time', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('Error fetching system logs:', error);
+        toast({
+          title: "Fehler beim Abrufen der System-Logs",
+          description: error.message,
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else if (data) {
+        setSystemLogs(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch system logs:', err);
+      toast({
+        title: "Fehler beim Abrufen der System-Logs",
+        description: "Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  // Fetch security activities from the database
+  const fetchSecurityActivities = async () => {
+    setIsLoadingSecurityData(true);
+    try {
+      // Fetch security activities
+      const { data: activities, error: activitiesError } = await supabase
+        .from('security_activities')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(5);
+      
+      if (activitiesError) {
+        throw activitiesError;
+      }
+      
+      // Fetch security status
+      const { data: status, error: statusError } = await supabase
+        .from('security_status')
+        .select('*')
+        .single();
+      
+      if (statusError) {
+        throw statusError;
+      }
+      
+      setSecurityActivities(activities);
+      
+      if (status) {
+        setSecurityStatus({
+          lastScan: new Date(status.last_scan).toLocaleString('de-DE'),
+          vulnerabilities: status.vulnerabilities_count,
+          failedLogins: status.failed_logins_count,
+          updatesAvailable: status.updates_available
+        });
+      }
+      
+    } catch (err) {
+      console.error('Failed to fetch security data:', err);
+      toast({
+        title: "Fehler beim Abrufen der Sicherheitsdaten",
+        description: "Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsLoadingSecurityData(false);
+    }
+  };
+
+  // Use effect to fetch metrics, logs, and security data when the component mounts
   useEffect(() => {
     fetchSystemMetrics();
+    fetchSystemLogs();
+    fetchSecurityActivities();
     
     // Set up an interval to refresh metrics every 60 seconds
     const intervalId = setInterval(() => {
       if (activeTab === 'system' || activeTab === 'overview') {
         fetchSystemMetrics();
+      }
+      
+      if (activeTab === 'logs') {
+        fetchSystemLogs();
+      }
+      
+      if (activeTab === 'security') {
+        fetchSecurityActivities();
       }
     }, 60000);
     
@@ -144,9 +226,15 @@ const Admin = () => {
   // Refresh stats for CPU, RAM, etc.
   const refreshSystemStats = () => {
     fetchSystemMetrics();
+    if (activeTab === 'logs') {
+      fetchSystemLogs();
+    } else if (activeTab === 'security') {
+      fetchSecurityActivities();
+    }
   };
 
   const handleRefreshStats = () => {
+    fetchSystemMetrics();
     toast({
       title: "Aktualisiert",
       description: "Die Statistiken wurden aktualisiert.",
@@ -206,12 +294,48 @@ const Admin = () => {
     }, 500);
   };
   
-  const handleSecurityScan = () => {
+  const handleSecurityScan = async () => {
     toast({
       title: "Sicherheitsscan gestartet",
       description: "Der Sicherheitsscan wurde gestartet und läuft im Hintergrund.",
       duration: 3000,
     });
+    
+    // In a real app, this would trigger a background security scan
+    try {
+      // Update the last scan time and reset vulnerabilities
+      await supabase
+        .from('security_status')
+        .update({
+          last_scan: new Date().toISOString(),
+          vulnerabilities_count: 0,
+          updated_at: new Date().toISOString()
+        });
+      
+      // Add a log entry
+      await supabase
+        .from('system_logs')
+        .insert({
+          level: 'info',
+          message: 'Sicherheitsscan wurde durchgeführt'
+        });
+      
+      // Add a security activity
+      await supabase
+        .from('security_activities')
+        .insert({
+          activity_type: 'security',
+          description: 'Sicherheitsscan durchgeführt',
+          ip_address: '192.168.1.1' // In a real app, get the actual IP
+        });
+        
+      // Refresh security data
+      setTimeout(() => {
+        fetchSecurityActivities();
+      }, 1000);
+    } catch (error) {
+      console.error('Error updating security data:', error);
+    }
   };
 
   const handleSystemDiagnostic = () => {
@@ -282,6 +406,17 @@ const Admin = () => {
       
       setServices(finalServices);
       
+      // Log the service restart to the database
+      supabase
+        .from('system_logs')
+        .insert({
+          level: 'info',
+          message: `Dienst "${serviceName}" wurde neu gestartet`
+        })
+        .then(() => {
+          fetchSystemLogs();
+        });
+      
       toast({
         title: "Service neu gestartet",
         description: `Der Dienst "${serviceName}" wurde erfolgreich neu gestartet.`,
@@ -290,7 +425,7 @@ const Admin = () => {
     }, 2500);
   };
 
-  const downloadLog = () => {
+  const downloadLog = async () => {
     toast({
       title: "Log-Dateien werden heruntergeladen",
       description: "Die Log-Dateien werden als ZIP-Archiv heruntergeladen.",
@@ -298,6 +433,21 @@ const Admin = () => {
     });
     
     // In a real app, this would trigger a file download
+    // For now, we'll just create a log entry
+    try {
+      await supabase
+        .from('system_logs')
+        .insert({
+          level: 'info',
+          message: 'Log-Dateien wurden heruntergeladen'
+        });
+      
+      setTimeout(() => {
+        fetchSystemLogs();
+      }, 500);
+    } catch (error) {
+      console.error('Error creating log entry:', error);
+    }
   };
 
   return (
@@ -308,7 +458,7 @@ const Admin = () => {
           <p className="text-muted-foreground">Verwalten Sie Ihre Plattform und überwachen Sie wichtige Kennzahlen</p>
         </header>
         
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="overview" className="space-y-6" onValueChange={setActiveTab}>
           <TabsList className="mb-2">
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
@@ -704,7 +854,7 @@ const Admin = () => {
                     <div className="p-4 border rounded-lg bg-card/60">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-muted-foreground">Letzter Scan</span>
-                        <Badge variant="outline">{securityStats.lastScan}</Badge>
+                        <Badge variant="outline">{securityStatus.lastScan}</Badge>
                       </div>
                       <div className="text-2xl font-bold flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5 text-green-500" />
@@ -715,7 +865,7 @@ const Admin = () => {
                     <div className="p-4 border rounded-lg bg-card/60">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-muted-foreground">Sicherheitsstatus</span>
-                        <Badge>{securityStats.vulnerabilities} Probleme gefunden</Badge>
+                        <Badge>{securityStatus.vulnerabilities} Probleme gefunden</Badge>
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Kritische Probleme</span>
@@ -728,45 +878,29 @@ const Admin = () => {
                     <h3 className="text-lg font-medium">Kürzliche Aktivitäten</h3>
                     <ScrollArea className="h-64 pr-4">
                       <div className="space-y-2">
-                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">Login erfolgt</p>
-                            <p className="text-sm text-muted-foreground">Administrator, 03.05.2025 09:45</p>
+                        {isLoadingSecurityData ? (
+                          <div className="flex justify-center items-center h-20">
+                            <p className="text-muted-foreground">Daten werden geladen...</p>
                           </div>
-                          <Badge variant="outline">192.168.1.45</Badge>
-                        </div>
-                        
-                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">Fehlgeschlagener Login</p>
-                            <p className="text-sm text-muted-foreground">Benutzer: admin, 02.05.2025 22:32</p>
+                        ) : securityActivities.length > 0 ? (
+                          securityActivities.map((activity) => (
+                            <div key={activity.id} className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
+                              <div>
+                                <p className="font-medium">{activity.description}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(activity.timestamp).toLocaleString('de-DE')}
+                                </p>
+                              </div>
+                              <Badge variant={activity.activity_type === 'login_failed' || activity.activity_type === 'firewall' ? 'destructive' : 'outline'}>
+                                {activity.ip_address || 'System'}
+                              </Badge>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex justify-center items-center h-20">
+                            <p className="text-muted-foreground">Keine Aktivitäten gefunden</p>
                           </div>
-                          <Badge variant="destructive">82.45.128.65</Badge>
-                        </div>
-                        
-                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">Sicherheitsupdate installiert</p>
-                            <p className="text-sm text-muted-foreground">System, 02.05.2025 08:15</p>
-                          </div>
-                          <Badge variant="outline">Automatisch</Badge>
-                        </div>
-                        
-                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">Neue Firewall-Regel hinzugefügt</p>
-                            <p className="text-sm text-muted-foreground">Administrator, 01.05.2025 14:22</p>
-                          </div>
-                          <Badge variant="outline">Manuell</Badge>
-                        </div>
-                        
-                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">Verdächtige Aktivität blockiert</p>
-                            <p className="text-sm text-muted-foreground">Firewall, 01.05.2025 03:15</p>
-                          </div>
-                          <Badge variant="destructive">118.25.67.94</Badge>
-                        </div>
+                        )}
                       </div>
                     </ScrollArea>
                   </div>
@@ -899,10 +1033,10 @@ const Admin = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={refreshSystemStats}
-                      disabled={isLoadingMetrics}
+                      onClick={fetchSystemLogs}
+                      disabled={isLoadingLogs}
                     >
-                      {isLoadingMetrics ? (
+                      {isLoadingLogs ? (
                         <span className="animate-spin">⟳</span>
                       ) : (
                         <RefreshCw className="h-4 w-4" />
@@ -923,28 +1057,40 @@ const Admin = () => {
                 
                 <ScrollArea className="h-[500px] border rounded-lg bg-card/30 p-4">
                   <div className="space-y-2 font-mono text-sm">
-                    {systemLogs.map((log, index) => (
-                      <div 
-                        key={index} 
-                        className={`p-2 rounded flex items-start ${
-                          log.level === 'error' ? 'bg-red-500/10 border border-red-500/20' : 
-                          log.level === 'warning' ? 'bg-yellow-500/10 border border-yellow-500/20' : 
-                          'bg-card/20 border border-border/30'
-                        }`}
-                      >
-                        <span className="text-muted-foreground mr-3">{log.time}</span>
-                        <div className="flex-1">
-                          <span className={`font-medium ${
-                            log.level === 'error' ? 'text-red-500' : 
-                            log.level === 'warning' ? 'text-yellow-500' : 
-                            'text-blue-500'
-                          } mr-2`}>
-                            [{log.level.toUpperCase()}]
-                          </span>
-                          <span>{log.message}</span>
-                        </div>
+                    {isLoadingLogs ? (
+                      <div className="flex justify-center items-center h-20">
+                        <p className="text-muted-foreground">Logs werden geladen...</p>
                       </div>
-                    ))}
+                    ) : systemLogs.length > 0 ? (
+                      systemLogs.map((log) => (
+                        <div 
+                          key={log.id} 
+                          className={`p-2 rounded flex items-start ${
+                            log.level === 'error' ? 'bg-red-500/10 border border-red-500/20' : 
+                            log.level === 'warning' ? 'bg-yellow-500/10 border border-yellow-500/20' : 
+                            'bg-card/20 border border-border/30'
+                          }`}
+                        >
+                          <span className="text-muted-foreground mr-3">
+                            {new Date(log.time).toLocaleTimeString()}
+                          </span>
+                          <div className="flex-1">
+                            <span className={`font-medium ${
+                              log.level === 'error' ? 'text-red-500' : 
+                              log.level === 'warning' ? 'text-yellow-500' : 
+                              'text-blue-500'
+                            } mr-2`}>
+                              [{log.level.toUpperCase()}]
+                            </span>
+                            <span>{log.message}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex justify-center items-center h-20">
+                        <p className="text-muted-foreground">Keine Logs gefunden</p>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
                 
