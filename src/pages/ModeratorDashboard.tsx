@@ -135,17 +135,9 @@ const ModeratorDashboard = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive>
-                    <Link to="/moderator-dashboard" className="flex items-center gap-2">
+                    <Link to="/moderator" className="flex items-center gap-2">
                       <BarChart2 className="h-4 w-4" />
                       <span>Dashboard</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/moderator" className="flex items-center gap-2">
-                      <Radio className="h-4 w-4" />
-                      <span>Radio</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -175,9 +167,17 @@ const ModeratorDashboard = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link to="/users" className="flex items-center gap-2">
+                    <Link to="/moderator/users" className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       <span>Benutzer</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/moderator/radio" className="flex items-center gap-2">
+                      <Radio className="h-4 w-4" />
+                      <span>Radio</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -191,7 +191,7 @@ const ModeratorDashboard = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link to="/settings" className="flex items-center gap-2">
+                    <Link to="/moderator/settings" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
                       <span>Einstellungen</span>
                     </Link>

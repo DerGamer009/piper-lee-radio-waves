@@ -139,18 +139,18 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Podcasts" isActive={isActive("/moderator")}>
-                  <Link to="/moderator">
+                <SidebarMenuButton asChild tooltip="Podcasts" isActive={isActive("/podcasts")}>
+                  <Link to="/podcasts">
                     <FileAudio className="h-4 w-4" />
                     <span>Podcasts</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Statistiken" isActive={isActive("/moderator-dashboard")}>
-                  <Link to="/moderator-dashboard">
+                <SidebarMenuButton asChild tooltip="Statistiken" isActive={isActive("/moderator")}>
+                  <Link to="/moderator">
                     <BarChart2 className="h-4 w-4" />
-                    <span>Statistiken</span>
+                    <span>Moderator Dashboard</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

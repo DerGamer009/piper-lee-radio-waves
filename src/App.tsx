@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -85,18 +85,24 @@ function App() {
                   path="/user-dashboard" 
                   element={<ProtectedRoute element={<Layout><UserDashboard /></Layout>} />} 
                 />
+                
+                {/* Redirect from old moderator-dashboard to new moderator route */}
                 <Route 
-                  path="/moderator-dashboard" 
-                  element={<ProtectedRoute element={<Layout showSidebar><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                  path="/moderator-dashboard"
+                  element={<Navigate to="/moderator" replace />} 
                 />
                 
-                {/* New moderator routes */}
+                {/* New moderator routes with nested structure */}
                 <Route 
-                  path="/users" 
+                  path="/moderator" 
+                  element={<ProtectedRoute element={<Layout showSidebar><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                />
+                <Route 
+                  path="/moderator/users" 
                   element={<ProtectedRoute element={<Layout showSidebar><UsersPage /></Layout>} requiredRoles={["moderator", "admin"]} />} 
                 />
                 <Route 
-                  path="/settings" 
+                  path="/moderator/settings" 
                   element={<ProtectedRoute element={<Layout showSidebar><ModeratorSettings /></Layout>} requiredRoles={["moderator", "admin"]} />} 
                 />
                 
@@ -132,10 +138,6 @@ function App() {
                       requiredRoles={["admin", "moderator"]} 
                     />
                   } 
-                />
-                <Route 
-                  path="/moderator" 
-                  element={<ProtectedRoute element={<Moderator />} requiredRoles={["admin", "moderator"]} />} 
                 />
                 
                 {/* New Admin Pages */}
