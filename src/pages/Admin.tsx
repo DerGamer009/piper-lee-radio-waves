@@ -12,6 +12,7 @@ import DashboardStats from '@/components/dashboard/DashboardStats';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 
 const Admin = () => {
   const { user, isAdmin } = useAuth();
@@ -35,6 +36,17 @@ const Admin = () => {
     { name: 'Cache Server', status: 'online' },
     { name: 'Media Storage', status: 'warning', message: 'Fast voll (92%)' }
   ]);
+  const [systemLogs, setSystemLogs] = useState([
+    { time: '09:45:22', level: 'info', message: 'Nutzer admin hat sich angemeldet' },
+    { time: '09:32:16', level: 'warning', message: 'Festplattenspeicher fast voll (92%)' },
+    { time: '08:15:03', level: 'info', message: 'Tägliches Backup erfolgreich abgeschlossen' },
+    { time: '07:30:00', level: 'info', message: 'System-Update verfügbar' },
+    { time: '23:15:45', level: 'error', message: 'Fehlgeschlagener Login-Versuch für Nutzer admin (IP: 82.45.128.65)' },
+    { time: '22:30:12', level: 'info', message: 'Datenbank-Optimierung durchgeführt' },
+    { time: '21:45:30', level: 'info', message: 'Cache geleert' },
+    { time: '20:10:05', level: 'warning', message: 'Hohe CPU-Auslastung (85%)' }
+  ]);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
 
   // Sample stats data - in a real app, this would come from an API
   const statsData = {
@@ -62,40 +74,76 @@ const Admin = () => {
     { id: 3, name: "Audio-Dateien", date: "30.04.2025", size: "3.8 GB", status: "Abgeschlossen" }
   ];
 
-  // Sample system logs
-  const systemLogs = [
-    { time: '09:45:22', level: 'info', message: 'Nutzer admin hat sich angemeldet' },
-    { time: '09:32:16', level: 'warning', message: 'Festplattenspeicher fast voll (92%)' },
-    { time: '08:15:03', level: 'info', message: 'Tägliches Backup erfolgreich abgeschlossen' },
-    { time: '07:30:00', level: 'info', message: 'System-Update verfügbar' },
-    { time: '23:15:45', level: 'error', message: 'Fehlgeschlagener Login-Versuch für Nutzer admin (IP: 82.45.128.65)' },
-    { time: '22:30:12', level: 'info', message: 'Datenbank-Optimierung durchgeführt' },
-    { time: '21:45:30', level: 'info', message: 'Cache geleert' },
-    { time: '20:10:05', level: 'warning', message: 'Hohe CPU-Auslastung (85%)' }
-  ];
-
   // Check if the user is authenticated and is an admin
   if (!user || !isAdmin) {
     return <Navigate to="/login" replace />;
   }
 
+  // Fetch real system metrics from the edge function
+  const fetchSystemMetrics = async () => {
+    setIsLoadingMetrics(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('system-metrics', {
+        method: 'GET'
+      });
+      
+      if (error) {
+        console.error('Error fetching system metrics:', error);
+        toast({
+          title: "Fehler beim Abrufen der Systemmetriken",
+          description: error.message,
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else if (data) {
+        console.log('Received system metrics:', data);
+        setServerStatus(data.metrics);
+        
+        if (data.services) {
+          setServices(data.services);
+        }
+        
+        if (data.logs) {
+          setSystemLogs(data.logs);
+        }
+        
+        toast({
+          title: "System-Status aktualisiert",
+          description: "Die Systemdaten wurden erfolgreich abgerufen.",
+          duration: 3000,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch system metrics:', err);
+      toast({
+        title: "Fehler beim Abrufen der Systemmetriken",
+        description: "Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsLoadingMetrics(false);
+    }
+  };
+
+  // Use effect to fetch metrics when the component mounts
+  useEffect(() => {
+    fetchSystemMetrics();
+    
+    // Set up an interval to refresh metrics every 60 seconds
+    const intervalId = setInterval(() => {
+      if (activeTab === 'system' || activeTab === 'overview') {
+        fetchSystemMetrics();
+      }
+    }, 60000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [activeTab]);
+
   // Refresh stats for CPU, RAM, etc.
   const refreshSystemStats = () => {
-    // Here you would typically fetch real data from an API
-    toast({
-      title: "System-Status aktualisiert",
-      description: "Die System-Statistiken wurden aktualisiert.",
-      duration: 3000,
-    });
-    
-    // Simulate updated stats
-    setServerStatus({
-      cpu: Math.floor(Math.random() * 40) + 10,
-      ram: Math.floor(Math.random() * 40) + 30,
-      disk: 78,
-      network: Math.floor(Math.random() * 30) + 5,
-      uptime: '5d 14h 32m'
-    });
+    fetchSystemMetrics();
   };
 
   const handleRefreshStats = () => {
@@ -440,8 +488,21 @@ const Admin = () => {
                     <Server className="h-5 w-5 text-primary" />
                     Server Status
                   </h2>
-                  <Button variant="outline" size="sm" onClick={refreshSystemStats}>
-                    <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={refreshSystemStats}
+                    disabled={isLoadingMetrics}
+                  >
+                    {isLoadingMetrics ? (
+                      <span className="flex items-center">
+                        <span className="animate-spin mr-2">⟳</span> Lädt...
+                      </span>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
+                      </>
+                    )}
                   </Button>
                 </div>
                 <div className="space-y-4">
@@ -487,6 +548,17 @@ const Admin = () => {
                       <span className="font-medium">{serverStatus.network}%</span>
                     </div>
                     <Progress value={serverStatus.network} className={`h-1.5 mt-2 ${serverStatus.network < 30 ? 'bg-green-200 [&>div]:bg-green-500' : serverStatus.network < 70 ? 'bg-yellow-200 [&>div]:bg-yellow-500' : 'bg-red-200 [&>div]:bg-red-500'}`} />
+                  </div>
+                  
+                  <div className="p-3 border border-border/50 rounded-lg mt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">System-Uptime:</span>
+                      <span className="font-medium">{serverStatus.uptime}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-muted-foreground">Letzte Aktualisierung:</span>
+                      <span className="text-xs">{new Date().toLocaleTimeString()}</span>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -824,8 +896,17 @@ const Admin = () => {
                     <Button variant="outline" size="sm" onClick={downloadLog}>
                       <Download className="mr-2 h-4 w-4" /> Logs exportieren
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <RefreshCw className="h-4 w-4" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={refreshSystemStats}
+                      disabled={isLoadingMetrics}
+                    >
+                      {isLoadingMetrics ? (
+                        <span className="animate-spin">⟳</span>
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -869,7 +950,7 @@ const Admin = () => {
                 
                 <div className="flex justify-between mt-4">
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <span>Zeige 8 von 1,245 Einträgen</span>
+                    <span>Zeige {systemLogs.length} von {systemLogs.length} Einträgen</span>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" disabled>
