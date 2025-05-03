@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +21,11 @@ import Podcasts from "./pages/Podcasts";
 import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
 import AdminSidebar from "./components/admin/AdminSidebar";
+import AdminSettings from "./components/admin/AdminSettings";
+import AdminNotifications from "./components/admin/AdminNotifications";
+import AdminMessages from "./components/admin/AdminMessages";
+import AdminDatabase from "./components/admin/AdminDatabase";
+import AdminUsers from "./components/admin/AdminUsers";
 import Moderator from "./pages/Moderator";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -35,14 +41,6 @@ import Status from './pages/Status';
 import UsersPage from './pages/UsersPage';
 import ModeratorSettings from './pages/ModeratorSettings';
 import ModeratorRadio from './pages/ModeratorRadio';
-import WeatherWidget from "./components/WeatherWidget";
-
-// Import admin components
-import AdminSettings from "./components/admin/AdminSettings";
-import AdminNotifications from "./components/admin/AdminNotifications";
-import AdminMessages from "./components/admin/AdminMessages";
-import AdminDatabase from "./components/admin/AdminDatabase";
-import AdminUsers from "./components/admin/AdminUsers";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,25 +50,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Custom Layout with Weather for Home page
-const HomeLayout = ({ children }: { children: React.ReactNode }) => (
-  <Layout>
-    <div className="container mx-auto px-4 sm:px-6 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          {children}
-        </div>
-        <div className="lg:col-span-1">
-          <div className="mb-6">
-            <WeatherWidget />
-          </div>
-          {/* Add other sidebar widgets here if needed */}
-        </div>
-      </div>
-    </div>
-  </Layout>
-);
 
 function App() {
   return (
@@ -82,7 +61,7 @@ function App() {
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<HomeLayout><Index /></HomeLayout>} />
+                <Route path="/" element={<Layout><Index /></Layout>} />
                 <Route path="/login" element={<Layout><Auth /></Layout>} />
                 <Route path="/datenschutz" element={<Layout><Privacy /></Layout>} />
                 <Route path="/nutzungsbedingungen" element={<Layout><Terms /></Layout>} />
