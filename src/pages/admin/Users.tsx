@@ -66,7 +66,7 @@ const UsersPage = () => {
           email: user.email || '',
           avatar: user.avatar_url,
           roles: roles,
-          lastLogin: user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Nie',
+          lastLogin: user.registered_at ? new Date(user.registered_at).toLocaleDateString() : 'Nie',
           status: user.is_active ? 'active' : 'inactive',
           isActive: user.is_active
         } as AppUser;

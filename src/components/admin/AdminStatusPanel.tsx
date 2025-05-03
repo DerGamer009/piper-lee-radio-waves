@@ -13,6 +13,10 @@ type StatusItem = {
   description: string;
 };
 
+interface AdminStatusPanelProps {
+  streamUrl?: string;
+}
+
 const initialStatuses: StatusItem[] = [
   {
     id: '1',
@@ -51,7 +55,7 @@ const initialStatuses: StatusItem[] = [
   }
 ];
 
-const AdminStatusPanel = () => {
+const AdminStatusPanel: React.FC<AdminStatusPanelProps> = ({ streamUrl }) => {
   const [statuses, setStatuses] = useState<StatusItem[]>(initialStatuses);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
@@ -138,6 +142,12 @@ const AdminStatusPanel = () => {
             </div>
           ))}
         </div>
+        {streamUrl && (
+          <div className="mt-6 p-4 bg-card/30 rounded-lg border border-muted">
+            <h3 className="font-medium mb-2">Stream URL</h3>
+            <p className="text-sm text-muted-foreground break-all">{streamUrl}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
