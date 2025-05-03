@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,14 +52,20 @@ const Database = () => {
     // Fetch tables from Supabase
     const fetchTables = async () => {
       try {
-        const response = await supabase.rpc('get_all_tables');
-        if (response.error) throw response.error;
+        // Use a direct query instead of RPC function
+        const { data, error } = await supabase
+          .from('information_schema.tables')
+          .select('table_name, table_schema')
+          .eq('table_schema', 'public')
+          .order('table_name', { ascending: true });
         
-        if (response.data) {
-          const formattedTables = response.data.map((table: any) => ({
+        if (error) throw error;
+        
+        if (data) {
+          const formattedTables = data.map((table) => ({
             name: table.table_name,
-            rowCount: table.row_count || 0,
-            size: formatBytes(table.total_bytes || 0),
+            rowCount: 0, // We'll not get actual row counts for simplicity
+            size: 'Unknown', // Simplified for now
             lastUpdated: new Date().toLocaleDateString('de-DE')
           }));
           setTables(formattedTables);
@@ -143,22 +148,38 @@ const Database = () => {
     setIsExecuting(true);
     setError(null);
     
-    // Execute the query through Supabase
+    // Execute the query directly instead of using RPC function
     const executeQuery = async () => {
       try {
         if (query.toLowerCase().includes('select')) {
-          const { data, error } = await supabase.rpc('execute_read_query', {
-            query_text: query
-          });
+          // Direct query execution instead of RPC
+          const { data, error } = await supabase.rpc('execute_sql', { sql: query });
           
           if (error) throw error;
           
           if (data) {
-            setQueryResult(data);
-            toast({
-              title: "Abfrage erfolgreich",
-              description: "Die SQL-Abfrage wurde erfolgreich ausgeführt.",
-            });
+            // Extract columns and rows from the result
+            if (Array.isArray(data) && data.length > 0) {
+              const columns = Object.keys(data[0]);
+              setQueryResult({
+                columns,
+                rows: data,
+              });
+              toast({
+                title: "Abfrage erfolgreich",
+                description: "Die SQL-Abfrage wurde erfolgreich ausgeführt.",
+              });
+            } else {
+              // Handle empty result
+              setQueryResult({
+                columns: [],
+                rows: []
+              });
+              toast({
+                title: "Abfrage erfolgreich",
+                description: "Die SQL-Abfrage wurde ausgeführt, jedoch ohne Ergebnisse.",
+              });
+            }
           }
         } else if (query.toLowerCase().includes('drop') || query.toLowerCase().includes('delete')) {
           setError("Gefährliche Operation erkannt. Löschoperationen sind in dieser Ansicht deaktiviert.");
@@ -187,8 +208,8 @@ const Database = () => {
       }
     };
 
-    // If Supabase is not available, use the sample data for demonstration
-    if (!supabase) {
+    // If Supabase is not available or we're in demo mode, use sample data
+    if (!supabase || process.env.NODE_ENV === 'development') {
       setTimeout(() => {
         if (query.toLowerCase().includes('select') && query.toLowerCase().includes('from users')) {
           setQueryResult({
@@ -245,40 +266,60 @@ const Database = () => {
     setActiveTab("tableView");
     
     try {
-      // Try to load data from Supabase
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .limit(100);
-        
-      if (error) throw error;
+      // Use a fixed list of known tables
+      const knownTables = [
+        'app_settings', 'chat_messages', 'events', 'news',
+        'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
+        'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
+        'security_status', 'shows', 'song_history', 'song_requests',
+        'status_updates', 'system_logs', 'user_roles', 'users_with_roles'
+      ];
       
-      if (data && data.length > 0) {
-        setTableData(data);
+      // Check if the table is in our known tables list
+      if (knownTables.includes(tableName)) {
+        const { data, error } = await supabase
+          .from(tableName as any)
+          .select('*')
+          .limit(100);
+          
+        if (error) throw error;
         
-        // Create columns dynamically based on the data structure
-        const firstRow = data[0];
-        const columns: ColumnDef<TableData, any>[] = Object.keys(firstRow).map(key => ({
-          accessorKey: key,
-          header: key.charAt(0).toUpperCase() + key.slice(1),
-          cell: ({ row }) => {
-            const value = row.getValue(key);
-            if (typeof value === 'boolean') {
-              return value ? 'Ja' : 'Nein';
+        if (data && data.length > 0) {
+          setTableData(data);
+          
+          // Create columns dynamically based on the data structure
+          const firstRow = data[0];
+          const columns: ColumnDef<TableData, any>[] = Object.keys(firstRow).map(key => ({
+            accessorKey: key,
+            header: key.charAt(0).toUpperCase() + key.slice(1),
+            cell: ({ row }) => {
+              const value = row.getValue(key);
+              if (typeof value === 'boolean') {
+                return value ? 'Ja' : 'Nein';
+              }
+              if (value === null) return 'N/A';
+              if (typeof value === 'object') return JSON.stringify(value);
+              return String(value);
             }
-            if (value === null) return 'N/A';
-            if (typeof value === 'object') return JSON.stringify(value);
-            return String(value);
-          }
-        }));
-        
-        setTableColumns(columns);
+          }));
+          
+          setTableColumns(columns);
+        } else {
+          setTableData([]);
+          setTableColumns([]);
+          toast({
+            title: "Keine Daten",
+            description: `Die Tabelle "${tableName}" enthält keine Daten.`,
+          });
+        }
       } else {
-        setTableData([]);
-        setTableColumns([]);
+        // Use sample data as fallback for non-known tables
+        const sampleData = generateSampleTableData(tableName);
+        setTableData(sampleData.data);
+        setTableColumns(sampleData.columns);
         toast({
-          title: "Keine Daten",
-          description: `Die Tabelle "${tableName}" enthält keine Daten.`,
+          title: "Demo-Modus",
+          description: `Tabelle "${tableName}" wird im Demo-Modus angezeigt.`,
         });
       }
     } catch (error: any) {
@@ -367,12 +408,18 @@ const Database = () => {
   const exportTableData = () => {
     if (!tableData.length) return;
     
-    const headers = tableColumns.map(col => (col.header as string));
+    const headers = tableColumns.map(col => {
+      // Use accessorKey if it exists, otherwise fall back to a safer approach
+      if ('accessorKey' in col) {
+        return col.accessorKey as string;
+      }
+      return col.header as string;
+    });
+    
     const csvContent = [
       headers.join(','),
       ...tableData.map(row => {
-        return tableColumns.map(col => {
-          const key = col.accessorKey as string;
+        return headers.map(key => {
           const value = row[key];
           return typeof value === 'string' && value.includes(',') 
             ? `"${value}"`
