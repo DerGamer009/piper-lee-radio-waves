@@ -5,6 +5,7 @@ interface StreamInfo {
   title?: string;
   artist?: string;
   listeners?: number;
+  total_listeners?: number; // Add total_listeners property
   current_song?: string;
   show_name?: string;
   show_host?: string;
@@ -112,6 +113,7 @@ export const fetchStreamInfo = async (): Promise<StreamInfo> => {
       title: data.now_playing?.song?.title || "",
       artist: data.now_playing?.song?.artist || "",
       listeners: data.listeners?.current || 0,
+      total_listeners: data.listeners?.total || 0, // Add total listeners
       current_song: data.now_playing?.song?.text || "",
       show_name: data.live?.is_live ? data.live?.streamer_name : "",
       show_host: "",

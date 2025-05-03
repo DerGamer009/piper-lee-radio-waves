@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,13 +35,7 @@ import Status from './pages/Status';
 import UsersPage from './pages/UsersPage';
 import ModeratorSettings from './pages/ModeratorSettings';
 import ModeratorRadio from './pages/ModeratorRadio';
-
-// Import admin pages
-import AdminSettings from './pages/admin/Settings';
-import AdminNotifications from './pages/admin/Notifications';
-import AdminMessages from './pages/admin/Messages';
-import AdminDatabase from './pages/admin/Database';
-import AdminUsers from './pages/admin/Users';
+import WeatherWidget from "./components/WeatherWidget";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +45,25 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Custom Layout with Weather for Home page
+const HomeLayout = ({ children }: { children: React.ReactNode }) => (
+  <Layout>
+    <div className="container mx-auto px-4 sm:px-6 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          {children}
+        </div>
+        <div className="lg:col-span-1">
+          <div className="mb-6">
+            <WeatherWidget />
+          </div>
+          {/* Add other sidebar widgets here if needed */}
+        </div>
+      </div>
+    </div>
+  </Layout>
+);
 
 function App() {
   return (
@@ -63,7 +75,7 @@ function App() {
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/" element={<HomeLayout><Index /></HomeLayout>} />
                 <Route path="/login" element={<Layout><Auth /></Layout>} />
                 <Route path="/datenschutz" element={<Layout><Privacy /></Layout>} />
                 <Route path="/nutzungsbedingungen" element={<Layout><Terms /></Layout>} />

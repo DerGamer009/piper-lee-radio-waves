@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { fetchWeatherData } from "@/services/radioService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sun, Cloud, CloudRain, Wind } from "lucide-react";
 
 interface WeatherData {
   city: string;
@@ -11,100 +12,119 @@ interface WeatherData {
   updated: string;
 }
 
-export function WeatherWidget() {
+const WeatherWidget = ({ city = "Berlin" }: { city?: string }) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadWeather = async () => {
+    const fetchWeather = async () => {
       setLoading(true);
       try {
-        const data = await fetchWeatherData();
-        setWeather(data);
-      } catch (error) {
-        console.error("Fehler beim Laden der Wetterdaten:", error);
-      } finally {
+        // For demo purposes, we'll use mock data
+        // In a real application, you would connect to a weather API
+        // Example: const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${city}`);
+        
+        // Mock data for demonstration
+        const mockWeather = {
+          city,
+          temperature: Math.floor(Math.random() * 15) + 10, // 10-25°C
+          condition: ["sonnig", "bewölkt", "regnerisch", "windig"][Math.floor(Math.random() * 4)],
+          humidity: Math.floor(Math.random() * 50) + 30, // 30-80%
+          updated: new Date().toLocaleTimeString('de-DE')
+        };
+        
+        setTimeout(() => {
+          setWeather(mockWeather);
+          setLoading(false);
+        }, 600); // Simulate network delay
+      } catch (err) {
+        console.error("Failed to fetch weather data:", err);
+        setError("Wetterdaten konnten nicht geladen werden.");
         setLoading(false);
       }
     };
 
-    loadWeather();
+    fetchWeather();
     
-    // Aktualisiere die Wetterdaten alle 30 Minuten
-    const interval = setInterval(loadWeather, 30 * 60000);
+    // Refresh weather every 30 minutes
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [city]);
 
-  // Wetter-Icons basierend auf Bedingung
-  const getWeatherIcon = (condition: string) => {
-    switch(condition.toLowerCase()) {
-      case "sonnig":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle cx="12" cy="12" r="5" strokeWidth="2" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-          </svg>
-        );
-      case "bewölkt":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-          </svg>
-        );
-      case "regnerisch":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 19.4l.72-1.2m4.32 0l.72-1.2m4.32 0l.72-1.2" />
-          </svg>
-        );
-      case "windig":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.59 4.59A2 2 0 1112 8H3m10.59 11.41A2 2 0 1116 16H7" />
-          </svg>
-        );
+  const getWeatherIcon = () => {
+    if (!weather) return <Sun className="h-12 w-12 text-yellow-400" />;
+    
+    switch (weather.condition.toLowerCase()) {
+      case 'sonnig':
+        return <Sun className="h-12 w-12 text-yellow-400" />;
+      case 'bewölkt':
+        return <Cloud className="h-12 w-12 text-gray-400" />;
+      case 'regnerisch':
+        return <CloudRain className="h-12 w-12 text-blue-400" />;
+      case 'windig':
+        return <Wind className="h-12 w-12 text-blue-300" />;
       default:
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-          </svg>
-        );
+        return <Sun className="h-12 w-12 text-yellow-400" />;
     }
   };
 
+  if (error) {
+    return (
+      <Card className="shadow-md">
+        <CardContent className="p-4 text-center text-red-500">
+          {error}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="border border-gray-800/50 bg-gradient-to-br from-[#1c1f2f]/60 to-[#252a40]/60 backdrop-blur-sm shadow-lg">
-      <CardContent className="p-4">
-        {loading ? (
-          <div className="flex items-center justify-center animate-pulse">
-            <div className="h-10 w-10 rounded-full bg-gray-700 mr-3"></div>
+    <Card className="shadow-md overflow-hidden">
+      <CardContent className="p-0">
+        <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 p-4">
+          <div className="flex items-center justify-between">
             <div>
-              <div className="h-4 w-16 bg-gray-700 rounded mb-2"></div>
-              <div className="h-3 w-24 bg-gray-800 rounded"></div>
+              {loading ? (
+                <>
+                  <Skeleton className="h-6 w-24 mb-2" />
+                  <Skeleton className="h-12 w-16" />
+                </>
+              ) : (
+                <>
+                  <p className="text-white text-sm font-medium">{weather?.city}</p>
+                  <p className="text-white text-3xl font-bold">{weather?.temperature}°C</p>
+                </>
+              )}
             </div>
+            {loading ? <Skeleton className="h-12 w-12 rounded-full" /> : getWeatherIcon()}
           </div>
-        ) : weather ? (
-          <div className="flex items-center">
-            <div className="mr-3">
-              {weather.condition && getWeatherIcon(weather.condition)}
-            </div>
-            <div>
-              <div className="flex items-baseline">
-                <span className="text-lg font-medium">{weather.temperature}°C</span>
-                <span className="ml-1 text-xs text-gray-400">{weather.city}</span>
+        </div>
+        <div className="p-4">
+          {loading ? (
+            <>
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4" />
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between text-sm">
+                <span>Bedingung:</span>
+                <span className="font-medium">{weather?.condition}</span>
               </div>
-              <div className="text-xs text-gray-400">
-                {weather.condition}, {weather.humidity}% Luftfeuchtigkeit
+              <div className="flex justify-between text-sm mt-1">
+                <span>Luftfeuchtigkeit:</span>
+                <span className="font-medium">{weather?.humidity}%</span>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-sm text-gray-400">Keine Wetterdaten verfügbar</p>
-          </div>
-        )}
+              <div className="text-xs text-gray-500 mt-3 text-right">
+                Aktualisiert: {weather?.updated}
+              </div>
+            </>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default WeatherWidget;
