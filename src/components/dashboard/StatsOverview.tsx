@@ -32,7 +32,7 @@ const StatsOverview = ({ stats, isLoading }: StatsOverviewProps) => {
       'sunday': 'Sonntag'
     };
     
-    return days[day] || day;
+    return days[day.toLowerCase()] || day;
   };
 
   return (
