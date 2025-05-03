@@ -37,6 +37,13 @@ import ModeratorSettings from './pages/ModeratorSettings';
 import ModeratorRadio from './pages/ModeratorRadio';
 import WeatherWidget from "./components/WeatherWidget";
 
+// Import admin components
+import AdminSettings from "./components/admin/AdminSettings";
+import AdminNotifications from "./components/admin/AdminNotifications";
+import AdminMessages from "./components/admin/AdminMessages";
+import AdminDatabase from "./components/admin/AdminDatabase";
+import AdminUsers from "./components/admin/AdminUsers";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

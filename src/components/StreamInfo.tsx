@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Music, Users, Radio, Headphones } from "lucide-react";
 import { fetchStreamInfo } from "@/services/radioService";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { WeatherWidget } from "./WeatherWidget";
+import WeatherWidget from "./WeatherWidget";
 
 interface StreamInfoData {
   title?: string;
