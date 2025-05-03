@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/use-toast";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -19,6 +20,7 @@ import ScheduleAdmin from "./pages/ScheduleAdmin";
 import Podcasts from "./pages/Podcasts";
 import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
+import AdminSidebar from "./components/admin/AdminSidebar";
 import Moderator from "./pages/Moderator";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -31,6 +33,13 @@ import SongRequests from "./pages/SongRequests";
 import Chat from "./pages/Chat";
 import Events from "./pages/Events";
 import Status from './pages/Status';
+
+// Import admin pages
+import AdminSettings from './pages/admin/Settings';
+import AdminNotifications from './pages/admin/Notifications';
+import AdminMessages from './pages/admin/Messages';
+import AdminDatabase from './pages/admin/Database';
+import AdminUsers from './pages/admin/Users';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,7 +68,6 @@ function App() {
                 <Route path="/kontakt" element={<Layout><Contact /></Layout>} />
                 <Route path="/partner" element={<Layout><Partner /></Layout>} />
                 <Route path="/sendeplan" element={<Layout><Schedule /></Layout>} />
-                <Route path="/sendeplan-admin" element={<ProtectedRoute element={<ScheduleAdmin />} requiredRoles={["admin", "moderator"]} />} />
                 <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
                 <Route path="/charts" element={<Layout><Charts /></Layout>} />
                 <Route path="/news" element={<Layout><News /></Layout>} />
@@ -79,14 +87,125 @@ function App() {
                   path="/moderator-dashboard" 
                   element={<ProtectedRoute element={<Layout><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
                 />
+                
+                {/* Admin routes with SidebarProvider */}
                 <Route 
                   path="/admin" 
-                  element={<ProtectedRoute element={<Admin />} requiredRoles={["admin"]} />} 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <Admin />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/sendeplan-admin" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <ScheduleAdmin />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin", "moderator"]} 
+                    />
+                  } 
                 />
                 <Route 
                   path="/moderator" 
                   element={<ProtectedRoute element={<Moderator />} requiredRoles={["admin", "moderator"]} />} 
                 />
+                
+                {/* New Admin Pages */}
+                <Route 
+                  path="/admin/settings" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <AdminSettings />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/notifications" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <AdminNotifications />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/messages" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <AdminMessages />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/database" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <AdminDatabase />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/users" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <AdminUsers />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
