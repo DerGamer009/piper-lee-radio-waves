@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,7 @@ import Events from "./pages/Events";
 import Status from './pages/Status';
 import UsersPage from './pages/UsersPage';
 import ModeratorSettings from './pages/ModeratorSettings';
+import ModeratorRadio from './pages/ModeratorRadio';
 
 // Import admin pages
 import AdminSettings from './pages/admin/Settings';
@@ -135,6 +137,24 @@ function App() {
                             <ModeratorDashboard />
                             <div className="flex-1">
                               <ModeratorSettings />
+                            </div>
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["moderator", "admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/moderator/radio" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <ModeratorDashboard />
+                            <div className="flex-1">
+                              <ModeratorRadio />
                             </div>
                           </div>
                         </SidebarProvider>

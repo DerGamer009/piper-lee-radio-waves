@@ -69,6 +69,24 @@ interface Event {
   is_featured?: boolean;
 }
 
+interface StreamStatus {
+  status: 'online' | 'offline' | 'starting' | 'stopping' | 'unknown';
+  is_live: boolean;
+  listeners: number;
+  current_track?: {
+    title: string;
+    artist: string;
+  };
+  message?: string;
+}
+
+interface RestartStatus {
+  success: boolean;
+  message: string;
+  status: 'completed' | 'in_progress' | 'failed';
+  timestamp: string;
+}
+
 const API_URL = "https://backend.piper-lee.net/api/";
 
 export const fetchStreamInfo = async (): Promise<StreamInfo> => {
@@ -394,5 +412,89 @@ export const fetchWeatherData = async (city: string = "Berlin"): Promise<any> =>
   } catch (error) {
     console.error("Fehler beim Abrufen der Wetterdaten:", error);
     return null;
+  }
+};
+
+// New functions for stream management
+export const fetchStreamStatus = async (): Promise<StreamStatus> => {
+  try {
+    const response = await fetch(`${API_URL}status`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch stream status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      status: data.status || 'unknown',
+      is_live: data.is_live || false,
+      listeners: data.listeners || 0,
+      current_track: data.current_track || { title: '', artist: '' },
+      message: data.message
+    };
+  } catch (error) {
+    console.error("Error fetching stream status:", error);
+    return {
+      status: 'unknown',
+      is_live: false,
+      listeners: 0
+    };
+  }
+};
+
+export const restartStreamServer = async (): Promise<RestartStatus> => {
+  try {
+    const response = await fetch(`${API_URL}station/1/restart-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to restart stream server: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      success: data.success || false,
+      message: data.message || 'Keine Rückmeldung vom Server',
+      status: data.status || 'failed',
+      timestamp: data.timestamp || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error restarting stream server:", error);
+    return {
+      success: false,
+      message: 'Fehler bei der Serveranfrage',
+      status: 'failed',
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
+export const getRestartStatus = async (): Promise<RestartStatus> => {
+  try {
+    const response = await fetch(`${API_URL}station/1/restart-status`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get restart status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return {
+      success: data.success || false,
+      message: data.message || 'Keine Rückmeldung vom Server',
+      status: data.status || 'failed',
+      timestamp: data.timestamp || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error getting restart status:", error);
+    return {
+      success: false,
+      message: 'Fehler bei der Serveranfrage',
+      status: 'failed', 
+      timestamp: new Date().toISOString()
+    };
   }
 };
