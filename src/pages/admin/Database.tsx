@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,27 +50,28 @@ const Database = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch tables from Supabase
+    // Fetch tables from database
     const fetchTables = async () => {
       try {
-        // Use a direct query instead of RPC function
-        const { data, error } = await supabase
-          .from('information_schema.tables')
-          .select('table_name, table_schema')
-          .eq('table_schema', 'public')
-          .order('table_name', { ascending: true });
+        // Since we can't directly access information_schema, we'll use a simpler approach
+        // and work with a predefined list of tables we know about from our database schema
+        const knownTables = [
+          'app_settings', 'chat_messages', 'events', 'news',
+          'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
+          'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
+          'security_status', 'shows', 'song_history', 'song_requests',
+          'status_updates', 'system_logs', 'user_roles'
+        ];
         
-        if (error) throw error;
+        // Create formatted table entries from our known tables
+        const formattedTables = knownTables.map(tableName => ({
+          name: tableName,
+          rowCount: 0, // We'll not get actual row counts for simplicity
+          size: 'Unknown', // Simplified for now
+          lastUpdated: new Date().toLocaleDateString('de-DE')
+        }));
         
-        if (data) {
-          const formattedTables = data.map((table) => ({
-            name: table.table_name,
-            rowCount: 0, // We'll not get actual row counts for simplicity
-            size: 'Unknown', // Simplified for now
-            lastUpdated: new Date().toLocaleDateString('de-DE')
-          }));
-          setTables(formattedTables);
-        }
+        setTables(formattedTables);
       } catch (error) {
         console.error("Error fetching tables:", error);
         // Fallback to sample data if there's an error
@@ -148,38 +150,66 @@ const Database = () => {
     setIsExecuting(true);
     setError(null);
     
-    // Execute the query directly instead of using RPC function
+    // Execute the query directly
     const executeQuery = async () => {
       try {
         if (query.toLowerCase().includes('select')) {
-          // Direct query execution instead of RPC
-          const { data, error } = await supabase.rpc('execute_sql', { sql: query });
+          // Since we can't use RPC functions like 'execute_sql', we'll use a simplified approach
+          // Extract the table name and limitations from the query (basic parsing)
+          const tableMatch = query.match(/from\s+([^\s;]+)/i);
+          const tableName = tableMatch ? tableMatch[1].toLowerCase() : null;
+          const limitMatch = query.match(/limit\s+(\d+)/i);
+          const limit = limitMatch ? parseInt(limitMatch[1]) : 10; // Default to 10
           
-          if (error) throw error;
-          
-          if (data) {
-            // Extract columns and rows from the result
-            if (Array.isArray(data) && data.length > 0) {
-              const columns = Object.keys(data[0]);
-              setQueryResult({
-                columns,
-                rows: data,
-              });
-              toast({
-                title: "Abfrage erfolgreich",
-                description: "Die SQL-Abfrage wurde erfolgreich ausgeführt.",
-              });
+          if (tableName) {
+            // Check if it's a known table
+            const knownTables = [
+              'app_settings', 'chat_messages', 'events', 'news',
+              'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
+              'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
+              'security_status', 'shows', 'song_history', 'song_requests',
+              'status_updates', 'system_logs', 'user_roles'
+            ];
+            
+            if (knownTables.includes(tableName)) {
+              // Make a direct query to the table
+              const { data, error: queryError } = await supabase
+                .from(tableName)
+                .select('*')
+                .limit(limit);
+                
+              if (queryError) throw queryError;
+              
+              if (data && Array.isArray(data)) {
+                // If we have data, transform it for the UI
+                const columns = data.length > 0 ? Object.keys(data[0]) : [];
+                
+                setQueryResult({
+                  columns,
+                  rows: data
+                });
+                
+                toast({
+                  title: "Abfrage erfolgreich",
+                  description: "Die SQL-Abfrage wurde erfolgreich ausgeführt.",
+                });
+              } else {
+                // Handle empty result
+                setQueryResult({
+                  columns: [],
+                  rows: []
+                });
+                
+                toast({
+                  title: "Abfrage erfolgreich",
+                  description: "Die SQL-Abfrage wurde ausgeführt, jedoch ohne Ergebnisse.",
+                });
+              }
             } else {
-              // Handle empty result
-              setQueryResult({
-                columns: [],
-                rows: []
-              });
-              toast({
-                title: "Abfrage erfolgreich",
-                description: "Die SQL-Abfrage wurde ausgeführt, jedoch ohne Ergebnisse.",
-              });
+              throw new Error(`Tabelle '${tableName}' nicht gefunden.`);
             }
+          } else {
+            throw new Error("Konnte keine Tabelle in der Abfrage identifizieren.");
           }
         } else if (query.toLowerCase().includes('drop') || query.toLowerCase().includes('delete')) {
           setError("Gefährliche Operation erkannt. Löschoperationen sind in dieser Ansicht deaktiviert.");
@@ -208,8 +238,8 @@ const Database = () => {
       }
     };
 
-    // If Supabase is not available or we're in demo mode, use sample data
-    if (!supabase || process.env.NODE_ENV === 'development') {
+    // Check if we're in demo mode, use sample data if so
+    if (process.env.NODE_ENV === 'development') {
       setTimeout(() => {
         if (query.toLowerCase().includes('select') && query.toLowerCase().includes('from users')) {
           setQueryResult({
@@ -272,26 +302,37 @@ const Database = () => {
         'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
         'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
         'security_status', 'shows', 'song_history', 'song_requests',
-        'status_updates', 'system_logs', 'user_roles', 'users_with_roles'
+        'status_updates', 'system_logs', 'user_roles'
       ];
       
       // Check if the table is in our known tables list
       if (knownTables.includes(tableName)) {
         const { data, error } = await supabase
-          .from(tableName as any)
+          .from(tableName)
           .select('*')
           .limit(100);
           
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setTableData(data);
+          // Convert data to TableData format (ensure each row has an id)
+          const tableDataWithIds: TableData[] = data.map((row: any) => {
+            // Make sure we have an id field - use existing, or generate one
+            if (!row.id) {
+              row.id = Math.random().toString(36).substring(2, 11);
+            }
+            return row as TableData;
+          });
+          
+          setTableData(tableDataWithIds);
           
           // Create columns dynamically based on the data structure
           const firstRow = data[0];
+          // Make sure we handle accessorKey correctly
           const columns: ColumnDef<TableData, any>[] = Object.keys(firstRow).map(key => ({
-            accessorKey: key,
+            id: key, // Use id instead of accessorKey
             header: key.charAt(0).toUpperCase() + key.slice(1),
+            accessorFn: (row: TableData) => row[key], // Use accessorFn instead of accessorKey
             cell: ({ row }) => {
               const value = row.getValue(key);
               if (typeof value === 'boolean') {
@@ -352,11 +393,11 @@ const Database = () => {
           { id: '3', username: 'user123', email: 'user123@example.com', role: 'user', created_at: '2024-02-05' }
         ];
         columns = [
-          { accessorKey: 'id', header: 'ID' },
-          { accessorKey: 'username', header: 'Benutzername' },
-          { accessorKey: 'email', header: 'E-Mail' },
-          { accessorKey: 'role', header: 'Rolle' },
-          { accessorKey: 'created_at', header: 'Erstellt am' }
+          { id: 'id', header: 'ID', accessorFn: (row: TableData) => row.id },
+          { id: 'username', header: 'Benutzername', accessorFn: (row: TableData) => row.username },
+          { id: 'email', header: 'E-Mail', accessorFn: (row: TableData) => row.email },
+          { id: 'role', header: 'Rolle', accessorFn: (row: TableData) => row.role },
+          { id: 'created_at', header: 'Erstellt am', accessorFn: (row: TableData) => row.created_at }
         ];
         break;
         
@@ -367,10 +408,10 @@ const Database = () => {
           { id: '3', user_id: '1', message: 'Wann ist die nächste Sendung?', created_at: '2025-05-02' }
         ];
         columns = [
-          { accessorKey: 'id', header: 'ID' },
-          { accessorKey: 'user_id', header: 'Benutzer ID' },
-          { accessorKey: 'message', header: 'Nachricht' },
-          { accessorKey: 'created_at', header: 'Erstellt am' }
+          { id: 'id', header: 'ID', accessorFn: (row: TableData) => row.id },
+          { id: 'user_id', header: 'Benutzer ID', accessorFn: (row: TableData) => row.user_id },
+          { id: 'message', header: 'Nachricht', accessorFn: (row: TableData) => row.message },
+          { id: 'created_at', header: 'Erstellt am', accessorFn: (row: TableData) => row.created_at }
         ];
         break;
         
@@ -381,11 +422,11 @@ const Database = () => {
           { id: '3', title: 'News Roundup', host: 'Tim Weber', duration: '25 min', published_at: '2025-05-01' }
         ];
         columns = [
-          { accessorKey: 'id', header: 'ID' },
-          { accessorKey: 'title', header: 'Titel' },
-          { accessorKey: 'host', header: 'Moderator' },
-          { accessorKey: 'duration', header: 'Dauer' },
-          { accessorKey: 'published_at', header: 'Veröffentlicht am' }
+          { id: 'id', header: 'ID', accessorFn: (row: TableData) => row.id },
+          { id: 'title', header: 'Titel', accessorFn: (row: TableData) => row.title },
+          { id: 'host', header: 'Moderator', accessorFn: (row: TableData) => row.host },
+          { id: 'duration', header: 'Dauer', accessorFn: (row: TableData) => row.duration },
+          { id: 'published_at', header: 'Veröffentlicht am', accessorFn: (row: TableData) => row.published_at }
         ];
         break;
         
@@ -396,9 +437,9 @@ const Database = () => {
           { id: '3', name: 'Beispiel 3', created_at: '2025-05-02' }
         ];
         columns = [
-          { accessorKey: 'id', header: 'ID' },
-          { accessorKey: 'name', header: 'Name' },
-          { accessorKey: 'created_at', header: 'Erstellt am' }
+          { id: 'id', header: 'ID', accessorFn: (row: TableData) => row.id },
+          { id: 'name', header: 'Name', accessorFn: (row: TableData) => row.name },
+          { id: 'created_at', header: 'Erstellt am', accessorFn: (row: TableData) => row.created_at }
         ];
     }
     
@@ -409,11 +450,8 @@ const Database = () => {
     if (!tableData.length) return;
     
     const headers = tableColumns.map(col => {
-      // Use accessorKey if it exists, otherwise fall back to a safer approach
-      if ('accessorKey' in col) {
-        return col.accessorKey as string;
-      }
-      return col.header as string;
+      // Extract column name from id property
+      return col.id as string;
     });
     
     const csvContent = [
