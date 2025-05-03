@@ -15,7 +15,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { Loader2 } from 'lucide-react'; // Changed from ReloadIcon to Loader2
 
 const generalFormSchema = z.object({
   websiteName: z.string().min(2, {
@@ -250,7 +250,7 @@ const ModeratorSettings = () => {
               >
                 {saveSettingsMutation.isPending ? (
                   <>
-                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Speichern...
                   </>
                 ) : "Speichern"}
