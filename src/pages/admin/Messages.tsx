@@ -61,26 +61,8 @@ const Messages = () => {
     const loadMessages = async () => {
       setIsLoading(true);
       try {
-        // Try to fetch messages from Supabase
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .order('timestamp', { ascending: false });
-          
-        if (error) throw error;
-        
-        if (data) {
-          const formattedMessages = data.map((msg: any) => ({
-            id: msg.id,
-            sender: msg.sender || 'Unbekannt',
-            avatar: msg.avatar_url,
-            content: msg.content,
-            timestamp: new Date(msg.timestamp).toLocaleString('de-DE'),
-            read: msg.is_read || false,
-            starred: msg.is_starred || false
-          }));
-          setMessages(formattedMessages);
-        }
+        // For now, load sample data since we don't have a messages table yet
+        setMessages(sampleMessages);
       } catch (error) {
         console.error('Error loading messages:', error);
         // Fallback to sample data
@@ -174,37 +156,13 @@ const Messages = () => {
       setMessages(messages.map(msg => 
         msg.id === message.id ? { ...msg, read: true } : msg
       ));
-      
-      // Update read status in database (if available)
-      if (supabase) {
-        supabase
-          .from('messages')
-          .update({ is_read: true })
-          .eq('id', message.id)
-          .then(({ error }) => {
-            if (error) console.error('Error marking message as read:', error);
-          });
-      }
     }
   };
 
   const handleStarMessage = (id: string) => {
     setMessages(messages.map(msg => {
       if (msg.id === id) {
-        const newStarred = !msg.starred;
-        
-        // Update star status in database (if available)
-        if (supabase) {
-          supabase
-            .from('messages')
-            .update({ is_starred: newStarred })
-            .eq('id', id)
-            .then(({ error }) => {
-              if (error) console.error('Error updating star status:', error);
-            });
-        }
-        
-        return { ...msg, starred: newStarred };
+        return { ...msg, starred: !msg.starred };
       }
       return msg;
     }));
@@ -215,7 +173,7 @@ const Messages = () => {
   };
 
   const handleDeleteMessage = (id: string) => {
-    // Remove from UI first
+    // Remove from UI
     setMessages(messages.filter(msg => msg.id !== id));
     
     // If currently selected, clear selection
@@ -223,34 +181,10 @@ const Messages = () => {
       setSelectedMessage(null);
     }
     
-    // Delete from database (if available)
-    if (supabase) {
-      supabase
-        .from('messages')
-        .delete()
-        .eq('id', id)
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error deleting message:', error);
-            toast({
-              title: "Fehler",
-              description: "Die Nachricht konnte nicht gelöscht werden.",
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "Nachricht gelöscht",
-              description: "Die Nachricht wurde erfolgreich gelöscht."
-            });
-          }
-        });
-    } else {
-      // Fallback for demo
-      toast({
-        title: "Nachricht gelöscht",
-        description: "Die Nachricht wurde erfolgreich gelöscht."
-      });
-    }
+    toast({
+      title: "Nachricht gelöscht",
+      description: "Die Nachricht wurde erfolgreich gelöscht."
+    });
   };
 
   const handleSendReply = () => {
@@ -263,12 +197,10 @@ const Messages = () => {
     
     // Clear reply field
     setReply('');
-    
-    // In a real app, you would save the reply to the database here
   };
 
   // For table view
-  const columns: ColumnDef<Message, any>[] = [
+  const columns: ColumnDef<Message>[] = [
     {
       id: 'starred',
       header: '',
@@ -363,7 +295,7 @@ const Messages = () => {
               <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-t-lg pb-4">
                 <CardTitle className="flex justify-between items-center">
                   <span>Nachrichtenübersicht</span>
-                  <Badge variant="outline" className="bg-white text-blue-700">
+                  <Badge variant="outline" className="bg-white/10 text-white">
                     {messages.filter(m => !m.read).length} Ungelesen
                   </Badge>
                 </CardTitle>
