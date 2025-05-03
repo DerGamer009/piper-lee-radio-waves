@@ -1,7 +1,6 @@
 
-import React, { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Navigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
   Sidebar, 
@@ -24,93 +23,41 @@ import {
   LogOut, 
   Settings, 
   Home, 
-  Mic,
-  RefreshCcw
+  Mic
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import StatsOverview from '@/components/dashboard/StatsOverview';
 import RecentUsers from '@/components/dashboard/RecentUsers';
 import RadioPlayer from '@/components/RadioPlayer';
 
 const ModeratorDashboard = () => {
   const { user, isModerator, signOut } = useAuth();
-  const queryClient = useQueryClient();
-  const [refreshing, setRefreshing] = useState(false);
+  const location = useLocation();
   const { toast } = useToast();
-
-  // Fetch statistics from Supabase
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: async () => {
-      // Get podcast count
-      const { data: podcasts, error: podcastError } = await supabase
-        .from('podcasts')
-        .select('id', { count: 'exact', head: true });
-      
-      // Get user count
-      const { data: users, error: userError } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true });
-      
-      // Get active shows count
-      const { data: shows, error: showError } = await supabase
-        .from('shows')
-        .select('id', { count: 'exact', head: true });
-      
-      // Get next scheduled show
-      const today = new Date();
-      const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][today.getDay()];
-      
-      const { data: nextShow } = await supabase
-        .from('schedule')
-        .select(`
-          *,
-          shows:show_id (title)
-        `)
-        .eq('day_of_week', dayOfWeek)
-        .order('start_time', { ascending: true })
-        .limit(1);
-      
-      if (podcastError || userError || showError) {
-        throw new Error('Error fetching statistics');
-      }
-      
-      return {
-        podcastCount: podcasts?.length ?? 0,
-        userCount: users?.length ?? 0,
-        showCount: shows?.length ?? 0,
-        nextShow: nextShow && nextShow.length > 0 ? {
-          title: nextShow[0].shows?.title || 'Unbekannte Sendung',
-          time: nextShow[0].start_time,
-          day: nextShow[0].day_of_week
-        } : null
-      };
-    }
-  });
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['recent-users'] });
-    
-    setTimeout(() => {
-      toast({
-        title: "Daten aktualisiert",
-        description: "Die Dashboard-Daten wurden erfolgreich aktualisiert.",
-      });
-      setRefreshing(false);
-    }, 1000);
+  
+  // Check if we're on the main dashboard or a subpage
+  const isMainDashboard = location.pathname === "/moderator";
+  
+  const handleSignOut = () => {
+    signOut();
+    toast({
+      title: "Abgemeldet",
+      description: "Sie wurden erfolgreich abgemeldet.",
+    });
   };
 
   if (!user || !isModerator) {
     return <Navigate to="/login" replace />;
   }
+  
+  // Helper function to check if a path is active
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   return (
-    <div className="flex min-h-screen">
+    <>
       {/* Sidebar */}
       <Sidebar className="border-r">
         <SidebarHeader className="border-b">
@@ -134,7 +81,7 @@ const ModeratorDashboard = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive>
+                  <SidebarMenuButton asChild isActive={isActive("/moderator")}>
                     <Link to="/moderator" className="flex items-center gap-2">
                       <BarChart2 className="h-4 w-4" />
                       <span>Dashboard</span>
@@ -150,7 +97,7 @@ const ModeratorDashboard = () => {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive("/sendeplan-admin")}>
                     <Link to="/sendeplan-admin" className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <span>Sendeplan</span>
@@ -158,7 +105,7 @@ const ModeratorDashboard = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive("/podcasts")}>
                     <Link to="/podcasts" className="flex items-center gap-2">
                       <FileAudio className="h-4 w-4" />
                       <span>Podcasts</span>
@@ -166,7 +113,7 @@ const ModeratorDashboard = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive("/moderator/users")}>
                     <Link to="/moderator/users" className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       <span>Benutzer</span>
@@ -174,7 +121,7 @@ const ModeratorDashboard = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive("/moderator/radio")}>
                     <Link to="/moderator/radio" className="flex items-center gap-2">
                       <Radio className="h-4 w-4" />
                       <span>Radio</span>
@@ -190,7 +137,7 @@ const ModeratorDashboard = () => {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive("/moderator/settings")}>
                     <Link to="/moderator/settings" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
                       <span>Einstellungen</span>
@@ -206,7 +153,7 @@ const ModeratorDashboard = () => {
           <div className="p-4">
             <Button 
               variant="outline" 
-              onClick={() => signOut()} 
+              onClick={handleSignOut} 
               className="w-full justify-start"
             >
               <LogOut className="h-4 w-4 mr-2" />
@@ -216,50 +163,37 @@ const ModeratorDashboard = () => {
         </SidebarFooter>
       </Sidebar>
       
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header with actions */}
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCcw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Aktualisieren
-            </Button>
-          </div>
-          
-          {/* Statistics Overview */}
-          <StatsOverview stats={stats} isLoading={statsLoading} />
-          
-          {/* Radio Player and Recent Users */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <Card className="md:col-span-1 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Radio className="h-5 w-5" />
-                  Live Radio
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
+      {/* Main Dashboard Content (only shown on the main dashboard route) */}
+      {isMainDashboard && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+            
+            {/* Statistics Overview */}
+            <StatsOverview stats={{
+              podcastCount: 0,
+              userCount: 0,
+              showCount: 0,
+              nextShow: null
+            }} isLoading={false} />
+            
+            {/* Radio Player and Recent Users */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+              <div className="md:col-span-1">
                 <RadioPlayer 
                   streamUrl="https://backend.piper-lee.net/listen/piper-lee/radio.mp3" 
                   stationName="Piper Lee Radio" 
                 />
-              </CardContent>
-            </Card>
-            
-            <div className="md:col-span-2">
-              <RecentUsers />
+              </div>
+              
+              <div className="md:col-span-2">
+                <RecentUsers />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

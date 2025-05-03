@@ -15,7 +15,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react'; // Changed from ReloadIcon to Loader2
+import { Loader2 } from 'lucide-react';
 
 const generalFormSchema = z.object({
   websiteName: z.string().min(2, {

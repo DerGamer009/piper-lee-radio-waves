@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,18 +91,57 @@ function App() {
                   element={<Navigate to="/moderator" replace />} 
                 />
                 
-                {/* New moderator routes with nested structure */}
+                {/* New moderator routes with nested structure and sidebar */}
                 <Route 
                   path="/moderator" 
-                  element={<ProtectedRoute element={<Layout showSidebar><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <ModeratorDashboard />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["moderator", "admin"]} 
+                    />
+                  } 
                 />
                 <Route 
                   path="/moderator/users" 
-                  element={<ProtectedRoute element={<Layout showSidebar><UsersPage /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <ModeratorDashboard />
+                            <div className="flex-1">
+                              <UsersPage />
+                            </div>
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["moderator", "admin"]} 
+                    />
+                  } 
                 />
                 <Route 
                   path="/moderator/settings" 
-                  element={<ProtectedRoute element={<Layout showSidebar><ModeratorSettings /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <ModeratorDashboard />
+                            <div className="flex-1">
+                              <ModeratorSettings />
+                            </div>
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["moderator", "admin"]} 
+                    />
+                  } 
                 />
                 
                 {/* Admin routes with SidebarProvider */}
