@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -96,6 +95,7 @@ function App() {
                       element={
                         <SidebarProvider>
                           <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
                             <Admin />
                           </div>
                         </SidebarProvider>
@@ -111,6 +111,7 @@ function App() {
                       element={
                         <SidebarProvider>
                           <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
                             <ScheduleAdmin />
                           </div>
                         </SidebarProvider>

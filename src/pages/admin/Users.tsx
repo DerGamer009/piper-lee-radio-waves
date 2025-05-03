@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,19 +100,19 @@ const UsersPage = () => {
     });
   };
 
-  const handleAddUserSuccess = (user: any) => {
+  const handleAddUserSuccess = () => {
     setIsAddingUser(false);
     toast({
       title: "Benutzer hinzugefügt",
-      description: `Der Benutzer ${user.username} wurde erfolgreich hinzugefügt.`,
+      description: "Der Benutzer wurde erfolgreich hinzugefügt.",
     });
   };
 
-  const handleEditUserSuccess = (user: any) => {
+  const handleEditUserSuccess = () => {
     setEditingUser(null);
     toast({
       title: "Benutzer aktualisiert",
-      description: `Die Daten von ${user.username} wurden erfolgreich aktualisiert.`,
+      description: "Die Benutzerdaten wurden erfolgreich aktualisiert.",
     });
   };
 

@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Shield, UserPlus, Trash, Edit, LogOut, Home, RefreshCcw, Plus, Users } from "lucide-react";
+import { Shield, UserPlus, Trash, Edit, LogOut, Home, RefreshCcw, Plus, Users, Radio } from "lucide-react";
 import { getUsers, deleteUser, updateUser } from "@/services/apiService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import UserForm from "@/components/UserForm";
@@ -21,8 +22,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
-import RadioCard from "@/components/dashboard/RadioCard";
-import StatusManagement from "@/components/dashboard/StatusManagement";
 import AdminStatusPanel from "@/components/admin/AdminStatusPanel";
 
 // Constants for radio stream
@@ -189,7 +188,7 @@ const Admin = () => {
             <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
               <CardTitle className="flex items-center gap-2">
                 <span className="bg-white text-purple-600 p-1 rounded-full">
-                  <RadioCard.Icon />
+                  <Radio className="h-4 w-4" />
                 </span>
                 Radio Status
               </CardTitle>
