@@ -4,12 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Shield, UserPlus, Trash, Edit, LogOut, Home, RefreshCcw, Plus, Users, Radio } from "lucide-react";
-import { getUsers, deleteUser, updateUser } from "@/services/apiService";
+import { Shield, UserPlus, Trash, Edit, LogOut, Home, RefreshCcw, Plus, Radio } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import UserForm from "@/components/UserForm";
 import { useToast } from "@/hooks/use-toast";
-import RadioPlayer from "@/components/RadioPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,172 +17,123 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import AdminStatusPanel from "@/components/admin/AdminStatusPanel";
+import { supabase } from "@/integrations/supabase/client";
 
 // Constants for radio stream
-const STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
-const STATION_NAME = "Piper Lee Radio";
+const RADIO_STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
 
+// Main Admin component
 const Admin = () => {
-  const navigate = useNavigate();
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<any | null>(null);
+  const [userToDelete, setUserToDelete] = useState<any | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
-  // Fetch users from the API with proper error handling
-  const { data: users, isLoading, error } = useQuery({
+
+  // Fetch users from Supabase
+  const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      try {
-        return await getUsers();
-      } catch (err) {
-        console.error('Error in queryFn:', err);
-        throw err;
+      console.log('Fetching users from Supabase');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          user_roles(role)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
       }
-    }
+      
+      return data.map(user => ({
+        id: user.id,
+        username: user.username || 'No Username',
+        fullName: user.full_name || '',
+        email: user.email || '',
+        isActive: user.is_active,
+        roles: user.user_roles ? 
+          (Array.isArray(user.user_roles) ? 
+            user.user_roles.map((r: any) => r.role).join(',') : 
+            'user') : 
+          'user',
+        createdAt: user.created_at
+      }));
+    },
   });
 
-  const [isAddingUser, setIsAddingUser] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isEditingUser, setIsEditingUser] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [radioStatus, setRadioStatus] = useState<'online' | 'maintenance' | 'offline'>('online');
-
-  const handleRadioStatusChange = (status: 'online' | 'maintenance' | 'offline') => {
-    setRadioStatus(status);
-    toast({
-      title: "Status aktualisiert",
-      description: `Radio Status wurde auf ${status} gesetzt.`,
-    });
-  };
-
-  const handleBackToHome = () => {
-    navigate('/');
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    toast({
-      title: "Abgemeldet",
-      description: "Sie wurden erfolgreich abgemeldet.",
-    });
-    navigate("/login");
-  };
-
-  const handleEditUser = (userId: string) => {
-    setSelectedUserId(userId);
-    setIsEditingUser(true);
-  };
-
-  const handleDeleteClick = (userId: string) => {
-    setSelectedUserId(userId);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (selectedUserId) {
-      try {
-        await deleteUser(selectedUserId);
-        queryClient.invalidateQueries({ queryKey: ['users'] });
-        toast({
-          title: "Benutzer gelöscht",
-          description: "Der Benutzer wurde erfolgreich gelöscht.",
-        });
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        toast({
-          title: "Fehler",
-          description: "Der Benutzer konnte nicht gelöscht werden.",
-          variant: "destructive",
-        });
-      }
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
-  const handleUserFormSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['users'] });
-    setIsAddingUser(false);
-    setIsEditingUser(false);
-  };
-
-  const handleToggleUserStatus = async (userId: string, isCurrentlyActive: boolean) => {
+  const handleDeleteUser = async (userId: string) => {
     try {
-      await updateUser(userId, { 
-        isActive: !isCurrentlyActive,
-        // These empty fields are required by the API but won't be used for the update
-        username: '', 
-        email: '', 
-        fullName: '', 
-        roles: [] 
-      });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      // Delete the user from Supabase
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) throw error;
+      
       toast({
-        title: "Status geändert",
-        description: `Benutzer ist jetzt ${!isCurrentlyActive ? 'aktiv' : 'inaktiv'}.`,
+        title: "Benutzer gelöscht",
+        description: "Der Benutzer wurde erfolgreich gelöscht.",
       });
-    } catch (error) {
-      console.error('Error updating user status:', error);
+      
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setUserToDelete(null);
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
       toast({
         title: "Fehler",
-        description: "Der Status konnte nicht geändert werden. Bitte versuchen Sie es später erneut.",
+        description: `Der Benutzer konnte nicht gelöscht werden: ${error.message}`,
         variant: "destructive",
       });
     }
   };
 
-  const selectedUser = users?.find(user => user.id === selectedUserId);
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+    toast({
+      title: "Daten aktualisiert",
+      description: "Die Benutzerdaten wurden aktualisiert.",
+    });
+  };
 
-  if (isLoading) return (
-    <SidebarInset className="p-4">Daten werden geladen...</SidebarInset>
-  );
+  const navigateToHome = () => {
+    navigate('/');
+  };
 
-  if (error) return (
-    <SidebarInset className="p-4 text-red-500">
-      Fehler beim Laden der Benutzer: {error instanceof Error ? error.message : 'Unbekannter Fehler'}
-    </SidebarInset>
-  );
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   return (
     <SidebarInset>
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-purple-500" />
-            <h1 className="text-3xl font-bold">Admin-Bereich</h1>
-          </div>
-          <div className="flex gap-4 items-center">
-            <RadioPlayer streamUrl={STREAM_URL} stationName={STATION_NAME} compact={true} />
-            <div className="flex gap-2">
-              <Button onClick={() => setIsAddingUser(true)} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700">
-                <UserPlus className="h-4 w-4" />
-                Neuer Benutzer
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleBackToHome}
-                className="flex items-center gap-2 border-purple-500 text-purple-500 hover:bg-purple-50 hover:text-purple-600"
-              >
-                <Home className="h-4 w-4" />
-                Startseite
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleLogout}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Abmelden
-              </Button>
-            </div>
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={navigateToHome}>
+              <Home className="w-4 h-4 mr-2" />
+              Startseite
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCcw className="w-4 h-4 mr-2" />
+              Aktualisieren
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Abmelden
+            </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="border-none shadow-md">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <Card className="col-span-2 shadow-md">
             <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
               <CardTitle className="flex items-center gap-2">
                 <span className="bg-white text-purple-600 p-1 rounded-full">
@@ -193,176 +142,171 @@ const Admin = () => {
                 Radio Status
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className={`w-4 h-4 rounded-full ${radioStatus === 'online' ? 'bg-green-500' : 'bg-gray-200'}`}
-                    role="radio"
-                    aria-checked={radioStatus === 'online'}
-                    onClick={() => handleRadioStatusChange('online')}
-                  ></div>
-                  <span className={radioStatus === 'online' ? 'font-medium' : ''}>Online</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div 
-                    className={`w-4 h-4 rounded-full ${radioStatus === 'maintenance' ? 'bg-amber-500' : 'bg-gray-200'}`}
-                    role="radio"
-                    aria-checked={radioStatus === 'maintenance'}
-                    onClick={() => handleRadioStatusChange('maintenance')}
-                  ></div>
-                  <span className={radioStatus === 'maintenance' ? 'font-medium' : ''}>Maintenance Mode</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div 
-                    className={`w-4 h-4 rounded-full ${radioStatus === 'offline' ? 'bg-red-500' : 'bg-gray-200'}`}
-                    role="radio"
-                    aria-checked={radioStatus === 'offline'}
-                    onClick={() => handleRadioStatusChange('offline')}
-                  ></div>
-                  <span className={radioStatus === 'offline' ? 'font-medium' : ''}>Offline</span>
-                </div>
-              </div>
+            <CardContent>
+              <AdminStatusPanel streamUrl={RADIO_STREAM_URL} />
             </CardContent>
           </Card>
-          
-          <AdminStatusPanel />
+
+          <Card className="shadow-md">
+            <CardHeader className="bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-t-lg pb-4">
+              <CardTitle className="flex justify-between items-center">
+                <span>Benutzer</span>
+                <Button 
+                  size="sm" 
+                  onClick={() => setIsAddingUser(true)} 
+                  className="bg-white text-indigo-700 hover:bg-white/90"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Neu
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Benutzer</TableHead>
+                        <TableHead>Rolle</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Aktionen</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users && users.length > 0 ? (
+                        users.map((user: any) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{user.username}</div>
+                                <div className="text-sm text-muted-foreground">{user.email}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {user.roles && user.roles.includes('admin') ? (
+                                <div className="flex items-center">
+                                  <Shield className="h-4 w-4 text-purple-600 mr-1" />
+                                  Admin
+                                </div>
+                              ) : user.roles && user.roles.includes('moderator') ? (
+                                <div className="flex items-center">
+                                  <UserPlus className="h-4 w-4 text-blue-600 mr-1" />
+                                  Moderator
+                                </div>
+                              ) : (
+                                <div className="text-gray-600">User</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className={`px-2 py-1 rounded-full text-xs inline-block ${
+                                user.isActive 
+                                  ? "bg-green-100 text-green-800" 
+                                  : "bg-red-100 text-red-800"
+                              }`}>
+                                {user.isActive ? "Aktiv" : "Inaktiv"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => setUserToEdit(user)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <Trash className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Benutzer löschen</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Sind Sie sicher, dass Sie diesen Benutzer löschen möchten? 
+                                        Diese Aktion kann nicht rückgängig gemacht werden.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => handleDeleteUser(user.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Löschen
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8">
+                            Keine Benutzer gefunden
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {isAddingUser && (
-          <Card className="mb-8 border-none shadow-md">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5" />
-                Neuen Benutzer hinzufügen
-              </CardTitle>
+          <Card className="mb-6 shadow-md">
+            <CardHeader className="bg-gradient-to-r from-green-700 to-green-500 text-white rounded-t-lg pb-4">
+              <CardTitle>Neuen Benutzer hinzufügen</CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              <UserForm onCancel={() => setIsAddingUser(false)} onSuccess={handleUserFormSuccess} />
-            </CardContent>
-          </Card>
-        )}
-
-        {isEditingUser && selectedUser && (
-          <Card className="mb-8 border-none shadow-md">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2">
-                <Edit className="h-5 w-5" />
-                Benutzer bearbeiten
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
               <UserForm 
-                user={selectedUser} 
-                onCancel={() => setIsEditingUser(false)} 
-                onSuccess={handleUserFormSuccess} 
-                isEditing={true}
+                onCancel={() => setIsAddingUser(false)} 
+                onSuccess={() => {
+                  setIsAddingUser(false);
+                  queryClient.invalidateQueries({ queryKey: ['users'] });
+                  toast({
+                    title: "Benutzer hinzugefügt",
+                    description: "Der Benutzer wurde erfolgreich hinzugefügt.",
+                  });
+                }}
               />
             </CardContent>
           </Card>
         )}
 
-        <Card className="border-none shadow-md">
-          <CardHeader className="bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-t-lg pb-4">
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="bg-white text-indigo-600 p-1 rounded-full">
-                  <Users className="h-4 w-4" />
-                </span>
-                Benutzer verwalten
-              </div>
-              <Button 
-                onClick={() => setIsAddingUser(true)} 
-                variant="outline" 
-                size="sm"
-                className="bg-white/20 text-white border-white/40 hover:bg-white/30"
-              >
-                <Plus className="h-4 w-4 mr-2" /> 
-                Neu
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 p-0">
-            <div className="rounded-b-lg overflow-hidden">
-              <Table>
-                <TableHeader className="bg-gray-50 dark:bg-gray-800">
-                  <TableRow>
-                    <TableHead>Benutzername</TableHead>
-                    <TableHead>Vollständiger Name</TableHead>
-                    <TableHead>E-Mail</TableHead>
-                    <TableHead>Rollen</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users && users.length > 0 ? (
-                    users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.username}</TableCell>
-                        <TableCell>{user.fullName}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{Array.isArray(user.roles) ? user.roles.join(', ') : user.roles}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            className={`px-2 py-1 rounded-full text-xs ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-                            onClick={() => handleToggleUserStatus(user.id, user.isActive || false)}
-                          >
-                            {user.isActive ? "Aktiv" : "Inaktiv"}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Bearbeiten"
-                            onClick={() => handleEditUser(user.id)}
-                            className="hover:bg-blue-50 hover:text-blue-600"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title="Löschen"
-                            onClick={() => handleDeleteClick(user.id)}
-                            className="hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        Keine Benutzer gefunden
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Benutzer löschen</AlertDialogTitle>
-              <AlertDialogDescription>
-                Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-                Löschen
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {userToEdit && (
+          <Card className="mb-6 shadow-md">
+            <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-t-lg pb-4">
+              <CardTitle>Benutzer bearbeiten</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <UserForm 
+                user={userToEdit}
+                isEditing 
+                onCancel={() => setUserToEdit(null)} 
+                onSuccess={() => {
+                  setUserToEdit(null);
+                  queryClient.invalidateQueries({ queryKey: ['users'] });
+                  toast({
+                    title: "Benutzer aktualisiert",
+                    description: "Die Benutzerdaten wurden erfolgreich aktualisiert.",
+                  });
+                }}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </SidebarInset>
   );

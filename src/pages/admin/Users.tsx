@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,8 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import UserForm from '@/components/UserForm';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/services/apiService';
 
 type AppUser = {
@@ -23,66 +26,53 @@ type AppUser = {
   isActive?: boolean;
 };
 
-const sampleUsers: AppUser[] = [
-  {
-    id: '1',
-    username: 'admin',
-    fullName: 'Admin User',
-    email: 'admin@piper-lee.de',
-    roles: ['admin'],
-    lastLogin: '01.05.2025 15:30',
-    status: 'active',
-    isActive: true
-  },
-  {
-    id: '2',
-    username: 'moderator1',
-    fullName: 'Mod User',
-    email: 'mod1@piper-lee.de',
-    roles: ['moderator'],
-    lastLogin: '01.05.2025 12:15',
-    status: 'active',
-    isActive: true
-  },
-  {
-    id: '3',
-    username: 'user123',
-    fullName: 'Regular User',
-    email: 'user123@example.com',
-    roles: ['user'],
-    lastLogin: '30.04.2025 18:22',
-    status: 'active',
-    isActive: true
-  },
-  {
-    id: '4',
-    username: 'banned_user',
-    fullName: 'Banned User',
-    email: 'banned@example.com',
-    roles: ['user'],
-    lastLogin: '15.04.2025 09:45',
-    status: 'banned',
-    isActive: false
-  },
-  {
-    id: '5',
-    username: 'inactive_user',
-    fullName: 'Inactive User',
-    email: 'inactive@example.com',
-    roles: ['user'],
-    lastLogin: '01.03.2025 14:30',
-    status: 'inactive',
-    isActive: false
-  }
-];
-
 const UsersPage = () => {
-  const [users, setUsers] = useState<AppUser[]>(sampleUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+  const queryClient = useQueryClient();
   
   const { toast } = useToast();
+
+  const { data: users, isLoading } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
+      console.log('Fetching users for admin page');
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          user_roles(role)
+        `);
+      
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
+      
+      return data.map(user => {
+        // Extract roles from the nested user_roles array
+        let roles: string[] = ['user']; // default role
+        if (user.user_roles && Array.isArray(user.user_roles)) {
+          roles = user.user_roles.map((r: any) => r.role);
+        } 
+        
+        // Format for the UI
+        return {
+          id: user.id,
+          username: user.username || 'No Username',
+          fullName: user.full_name || '',
+          email: user.email || '',
+          avatar: user.avatar_url,
+          roles: roles,
+          lastLogin: user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Nie',
+          status: user.is_active ? 'active' : 'inactive',
+          isActive: user.is_active
+        } as AppUser;
+      });
+    }
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +92,7 @@ const UsersPage = () => {
 
   const handleAddUserSuccess = () => {
     setIsAddingUser(false);
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     toast({
       title: "Benutzer hinzugefügt",
       description: "Der Benutzer wurde erfolgreich hinzugefügt.",
@@ -110,30 +101,49 @@ const UsersPage = () => {
 
   const handleEditUserSuccess = () => {
     setEditingUser(null);
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     toast({
       title: "Benutzer aktualisiert",
       description: "Die Benutzerdaten wurden erfolgreich aktualisiert.",
     });
   };
 
-  const handleStatusChange = (userId: string, newStatus: 'active' | 'inactive' | 'banned') => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, status: newStatus } : user
-    ));
-    
-    const user = users.find(u => u.id === userId);
-    if (user) {
+  const handleStatusChange = async (userId: string, newStatus: 'active' | 'inactive' | 'banned') => {
+    try {
+      // Update the user's status in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          is_active: newStatus === 'active'
+        })
+        .eq('id', userId);
+      
+      if (error) throw error;
+      
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      
+      const user = users?.find(u => u.id === userId);
+      if (user) {
+        toast({
+          title: "Status geändert",
+          description: `Der Status von ${user.username} wurde auf ${
+            newStatus === 'active' ? 'Aktiv' : 
+            newStatus === 'inactive' ? 'Inaktiv' : 'Gesperrt'
+          } geändert.`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error updating user status:', error);
       toast({
-        title: "Status geändert",
-        description: `Der Status von ${user.username} wurde auf ${
-          newStatus === 'active' ? 'Aktiv' : 
-          newStatus === 'inactive' ? 'Inaktiv' : 'Gesperrt'
-        } geändert.`,
+        title: "Fehler",
+        description: `Der Status konnte nicht geändert werden: ${error.message}`,
+        variant: "destructive"
       });
     }
   };
 
-  const filteredUsers = searchTerm
+  const filteredUsers = searchTerm && users
     ? users.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
         user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -243,7 +253,15 @@ const UsersPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.length > 0 ? (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="flex justify-center">
+                          <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredUsers && filteredUsers.length > 0 ? (
                     filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
@@ -251,11 +269,11 @@ const UsersPage = () => {
                             <Avatar>
                               <AvatarImage src={user.avatar} />
                               <AvatarFallback>
-                                {user.fullName.split(' ').map(n => n[0]).join('')}
+                                {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('') : user.username.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="font-medium">{user.fullName}</div>
+                              <div className="font-medium">{user.fullName || user.username}</div>
                               <div className="text-sm text-muted-foreground">@{user.username}</div>
                             </div>
                           </div>

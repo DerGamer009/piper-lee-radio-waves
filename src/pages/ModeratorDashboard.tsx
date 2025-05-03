@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface ScheduleItem {
   end_time: string;
   host_id: string | null;
   is_recurring: boolean;
+  shows: { title: string } | null;
   show_title?: string;
 }
 
@@ -75,9 +77,14 @@ const ModeratorDashboard = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading shows:", error);
+        throw error;
+      }
+      
       return data as Show[];
-    }
+    },
+    enabled: !!user // Only run query if user is logged in
   });
 
   // Query for schedule
@@ -96,13 +103,17 @@ const ModeratorDashboard = () => {
         .order('day_of_week', { ascending: true })
         .order('start_time', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading schedule:", error);
+        throw error;
+      }
 
       return data.map((item) => ({
         ...item,
         show_title: item.shows?.title
       })) as ScheduleItem[];
-    }
+    },
+    enabled: !!user // Only run query if user is logged in
   });
 
   const handleRefresh = () => {
@@ -174,6 +185,8 @@ const ModeratorDashboard = () => {
     e.preventDefault();
     
     try {
+      if (!user?.id) throw new Error("Benutzer nicht angemeldet");
+      
       const { data, error } = await supabase
         .from('shows')
         .insert([
@@ -181,7 +194,7 @@ const ModeratorDashboard = () => {
             title, 
             description: description || null, 
             image_url: imageUrl || null,
-            created_by: user?.id
+            created_by: user.id
           }
         ]);
 
@@ -195,6 +208,7 @@ const ModeratorDashboard = () => {
       resetShowForm();
       queryClient.invalidateQueries({ queryKey: ['shows'] });
     } catch (error: any) {
+      console.error("Error creating show:", error);
       toast({
         title: "Fehler",
         description: `Die Sendung konnte nicht erstellt werden: ${error.message}`,
@@ -208,7 +222,6 @@ const ModeratorDashboard = () => {
     setTitle('');
     setDescription('');
     setImageUrl('');
-    setIsLive(false);
   };
 
   if (!user || !isModerator) {
@@ -400,7 +413,7 @@ const ModeratorDashboard = () => {
                         key={item.id}
                         className="p-3 border rounded-md hover:bg-gray-50 transition-colors"
                       >
-                        <div className="font-medium">{item.show_title}</div>
+                        <div className="font-medium">{item.show_title ?? 'Unnamed Show'}</div>
                         <div className="text-sm text-gray-500">
                           {item.day_of_week}, {item.start_time} - {item.end_time} Uhr
                         </div>
