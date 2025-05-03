@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,6 +33,8 @@ import SongRequests from "./pages/SongRequests";
 import Chat from "./pages/Chat";
 import Events from "./pages/Events";
 import Status from './pages/Status';
+import UsersPage from './pages/UsersPage';
+import ModeratorSettings from './pages/ModeratorSettings';
 
 // Import admin pages
 import AdminSettings from './pages/admin/Settings';
@@ -84,7 +87,17 @@ function App() {
                 />
                 <Route 
                   path="/moderator-dashboard" 
-                  element={<ProtectedRoute element={<Layout><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                  element={<ProtectedRoute element={<Layout showSidebar><ModeratorDashboard /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                />
+                
+                {/* New moderator routes */}
+                <Route 
+                  path="/users" 
+                  element={<ProtectedRoute element={<Layout showSidebar><UsersPage /></Layout>} requiredRoles={["moderator", "admin"]} />} 
+                />
+                <Route 
+                  path="/settings" 
+                  element={<ProtectedRoute element={<Layout showSidebar><ModeratorSettings /></Layout>} requiredRoles={["moderator", "admin"]} />} 
                 />
                 
                 {/* Admin routes with SidebarProvider */}

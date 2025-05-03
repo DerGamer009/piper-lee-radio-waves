@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -13,8 +13,7 @@ import {
   SidebarMenuButton, 
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarTrigger
+  SidebarGroupLabel
 } from "@/components/ui/sidebar";
 import { 
   BarChart2, 
@@ -128,26 +127,26 @@ const ModeratorDashboard = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/" className="flex items-center gap-2">
+                    <Link to="/" className="flex items-center gap-2">
                       <Home className="h-4 w-4" />
                       <span>Startseite</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive>
-                    <a href="/moderator-dashboard" className="flex items-center gap-2">
+                    <Link to="/moderator-dashboard" className="flex items-center gap-2">
                       <BarChart2 className="h-4 w-4" />
                       <span>Dashboard</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/moderator" className="flex items-center gap-2">
+                    <Link to="/moderator" className="flex items-center gap-2">
                       <Radio className="h-4 w-4" />
                       <span>Radio</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -160,26 +159,26 @@ const ModeratorDashboard = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/schedule" className="flex items-center gap-2">
+                    <Link to="/sendeplan-admin" className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <span>Sendeplan</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/podcasts" className="flex items-center gap-2">
+                    <Link to="/podcasts" className="flex items-center gap-2">
                       <FileAudio className="h-4 w-4" />
                       <span>Podcasts</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/users" className="flex items-center gap-2">
+                    <Link to="/users" className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       <span>Benutzer</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -192,10 +191,10 @@ const ModeratorDashboard = () => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="/settings" className="flex items-center gap-2">
+                    <Link to="/settings" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
                       <span>Einstellungen</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
