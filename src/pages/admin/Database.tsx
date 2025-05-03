@@ -34,6 +34,29 @@ interface QueryResult {
   rows: Record<string, any>[];
 }
 
+// Define the known tables in our database as a type
+type KnownTable = 
+  | "app_settings" 
+  | "chat_messages" 
+  | "events" 
+  | "news"
+  | "newsletter_subscribers" 
+  | "partners" 
+  | "podcasts" 
+  | "poll_options"
+  | "polls" 
+  | "poll_votes" 
+  | "profiles" 
+  | "schedule" 
+  | "security_activities"
+  | "security_status" 
+  | "shows" 
+  | "song_history" 
+  | "song_requests"
+  | "status_updates" 
+  | "system_logs" 
+  | "user_roles";
+
 const Database = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 10;');
@@ -146,6 +169,17 @@ const Database = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
+  // Check if a tableName is in our list of known tables
+  const isKnownTable = (tableName: string): tableName is KnownTable => {
+    return [
+      'app_settings', 'chat_messages', 'events', 'news',
+      'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
+      'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
+      'security_status', 'shows', 'song_history', 'song_requests',
+      'status_updates', 'system_logs', 'user_roles'
+    ].includes(tableName);
+  };
+
   const handleExecuteQuery = () => {
     setIsExecuting(true);
     setError(null);
@@ -154,62 +188,48 @@ const Database = () => {
     const executeQuery = async () => {
       try {
         if (query.toLowerCase().includes('select')) {
-          // Since we can't use RPC functions like 'execute_sql', we'll use a simplified approach
           // Extract the table name and limitations from the query (basic parsing)
           const tableMatch = query.match(/from\s+([^\s;]+)/i);
           const tableName = tableMatch ? tableMatch[1].toLowerCase() : null;
           const limitMatch = query.match(/limit\s+(\d+)/i);
           const limit = limitMatch ? parseInt(limitMatch[1]) : 10; // Default to 10
           
-          if (tableName) {
-            // Check if it's a known table
-            const knownTables = [
-              'app_settings', 'chat_messages', 'events', 'news',
-              'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
-              'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
-              'security_status', 'shows', 'song_history', 'song_requests',
-              'status_updates', 'system_logs', 'user_roles'
-            ];
-            
-            if (knownTables.includes(tableName)) {
-              // Make a direct query to the table
-              const { data, error: queryError } = await supabase
-                .from(tableName)
-                .select('*')
-                .limit(limit);
-                
-              if (queryError) throw queryError;
+          if (tableName && isKnownTable(tableName)) {
+            // Now TypeScript knows tableName is a valid table name
+            const { data, error: queryError } = await supabase
+              .from(tableName)
+              .select('*')
+              .limit(limit);
               
-              if (data && Array.isArray(data)) {
-                // If we have data, transform it for the UI
-                const columns = data.length > 0 ? Object.keys(data[0]) : [];
-                
-                setQueryResult({
-                  columns,
-                  rows: data
-                });
-                
-                toast({
-                  title: "Abfrage erfolgreich",
-                  description: "Die SQL-Abfrage wurde erfolgreich ausgeführt.",
-                });
-              } else {
-                // Handle empty result
-                setQueryResult({
-                  columns: [],
-                  rows: []
-                });
-                
-                toast({
-                  title: "Abfrage erfolgreich",
-                  description: "Die SQL-Abfrage wurde ausgeführt, jedoch ohne Ergebnisse.",
-                });
-              }
+            if (queryError) throw queryError;
+            
+            if (data && Array.isArray(data)) {
+              // If we have data, transform it for the UI
+              const columns = data.length > 0 ? Object.keys(data[0]) : [];
+              
+              setQueryResult({
+                columns,
+                rows: data
+              });
+              
+              toast({
+                title: "Abfrage erfolgreich",
+                description: "Die SQL-Abfrage wurde erfolgreich ausgeführt.",
+              });
             } else {
-              throw new Error(`Tabelle '${tableName}' nicht gefunden.`);
+              // Handle empty result
+              setQueryResult({
+                columns: [],
+                rows: []
+              });
+              
+              toast({
+                title: "Abfrage erfolgreich",
+                description: "Die SQL-Abfrage wurde ausgeführt, jedoch ohne Ergebnisse.",
+              });
             }
           } else {
-            throw new Error("Konnte keine Tabelle in der Abfrage identifizieren.");
+            throw new Error(`Tabelle '${tableName}' nicht gefunden.`);
           }
         } else if (query.toLowerCase().includes('drop') || query.toLowerCase().includes('delete')) {
           setError("Gefährliche Operation erkannt. Löschoperationen sind in dieser Ansicht deaktiviert.");
@@ -296,17 +316,8 @@ const Database = () => {
     setActiveTab("tableView");
     
     try {
-      // Use a fixed list of known tables
-      const knownTables = [
-        'app_settings', 'chat_messages', 'events', 'news',
-        'newsletter_subscribers', 'partners', 'podcasts', 'poll_options',
-        'polls', 'poll_votes', 'profiles', 'schedule', 'security_activities',
-        'security_status', 'shows', 'song_history', 'song_requests',
-        'status_updates', 'system_logs', 'user_roles'
-      ];
-      
       // Check if the table is in our known tables list
-      if (knownTables.includes(tableName)) {
+      if (isKnownTable(tableName)) {
         const { data, error } = await supabase
           .from(tableName)
           .select('*')
@@ -328,11 +339,11 @@ const Database = () => {
           
           // Create columns dynamically based on the data structure
           const firstRow = data[0];
-          // Make sure we handle accessorKey correctly
+          // Make sure we handle accessorFn correctly
           const columns: ColumnDef<TableData, any>[] = Object.keys(firstRow).map(key => ({
-            id: key, // Use id instead of accessorKey
+            id: key,
             header: key.charAt(0).toUpperCase() + key.slice(1),
-            accessorFn: (row: TableData) => row[key], // Use accessorFn instead of accessorKey
+            accessorFn: (row: TableData) => row[key],
             cell: ({ row }) => {
               const value = row.getValue(key);
               if (typeof value === 'boolean') {
