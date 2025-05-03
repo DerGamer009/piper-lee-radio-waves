@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sun, Cloud, CloudRain, Wind } from "lucide-react";
+import { Sun, Cloud, CloudRain, Wind, CloudLightning } from "lucide-react";
 
 interface WeatherData {
   city: string;
@@ -10,6 +10,15 @@ interface WeatherData {
   condition: string;
   humidity: number;
   updated: string;
+}
+
+// Types for wetter.com API response
+interface WetterComResponse {
+  city?: string;
+  temperature?: number;
+  condition?: string;
+  humidity?: number;
+  timestamp?: string;
 }
 
 const WeatherWidget = ({ city = "Berlin" }: { city?: string }) => {
@@ -21,28 +30,60 @@ const WeatherWidget = ({ city = "Berlin" }: { city?: string }) => {
     const fetchWeather = async () => {
       setLoading(true);
       try {
-        // For demo purposes, we'll use mock data
-        // In a real application, you would connect to a weather API
-        // Example: const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${city}`);
+        // Try to fetch from wetter.com API
+        // Note: This is a placeholder URL - you need to replace with actual wetter.com API endpoint
+        const wetterComApiUrl = `https://api.wetter.com/location/city=${encodeURIComponent(city)}/format=json`;
         
-        // Mock data for demonstration
-        const mockWeather = {
-          city,
-          temperature: Math.floor(Math.random() * 15) + 10, // 10-25°C
-          condition: ["sonnig", "bewölkt", "regnerisch", "windig"][Math.floor(Math.random() * 4)],
-          humidity: Math.floor(Math.random() * 50) + 30, // 30-80%
-          updated: new Date().toLocaleTimeString('de-DE')
-        };
-        
-        setTimeout(() => {
-          setWeather(mockWeather);
-          setLoading(false);
-        }, 600); // Simulate network delay
+        try {
+          const response = await fetch(wetterComApiUrl);
+          
+          if (response.ok) {
+            const data: WetterComResponse = await response.json();
+            
+            // Transform wetter.com API response to our WeatherData format
+            const weatherData: WeatherData = {
+              city: data.city || city,
+              temperature: data.temperature || 0,
+              condition: mapWetterCondition(data.condition || ""),
+              humidity: data.humidity || 0,
+              updated: formatTime(data.timestamp || new Date().toISOString())
+            };
+            
+            setWeather(weatherData);
+            setLoading(false);
+          } else {
+            // If API call fails, fall back to mock data
+            console.warn("Wetter.com API call failed, using fallback data");
+            useFallbackData();
+          }
+        } catch (apiError) {
+          console.error("Error fetching from wetter.com API:", apiError);
+          useFallbackData();
+        }
       } catch (err) {
         console.error("Failed to fetch weather data:", err);
         setError("Wetterdaten konnten nicht geladen werden.");
         setLoading(false);
       }
+    };
+
+    // Helper function to use mock data as fallback
+    const useFallbackData = () => {
+      console.log("Using fallback weather data for", city);
+      
+      // Mock data for demonstration
+      const mockWeather = {
+        city,
+        temperature: Math.floor(Math.random() * 15) + 10, // 10-25°C
+        condition: ["sonnig", "bewölkt", "regnerisch", "windig"][Math.floor(Math.random() * 4)],
+        humidity: Math.floor(Math.random() * 50) + 30, // 30-80%
+        updated: new Date().toLocaleTimeString('de-DE')
+      };
+      
+      setTimeout(() => {
+        setWeather(mockWeather);
+        setLoading(false);
+      }, 600); // Simulate network delay
     };
 
     fetchWeather();
@@ -51,6 +92,33 @@ const WeatherWidget = ({ city = "Berlin" }: { city?: string }) => {
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, [city]);
+
+  // Map wetter.com condition to our internal condition format
+  const mapWetterCondition = (wetterCondition: string): string => {
+    const conditionMap: {[key: string]: string} = {
+      "clear": "sonnig",
+      "sunny": "sonnig",
+      "partly_cloudy": "bewölkt",
+      "cloudy": "bewölkt",
+      "overcast": "bewölkt",
+      "rain": "regnerisch",
+      "showers": "regnerisch",
+      "thunderstorm": "gewitter",
+      "windy": "windig",
+      // Add more mappings as needed
+    };
+    
+    return conditionMap[wetterCondition.toLowerCase()] || "bewölkt";
+  };
+
+  const formatTime = (timestamp: string): string => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+  };
 
   const getWeatherIcon = () => {
     if (!weather) return <Sun className="h-12 w-12 text-yellow-400" />;
@@ -64,6 +132,8 @@ const WeatherWidget = ({ city = "Berlin" }: { city?: string }) => {
         return <CloudRain className="h-12 w-12 text-blue-400" />;
       case 'windig':
         return <Wind className="h-12 w-12 text-blue-300" />;
+      case 'gewitter':
+        return <CloudLightning className="h-12 w-12 text-purple-400" />;
       default:
         return <Sun className="h-12 w-12 text-yellow-400" />;
     }
