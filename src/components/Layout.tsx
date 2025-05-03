@@ -34,8 +34,11 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = false }) => {
     };
   }, []);
   
+  // Check if the current path is /moderator-dashboard
+  const isModeratorDashboard = window.location.pathname === '/moderator-dashboard';
+  
   // Layout with sidebar
-  if (showSidebar) {
+  if (showSidebar || isModeratorDashboard) {
     return (
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
