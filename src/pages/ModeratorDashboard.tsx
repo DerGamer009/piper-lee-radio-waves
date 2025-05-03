@@ -28,10 +28,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import DashboardStats from '@/components/dashboard/DashboardStats';
+import StatsOverview from '@/components/dashboard/StatsOverview';
 import RecentUsers from '@/components/dashboard/RecentUsers';
 import RadioPlayer from '@/components/RadioPlayer';
-import WeatherWidget from '@/components/WeatherWidget';
 
 const ModeratorDashboard = () => {
   const { user, isModerator, signOut } = useAuth();
@@ -182,21 +181,22 @@ const ModeratorDashboard = () => {
             
             {/* Statistics Overview */}
             <div className="fade-in" style={{animationDelay: "150ms"}}>
-              <DashboardStats />
+              <StatsOverview stats={{
+                podcastCount: 0,
+                userCount: 0,
+                showCount: 0,
+                nextShow: null
+              }} isLoading={false} />
             </div>
             
-            {/* Radio Player, Weather and Recent Users */}
+            {/* Radio Player and Recent Users */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <div className="md:col-span-1 fade-in" style={{animationDelay: "250ms"}}>
-                <div className="bg-card/50 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden shadow-sm hover-lift mb-6">
+                <div className="bg-card/50 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden shadow-sm hover-lift">
                   <RadioPlayer 
                     streamUrl="https://backend.piper-lee.net/listen/piper-lee/radio.mp3" 
                     stationName="Piper Lee Radio" 
                   />
-                </div>
-                
-                <div className="fade-in" style={{animationDelay: "300ms"}}>
-                  <WeatherWidget city="Berlin" />
                 </div>
               </div>
               

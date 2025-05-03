@@ -21,11 +21,6 @@ import Podcasts from "./pages/Podcasts";
 import Charts from "./pages/Charts";
 import Admin from "./pages/Admin";
 import AdminSidebar from "./components/admin/AdminSidebar";
-import AdminSettings from "./components/admin/AdminSettings";
-import AdminNotifications from "./components/admin/AdminNotifications";
-import AdminMessages from "./components/admin/AdminMessages";
-import AdminDatabase from "./components/admin/AdminDatabase";
-import AdminUsers from "./components/admin/AdminUsers";
 import Moderator from "./pages/Moderator";
 import ModeratorDashboard from "./pages/ModeratorDashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -41,6 +36,13 @@ import Status from './pages/Status';
 import UsersPage from './pages/UsersPage';
 import ModeratorSettings from './pages/ModeratorSettings';
 import ModeratorRadio from './pages/ModeratorRadio';
+
+// Import admin pages
+import AdminSettings from './pages/admin/Settings';
+import AdminNotifications from './pages/admin/Notifications';
+import AdminMessages from './pages/admin/Messages';
+import AdminDatabase from './pages/admin/Database';
+import AdminUsers from './pages/admin/Users';
 
 const queryClient = new QueryClient({
   defaultOptions: {

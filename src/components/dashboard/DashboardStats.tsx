@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Headphones, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { fetchStreamInfo } from '@/services/radioService';
 
 interface StatsCardProps {
   title: string;
@@ -64,7 +62,6 @@ const StatsCard = ({
 
 const DashboardStats = () => {
   const [liveListeners, setLiveListeners] = useState<number | null>(null);
-  const [totalListeners, setTotalListeners] = useState<number | null>(null);
   const [previousListeners, setPreviousListeners] = useState<number | null>(null);
   const [listenerChangePercent, setListenerChangePercent] = useState<number>(5); // Default to 5%
   const [listenerChangeType, setListenerChangeType] = useState<'positive' | 'negative' | 'neutral'>('positive');
@@ -163,14 +160,16 @@ const DashboardStats = () => {
       setLiveListenersLoading(true);
       setLiveListenersError(null);
       try {
-        const streamInfo = await fetchStreamInfo();
+        const response = await fetch('https://backend.piper-lee.net/api/nowplaying/1');
         
+        if (!response.ok) {
+          throw new Error('Failed to fetch live listeners data');
+        }
+        
+        const data = await response.json();
         // Extract listeners count from API response
-        if (streamInfo && typeof streamInfo.listeners === 'number') {
-          const currentListeners = streamInfo.listeners;
-          const totalListenersCount = streamInfo.total_listeners || 0;
-          
-          setTotalListeners(totalListenersCount);
+        if (data && data.listeners && typeof data.listeners.current === 'number') {
+          const currentListeners = data.listeners.current;
           
           // If we have previous listeners data, calculate the change percentage
           if (previousListeners) {
@@ -195,7 +194,7 @@ const DashboardStats = () => {
           setLiveListeners(currentListeners);
         } else {
           setLiveListeners(0);
-          console.warn('Live listeners data format unexpected:', streamInfo);
+          console.warn('Live listeners data format unexpected:', data);
         }
       } catch (error) {
         console.error('Error fetching live listeners:', error);
@@ -239,9 +238,10 @@ const DashboardStats = () => {
       />
       
       <StatsCard 
-        title="Gesamt-Hörer" 
-        value={liveListenersLoading ? "..." : String(totalListeners || 0)}
-        subText="Insgesamt seit Start"
+        title="Podcast Downloads" 
+        value={loadingPodcasts ? "..." : String(podcastDownloads || 0)}
+        changeText="Veröffentlichte Podcasts" 
+        changeType="neutral"
         icon={<Headphones className="h-5 w-5 text-blue-400" />} 
         iconBgColor="bg-blue-900/30" 
       />
