@@ -10,8 +10,9 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import UserForm from '@/components/UserForm';
+import { User } from '@/services/apiService';
 
-type User = {
+type AppUser = {
   id: string;
   username: string;
   fullName: string;
@@ -20,9 +21,10 @@ type User = {
   roles: string[];
   lastLogin: string;
   status: 'active' | 'inactive' | 'banned';
+  isActive?: boolean;
 };
 
-const sampleUsers: User[] = [
+const sampleUsers: AppUser[] = [
   {
     id: '1',
     username: 'admin',
@@ -30,7 +32,8 @@ const sampleUsers: User[] = [
     email: 'admin@piper-lee.de',
     roles: ['admin'],
     lastLogin: '01.05.2025 15:30',
-    status: 'active'
+    status: 'active',
+    isActive: true
   },
   {
     id: '2',
@@ -39,7 +42,8 @@ const sampleUsers: User[] = [
     email: 'mod1@piper-lee.de',
     roles: ['moderator'],
     lastLogin: '01.05.2025 12:15',
-    status: 'active'
+    status: 'active',
+    isActive: true
   },
   {
     id: '3',
@@ -48,7 +52,8 @@ const sampleUsers: User[] = [
     email: 'user123@example.com',
     roles: ['user'],
     lastLogin: '30.04.2025 18:22',
-    status: 'active'
+    status: 'active',
+    isActive: true
   },
   {
     id: '4',
@@ -57,7 +62,8 @@ const sampleUsers: User[] = [
     email: 'banned@example.com',
     roles: ['user'],
     lastLogin: '15.04.2025 09:45',
-    status: 'banned'
+    status: 'banned',
+    isActive: false
   },
   {
     id: '5',
@@ -66,15 +72,16 @@ const sampleUsers: User[] = [
     email: 'inactive@example.com',
     roles: ['user'],
     lastLogin: '01.03.2025 14:30',
-    status: 'inactive'
+    status: 'inactive',
+    isActive: false
   }
 ];
 
 const UsersPage = () => {
-  const [users, setUsers] = useState<User[]>(sampleUsers);
+  const [users, setUsers] = useState<AppUser[]>(sampleUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   
   const { toast } = useToast();
 
@@ -168,7 +175,7 @@ const UsersPage = () => {
             </CardHeader>
             <CardContent className="pt-6">
               <UserForm 
-                user={editingUser}
+                user={editingUser as User}
                 isEditing={true}
                 onCancel={() => setEditingUser(null)} 
                 onSuccess={handleEditUserSuccess}
