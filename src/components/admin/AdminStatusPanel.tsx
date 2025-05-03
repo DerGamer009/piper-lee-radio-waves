@@ -1,155 +1,192 @@
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Activity, RefreshCcw, Plus, Edit, Trash, CheckCircle, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-type StatusItem = {
-  id: string;
-  name: string;
-  status: 'operational' | 'issue' | 'outage';
-  lastUpdated: string;
-  description: string;
-};
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Play, Pause, Volume2, Radio, SignalHigh } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminStatusPanelProps {
-  streamUrl?: string;
+  streamUrl: string;
 }
 
-const initialStatuses: StatusItem[] = [
-  {
-    id: '1',
-    name: 'API',
-    status: 'operational',
-    lastUpdated: '01.05.2025, 15:06',
-    description: 'API services have been restored.'
-  },
-  {
-    id: '2',
-    name: 'Website',
-    status: 'operational',
-    lastUpdated: '01.05.2025, 14:40',
-    description: 'Die Website läuft ohne Probleme'
-  },
-  {
-    id: '3',
-    name: 'Chat-System',
-    status: 'operational',
-    lastUpdated: '01.05.2025, 14:39',
-    description: 'Der Live-Chat funktioniert einwandfrei'
-  },
-  {
-    id: '4',
-    name: 'Streaming-Dienst',
-    status: 'operational',
-    lastUpdated: '01.05.2025, 14:24',
-    description: 'Der Streaming-Dienst ist verfügbar'
-  },
-  {
-    id: '5',
-    name: 'Datenbank',
-    status: 'operational',
-    lastUpdated: '01.05.2025, 14:15',
-    description: 'Die Datenbank ist verfügbar'
-  }
-];
-
-const AdminStatusPanel: React.FC<AdminStatusPanelProps> = ({ streamUrl }) => {
-  const [statuses, setStatuses] = useState<StatusItem[]>(initialStatuses);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+const AdminStatusPanel = ({ streamUrl }: AdminStatusPanelProps) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [listenerCount, setListenerCount] = useState<number>(0);
+  const [streamStatus, setStreamStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const { toast } = useToast();
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast({
-        title: "Status aktualisiert",
-        description: "Alle Systeme wurden aktualisiert.",
+  useEffect(() => {
+    const audio = new Audio(streamUrl);
+    setAudioElement(audio);
+
+    // Check stream status
+    checkStreamStatus();
+
+    // Cleanup
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+    };
+  }, [streamUrl]);
+
+  const checkStreamStatus = () => {
+    fetch(streamUrl, { method: 'HEAD' })
+      .then(response => {
+        setStreamStatus(response.ok ? 'online' : 'offline');
+        // Simulate listener count - in a real app, this would come from your streaming service API
+        setListenerCount(Math.floor(Math.random() * 50) + 10);
+      })
+      .catch(() => {
+        setStreamStatus('offline');
       });
-    }, 1000);
   };
 
-  const handleNewStatus = () => {
+  const togglePlayback = () => {
+    if (!audioElement) return;
+
+    if (isPlaying) {
+      audioElement.pause();
+      setIsPlaying(false);
+      toast({
+        title: "Stream pausiert",
+        description: "Die Audiowiedergabe wurde pausiert.",
+      });
+    } else {
+      audioElement.play().catch(error => {
+        toast({
+          title: "Fehler",
+          description: "Stream konnte nicht gestartet werden.",
+          variant: "destructive"
+        });
+        console.error("Audio playback error:", error);
+      });
+      setIsPlaying(true);
+      toast({
+        title: "Stream gestartet",
+        description: "Die Audiowiedergabe wurde gestartet.",
+      });
+    }
+  };
+
+  const refreshStatus = () => {
+    setStreamStatus('checking');
+    checkStreamStatus();
     toast({
-      title: "Neuer Status",
-      description: "Diese Funktionalität ist noch in Entwicklung.",
+      title: "Status aktualisiert",
+      description: "Der Streamstatus wurde aktualisiert.",
     });
   };
 
   return (
-    <Card className="border-none shadow-md">
-      <CardHeader className="bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-t-lg pb-4">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="bg-white text-indigo-600 p-1 rounded-full">
-              <Activity className="h-4 w-4" />
-            </span>
-            System Status verwalten
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleRefresh} 
-              variant="outline" 
-              size="sm"
-              disabled={isRefreshing}
-              className="bg-white/20 text-white border-white/40 hover:bg-white/30"
-            >
-              <RefreshCcw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} /> 
-              Aktualisieren
-            </Button>
-            <Button 
-              onClick={handleNewStatus} 
-              variant="outline" 
-              size="sm"
-              className="bg-white/20 text-white border-white/40 hover:bg-white/30"
-            >
-              <Plus className="h-4 w-4 mr-2" /> 
-              Neuer Status
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          {statuses.map(status => (
-            <div key={status.id} className="flex justify-between items-center p-4 bg-card/30 rounded-lg border border-muted">
-              <div className="flex items-center gap-3">
-                {status.status === 'operational' && (
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                )}
-                {status.status === 'issue' && (
-                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                )}
-                {status.status === 'outage' && (
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                )}
-                <div>
-                  <h3 className="font-medium">{status.name}</h3>
-                  <p className="text-sm text-muted-foreground">{status.description}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Zuletzt aktualisiert: {status.lastUpdated}</p>
+    <div className="space-y-4">
+      <Tabs defaultValue="overview">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="listeners">Hörer</TabsTrigger>
+          <TabsTrigger value="settings">Einstellungen</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="border border-gray-100 shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Radio className="h-5 w-5 text-purple-600" />
+                    <h3 className="font-medium">Stream Status</h3>
+                  </div>
+
+                  <Badge 
+                    variant={
+                      streamStatus === 'online' ? 'success' :
+                      streamStatus === 'offline' ? 'destructive' : 'outline'
+                    }
+                    className="flex items-center gap-1"
+                  >
+                    {streamStatus === 'checking' && 'Wird geprüft...'}
+                    {streamStatus === 'online' && (
+                      <>
+                        <SignalHigh className="h-3.5 w-3.5" />
+                        Online
+                      </>
+                    )}
+                    {streamStatus === 'offline' && 'Offline'}
+                  </Badge>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-        {streamUrl && (
-          <div className="mt-6 p-4 bg-card/30 rounded-lg border border-muted">
-            <h3 className="font-medium mb-2">Stream URL</h3>
-            <p className="text-sm text-muted-foreground break-all">{streamUrl}</p>
+
+                <div className="flex items-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={togglePlayback}
+                    disabled={streamStatus !== 'online'}
+                    className="flex-1"
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-1" /> Pause
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-1" /> Stream testen
+                      </>
+                    )}
+                  </Button>
+                  <Button size="sm" onClick={refreshStatus}>
+                    Status prüfen
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-gray-100 shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="h-5 w-5 text-purple-600" />
+                    <h3 className="font-medium">Aktuelle Hörer</h3>
+                  </div>
+                  
+                  <div className="text-2xl font-bold">{listenerCount}</div>
+                </div>
+
+                <div className="mt-4 h-10 bg-gray-100 rounded-md overflow-hidden relative">
+                  <div 
+                    className="h-full bg-gradient-to-r from-purple-500 to-purple-700"
+                    style={{ width: `${Math.min(listenerCount, 100)}%` }}
+                  ></div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </TabsContent>
+
+        <TabsContent value="listeners">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-center text-muted-foreground py-8">
+                Details zu den Hörern werden hier angezeigt.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-center text-muted-foreground py-8">
+                Stream-Einstellungen werden hier angezeigt.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

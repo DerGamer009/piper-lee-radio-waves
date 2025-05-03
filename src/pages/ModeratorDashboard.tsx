@@ -1,614 +1,265 @@
 
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarFooter, 
+  SidebarHeader, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton, 
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarTrigger
+} from "@/components/ui/sidebar";
+import { 
+  BarChart2, 
+  Radio, 
+  Calendar, 
+  Users, 
+  FileAudio, 
+  LogOut, 
+  Settings, 
+  Home, 
+  Mic,
+  RefreshCcw
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Calendar, Mic, Radio, LogOut, RefreshCw, Menu, Clock, Users, Music } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import PodcastManagement from '@/components/dashboard/PodcastManagement';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/integrations/supabase/client';
+import StatsOverview from '@/components/dashboard/StatsOverview';
+import RecentUsers from '@/components/dashboard/RecentUsers';
 import RadioPlayer from '@/components/RadioPlayer';
-
-interface Show {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  created_at: string;
-}
-
-interface ScheduleItem {
-  id: string;
-  show_id: string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-  host_id: string | null;
-  is_recurring: boolean;
-  shows: { title: string } | null;
-  show_title?: string;
-}
 
 const ModeratorDashboard = () => {
   const { user, isModerator, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
-  const { isMobile } = useIsMobile();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { toast } = useToast();
 
-  // States for show form
-  const [isAddingShow, setIsAddingShow] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [isLive, setIsLive] = useState(false);
-  const [currentSong, setCurrentSong] = useState('Sunshine - The Weeknd');
-  const [liveTitle, setLiveTitle] = useState('Nachmittagsklänge mit DJ Max');
-  const [liveDescription, setLiveDescription] = useState('Die besten Hits für Ihren Nachmittag! DJ Max bringt Sie mit den neusten Charts und den größten Klassikern durch den Tag.');
-  const [isChatEnabled, setIsChatEnabled] = useState(true);
-  const [streamDuration, setStreamDuration] = useState('01:23:45');
-  const [listeners, setListeners] = useState(42);
-
-  // Query for shows
-  const { data: shows, isLoading: showsLoading } = useQuery({
-    queryKey: ['shows'],
+  // Fetch statistics from Supabase
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('shows')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error loading shows:", error);
-        throw error;
-      }
+      // Get podcast count
+      const { data: podcasts, error: podcastError } = await supabase
+        .from('podcasts')
+        .select('id', { count: 'exact', head: true });
       
-      return data as Show[];
-    },
-    enabled: !!user // Only run query if user is logged in
-  });
-
-  // Query for schedule
-  const { data: schedule, isLoading: scheduleLoading } = useQuery({
-    queryKey: ['schedule'],
-    queryFn: async () => {
-      // Get schedule with show information
-      const { data, error } = await supabase
+      // Get user count
+      const { data: users, error: userError } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true });
+      
+      // Get active shows count
+      const { data: shows, error: showError } = await supabase
+        .from('shows')
+        .select('id', { count: 'exact', head: true });
+      
+      // Get next scheduled show
+      const today = new Date();
+      const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][today.getDay()];
+      
+      const { data: nextShow } = await supabase
         .from('schedule')
         .select(`
           *,
-          shows:show_id (
-            title
-          )
+          shows:show_id (title)
         `)
-        .order('day_of_week', { ascending: true })
-        .order('start_time', { ascending: true });
-
-      if (error) {
-        console.error("Error loading schedule:", error);
-        throw error;
+        .eq('day_of_week', dayOfWeek)
+        .order('start_time', { ascending: true })
+        .limit(1);
+      
+      if (podcastError || userError || showError) {
+        throw new Error('Error fetching statistics');
       }
-
-      return data.map((item) => ({
-        ...item,
-        show_title: item.shows?.title
-      })) as ScheduleItem[];
-    },
-    enabled: !!user // Only run query if user is logged in
+      
+      return {
+        podcastCount: podcasts?.length ?? 0,
+        userCount: users?.length ?? 0,
+        showCount: shows?.length ?? 0,
+        nextShow: nextShow && nextShow.length > 0 ? {
+          title: nextShow[0].shows?.title || 'Unbekannte Sendung',
+          time: nextShow[0].start_time,
+          day: nextShow[0].day_of_week
+        } : null
+      };
+    }
   });
 
   const handleRefresh = () => {
     setRefreshing(true);
-    queryClient.invalidateQueries({ queryKey: ['shows'] });
-    queryClient.invalidateQueries({ queryKey: ['schedule'] });
-    queryClient.invalidateQueries({ queryKey: ['podcasts'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['recent-users'] });
     
     setTimeout(() => {
       toast({
         title: "Daten aktualisiert",
-        description: "Die Ansicht wurde erfolgreich aktualisiert.",
+        description: "Die Dashboard-Daten wurden erfolgreich aktualisiert.",
       });
       setRefreshing(false);
     }, 1000);
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-  };
-
-  const updateStreamInfo = (type: string) => {
-    let message = "";
-    
-    switch(type) {
-      case 'song':
-        message = "Aktueller Song aktualisiert";
-        break;
-      case 'title':
-        message = "Live-Titel aktualisiert";
-        break;
-      case 'all':
-        message = "Stream-Informationen aktualisiert";
-        break;
-      default:
-        message = "Änderungen wurden gespeichert";
-    }
-    
-    toast({
-      title: message,
-      description: "Die Stream-Informationen wurden erfolgreich aktualisiert.",
-    });
-  };
-
-  const handleEndStream = () => {
-    toast({
-      title: "Stream beendet",
-      description: "Die Live-Sendung wurde erfolgreich beendet.",
-    });
-    setIsLive(false);
-  };
-
-  const handlePauseStream = () => {
-    toast({
-      title: "Stream pausiert",
-      description: "Die Live-Sendung wurde pausiert. Klicken Sie auf 'Fortsetzen', um weiterzusenden.",
-    });
-  };
-
-  const startStream = () => {
-    setIsLive(true);
-    toast({
-      title: "Stream gestartet",
-      description: "Die Live-Sendung wurde erfolgreich gestartet.",
-    });
-  };
-
-  const createShow = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (!user?.id) throw new Error("Benutzer nicht angemeldet");
-      
-      const { data, error } = await supabase
-        .from('shows')
-        .insert([
-          { 
-            title, 
-            description: description || null, 
-            image_url: imageUrl || null,
-            created_by: user.id
-          }
-        ]);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Sendung erstellt",
-        description: "Die Sendung wurde erfolgreich erstellt.",
-      });
-      
-      resetShowForm();
-      queryClient.invalidateQueries({ queryKey: ['shows'] });
-    } catch (error: any) {
-      console.error("Error creating show:", error);
-      toast({
-        title: "Fehler",
-        description: `Die Sendung konnte nicht erstellt werden: ${error.message}`,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const resetShowForm = () => {
-    setIsAddingShow(false);
-    setTitle('');
-    setDescription('');
-    setImageUrl('');
   };
 
   if (!user || !isModerator) {
     return <Navigate to="/login" replace />;
   }
 
-  const isLoading = showsLoading || scheduleLoading;
-
   return (
-    <div className="container mx-auto py-6 md:py-8 px-4">
-      <div className="flex justify-between items-center mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-          <Mic className="h-6 w-6 md:h-8 md:w-8 text-radio-purple" />
-          <span className={isMobile ? "sr-only" : ""}>Moderator-Dashboard</span>
-        </h1>
-        <div className="flex items-center gap-2">
-          {isMobile && (
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <Sidebar className="border-r">
+        <SidebarHeader className="border-b">
+          <div className="px-6 py-4 flex items-center gap-2">
+            <Mic className="h-6 w-6 text-purple-500" />
+            <h1 className="text-xl font-semibold">Moderator Panel</h1>
+          </div>
+        </SidebarHeader>
+        
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/" className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      <span>Startseite</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive>
+                    <a href="/moderator-dashboard" className="flex items-center gap-2">
+                      <BarChart2 className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/moderator" className="flex items-center gap-2">
+                      <Radio className="h-4 w-4" />
+                      <span>Radio</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          
+          <SidebarGroup>
+            <SidebarGroupLabel>Content</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/schedule" className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>Sendeplan</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/podcasts" className="flex items-center gap-2">
+                      <FileAudio className="h-4 w-4" />
+                      <span>Podcasts</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/users" className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>Benutzer</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/settings" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      <span>Einstellungen</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        
+        <SidebarFooter className="border-t">
+          <div className="p-4">
             <Button 
               variant="outline" 
-              size="sm"
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden"
+              onClick={() => signOut()} 
+              className="w-full justify-start"
             >
-              <Menu className="h-4 w-4" />
+              <LogOut className="h-4 w-4 mr-2" />
+              Abmelden
             </Button>
-          )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={isMobile ? "px-2" : ""}
-          >
-            <RefreshCw className={`h-4 w-4 ${isMobile ? "" : "mr-2"} ${refreshing ? 'animate-spin' : ''}`} />
-            {!isMobile && "Aktualisieren"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleLogout} className={isMobile ? "px-2" : ""}>
-            <LogOut className={`h-4 w-4 ${isMobile ? "" : "mr-2"}`} />
-            {!isMobile && "Abmelden"}
-          </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header with actions */}
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCcw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
+          </div>
+          
+          {/* Statistics Overview */}
+          <StatsOverview stats={stats} isLoading={statsLoading} />
+          
+          {/* Radio Player and Recent Users */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <Card className="md:col-span-1 shadow-md">
+              <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Radio className="h-5 w-5" />
+                  Live Radio
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <RadioPlayer 
+                  streamUrl="https://backend.piper-lee.net/listen/piper-lee/radio.mp3" 
+                  stationName="Piper Lee Radio" 
+                />
+              </CardContent>
+            </Card>
+            
+            <div className="md:col-span-2">
+              <RecentUsers />
+            </div>
+          </div>
         </div>
       </div>
-
-      <Tabs defaultValue="shows" className="space-y-6">
-        <TabsList className="mb-4 bg-background border overflow-x-auto flex w-full md:inline-flex">
-          <TabsTrigger value="shows" className="flex-1 md:flex-initial">Sendungen</TabsTrigger>
-          <TabsTrigger value="schedule" className="flex-1 md:flex-initial">Sendeplan</TabsTrigger>
-          <TabsTrigger value="podcasts" className="flex-1 md:flex-initial">Podcasts</TabsTrigger>
-          <TabsTrigger value="live" className="flex-1 md:flex-initial">Live</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="shows" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center flex-wrap gap-2">
-                <CardTitle>Sendungen verwalten</CardTitle>
-                {!isAddingShow && (
-                  <Button onClick={() => setIsAddingShow(true)}>
-                    Neue Sendung
-                  </Button>
-                )}
-              </div>
-              <CardDescription>
-                Hier können Sie neue Sendungen erstellen und bestehende verwalten.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isAddingShow ? (
-                <form onSubmit={createShow} className="space-y-4">
-                  <div>
-                    <Label htmlFor="title">Titel</Label>
-                    <Input 
-                      id="title" 
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Titel der Sendung"
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="description">Beschreibung (optional)</Label>
-                    <Textarea 
-                      id="description" 
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Beschreibung der Sendung"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="imageUrl">Bild-URL (optional)</Label>
-                    <Input 
-                      id="imageUrl" 
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      placeholder="URL zum Bild der Sendung"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={resetShowForm}
-                    >
-                      Abbrechen
-                    </Button>
-                    <Button type="submit">
-                      Sendung erstellen
-                    </Button>
-                  </div>
-                </form>
-              ) : isLoading ? (
-                <div className="flex justify-center p-6">
-                  <div className="animate-spin h-10 w-10 border-4 border-radio-purple border-t-transparent rounded-full"></div>
-                </div>
-              ) : shows && shows.length > 0 ? (
-                <div className="space-y-4">
-                  {shows.map((show) => (
-                    <div 
-                      key={show.id} 
-                      className="p-4 border rounded-md hover:bg-gray-50 transition-colors flex justify-between items-center"
-                    >
-                      <div>
-                        <h3 className="font-medium">{show.title}</h3>
-                        {show.description && (
-                          <p className="text-sm text-gray-600 line-clamp-1">
-                            {show.description}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-1">
-                          Erstellt am {new Date(show.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          Bearbeiten
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p>Keine Sendungen vorhanden</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => setIsAddingShow(true)}
-                  >
-                    Erste Sendung erstellen
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="schedule">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center flex-wrap gap-2">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Sendeplan
-                </CardTitle>
-                <Button asChild>
-                  <a href="/moderator">Zum Planer</a>
-                </Button>
-              </div>
-              <CardDescription>
-                Überblick über den aktuellen Sendeplan.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center p-6">
-                  <div className="animate-spin h-10 w-10 border-4 border-radio-purple border-t-transparent rounded-full"></div>
-                </div>
-              ) : schedule && schedule.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {schedule.map((item) => (
-                      <div 
-                        key={item.id}
-                        className="p-3 border rounded-md hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="font-medium">{item.show_title ?? 'Unnamed Show'}</div>
-                        <div className="text-sm text-gray-500">
-                          {item.day_of_week}, {item.start_time} - {item.end_time} Uhr
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {item.is_recurring ? "Wöchentlich" : "Einmalig"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p>Kein Sendeplan vorhanden</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    asChild
-                  >
-                    <a href="/moderator">Zum Planer</a>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="podcasts">
-          <PodcastManagement />
-        </TabsContent>
-        
-        <TabsContent value="live">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                <div className="flex items-center gap-2 text-radio-purple">
-                  <Radio className="h-5 w-5" />
-                  <span className="text-lg md:text-2xl font-bold">Live-Sendung</span>
-                </div>
-                <div className={`ml-2 px-2 py-0.5 text-xs rounded-full flex items-center gap-1 ${isLive ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/20 text-gray-500'}`}>
-                  <span className={`h-2 w-2 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-gray-500'}`}></span>
-                  <span>{isLive ? 'On Air' : 'Offline'}</span>
-                </div>
-              </CardTitle>
-              <CardDescription>
-                Starten Sie eine Live-Sendung und verwalten Sie den Stream.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-8">
-                {/* Stream Status Card */}
-                <div className="p-6 border rounded-xl bg-card/60 backdrop-blur-sm shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-2">
-                      {isLive ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse"></div>
-                          <span className="font-medium text-lg">Online</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full bg-gray-500"></div>
-                          <span className="font-medium text-lg text-gray-400">Offline</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      {isLive && (
-                        <>
-                          <div className="flex items-center gap-2 bg-card/80 px-4 py-2 rounded-lg">
-                            <Users className="h-4 w-4 text-green-400" />
-                            <span><span className="font-semibold">{listeners}</span> Hörer</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 bg-card/80 px-4 py-2 rounded-lg">
-                            <Clock className="h-4 w-4 text-blue-400" />
-                            <span>Laufzeit: <span className="font-semibold">{streamDuration}</span></span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="col-span-1">
-                      <RadioPlayer 
-                        streamUrl="https://backend.piper-lee.net/listen/piper-lee/radio.mp3"
-                        stationName={liveTitle || "Live Stream"}
-                        compact={true}
-                      />
-                    </div>
-                    
-                    <div className="col-span-1 md:col-span-2">
-                      {!isLive && (
-                        <div className="h-full flex flex-col items-center justify-center">
-                          <p className="text-muted-foreground mb-4">Starten Sie eine Live-Sendung, um den Stream zu verwalten.</p>
-                          <Button onClick={startStream} className="bg-green-500 hover:bg-green-600">
-                            Stream starten
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {isLive && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="live-title" className="text-muted-foreground">Live-Titel</Label>
-                            <div className="mt-1 flex gap-2">
-                              <Input
-                                id="live-title"
-                                value={liveTitle}
-                                onChange={(e) => setLiveTitle(e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => updateStreamInfo('title')}
-                              >
-                                Speichern
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="current-song" className="text-muted-foreground">Aktueller Song</Label>
-                            <div className="mt-1 flex gap-2">
-                              <Input
-                                id="current-song"
-                                value={currentSong}
-                                onChange={(e) => setCurrentSong(e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button 
-                                size="sm" 
-                                className="bg-radio-purple hover:bg-radio-blue"
-                                onClick={() => updateStreamInfo('song')}
-                              >
-                                Update
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Stream Description and Settings */}
-                {isLive && (
-                  <>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <Label htmlFor="live-description" className="text-muted-foreground">Beschreibung</Label>
-                        <Textarea
-                          id="live-description"
-                          value={liveDescription}
-                          onChange={(e) => setLiveDescription(e.target.value)}
-                          rows={3}
-                          className="mt-1 resize-none"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between flex-wrap gap-4 border-t border-muted pt-4">
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="enable-chat" 
-                          checked={isChatEnabled}
-                          onCheckedChange={setIsChatEnabled}
-                        />
-                        <Label htmlFor="enable-chat">Chat aktivieren</Label>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          onClick={handlePauseStream}
-                        >
-                          Pause
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          onClick={handleEndStream}
-                        >
-                          Beenden
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
