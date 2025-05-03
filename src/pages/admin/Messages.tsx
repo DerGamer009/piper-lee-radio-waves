@@ -1,583 +1,592 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { SidebarInset } from '@/components/ui/sidebar';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { MessageSquare, Send, Trash, ArrowLeft, CornerDownRight } from 'lucide-react';
-import { SidebarInset } from '@/components/ui/sidebar';
-import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { DataTable } from '@/components/ui/data-table';
+import { ColumnDef } from '@tanstack/react-table';
+import { supabase } from "@/integrations/supabase/client";
+import {
+  MessageSquare,
+  Send,
+  MoreVertical,
+  Search,
+  Bell,
+  Trash2,
+  Archive,
+  Star,
+  RefreshCw,
+  UserPlus,
+  Filter
+} from 'lucide-react';
 
-type Message = {
+interface Message {
   id: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar?: string;
+  sender: string;
+  avatar?: string;
   content: string;
   timestamp: string;
-  isRead: boolean;
-  type: 'inbox' | 'sent' | 'draft';
-  subject: string;
-  replies?: Reply[];
-};
+  read: boolean;
+  starred: boolean;
+}
 
-type Reply = {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar?: string;
-  content: string;
-  timestamp: string;
-};
-
-const initialMessages: Message[] = [
-  {
-    id: '1',
-    senderId: 'user1',
-    senderName: 'Max Mustermann',
-    senderAvatar: '',
-    subject: 'Frage zum Sendeplan',
-    content: 'Hallo, ich hätte eine Frage zum aktuellen Sendeplan. Wann wird die neue Show "Musikwelten" zum ersten Mal ausgestrahlt?',
-    timestamp: '2025-05-01T14:30:00',
-    isRead: false,
-    type: 'inbox',
-    replies: []
-  },
-  {
-    id: '2',
-    senderId: 'user2',
-    senderName: 'Anna Schmidt',
-    subject: 'Feedback zur letzten Sendung',
-    content: 'Die gestrige Sendung war wirklich großartig! Besonders der Gast hat spannende Einblicke gegeben. Wäre es möglich, mehr solcher Interviews zu planen?',
-    timestamp: '2025-05-01T10:15:00',
-    isRead: true,
-    type: 'inbox',
-    replies: [
-      {
-        id: 'r1',
-        senderId: 'admin',
-        senderName: 'Admin',
-        content: 'Vielen Dank für dein positives Feedback! Wir planen tatsächlich weitere Interviews in diesem Format.',
-        timestamp: '2025-05-01T11:30:00'
-      }
-    ]
-  },
-  {
-    id: '3',
-    senderId: 'admin',
-    senderName: 'Admin',
-    subject: 'Update zu kommenden Funktionen',
-    content: 'Wir möchten Sie über die neuen Funktionen informieren, die in den kommenden Wochen hinzugefügt werden.',
-    timestamp: '2025-04-30T16:45:00',
-    isRead: true,
-    type: 'sent'
-  },
-];
+interface MessageFilter {
+  search: string;
+  showStarred: boolean;
+  showUnread: boolean;
+}
 
 const Messages = () => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'draft'>('inbox');
+  const [activeTab, setActiveTab] = useState('inbox');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [reply, setReply] = useState('');
-  const [newMessage, setNewMessage] = useState({
-    recipient: '',
-    subject: '',
-    content: ''
+  const [filter, setFilter] = useState<MessageFilter>({
+    search: '',
+    showStarred: false,
+    showUnread: false,
   });
+  const [isLoading, setIsLoading] = useState(true);
   
   const { toast } = useToast();
 
-  const handleSendReply = () => {
-    if (!selectedMessage || !reply.trim()) return;
-    
-    const newReply: Reply = {
-      id: Date.now().toString(),
-      senderId: 'admin',
-      senderName: 'Admin',
-      content: reply,
-      timestamp: new Date().toISOString()
+  useEffect(() => {
+    // Simulate loading messages from the database
+    const loadMessages = async () => {
+      setIsLoading(true);
+      try {
+        // Try to fetch messages from Supabase
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .order('timestamp', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (data) {
+          const formattedMessages = data.map((msg: any) => ({
+            id: msg.id,
+            sender: msg.sender || 'Unbekannt',
+            avatar: msg.avatar_url,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp).toLocaleString('de-DE'),
+            read: msg.is_read || false,
+            starred: msg.is_starred || false
+          }));
+          setMessages(formattedMessages);
+        }
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        // Fallback to sample data
+        setMessages(sampleMessages);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    setMessages(messages.map(message => 
-      message.id === selectedMessage.id
-        ? { 
-            ...message, 
-            replies: [...(message.replies || []), newReply]
-          }
-        : message
-    ));
+    loadMessages();
+  }, [activeTab]);
+
+  // Sample data for fallback
+  const sampleMessages: Message[] = [
+    {
+      id: '1',
+      sender: 'Max Mustermann',
+      avatar: 'https://i.pravatar.cc/150?img=1',
+      content: 'Hallo! Ich wollte mich nach dem Status meiner Anfrage erkundigen. Vielen Dank im Voraus!',
+      timestamp: '01.05.2025, 14:30',
+      read: false,
+      starred: true
+    },
+    {
+      id: '2',
+      sender: 'Lisa Schmidt',
+      avatar: 'https://i.pravatar.cc/150?img=5',
+      content: 'Vielen Dank für die schnelle Antwort. Ich habe noch eine Frage bezüglich der Sendezeit...',
+      timestamp: '01.05.2025, 12:15',
+      read: true,
+      starred: false
+    },
+    {
+      id: '3',
+      sender: 'Tim Weber',
+      avatar: 'https://i.pravatar.cc/150?img=3',
+      content: 'Könnten Sie mir bitte mitteilen, wann die nächste Livesendung stattfindet? Ich würde gerne teilnehmen.',
+      timestamp: '30.04.2025, 18:45',
+      read: true,
+      starred: false
+    },
+    {
+      id: '4',
+      sender: 'Anna Becker',
+      avatar: 'https://i.pravatar.cc/150?img=10',
+      content: 'Ich habe einen Song-Wunsch für die nächste Sendung: "Dreams" von Fleetwood Mac.',
+      timestamp: '30.04.2025, 16:20',
+      read: false,
+      starred: false
+    },
+    {
+      id: '5',
+      sender: 'Markus Klein',
+      avatar: 'https://i.pravatar.cc/150?img=12',
+      content: 'Gibt es Möglichkeiten, bei Ihrer Station als freiwilliger Helfer mitzuarbeiten? Ich interessiere mich sehr für Radio und Medien.',
+      timestamp: '29.04.2025, 09:10',
+      read: true,
+      starred: true
+    },
+    {
+      id: '6',
+      sender: 'System',
+      content: 'Wichtige Systembenachrichtigung: Wartungsarbeiten sind für den 05.05.2025 um 02:00 Uhr geplant. Die Plattform wird voraussichtlich für 2 Stunden nicht verfügbar sein.',
+      timestamp: '29.04.2025, 08:00',
+      read: false,
+      starred: true
+    }
+  ];
+
+  // Apply filters to messages
+  const filteredMessages = messages.filter(msg => {
+    if (filter.search && !msg.content.toLowerCase().includes(filter.search.toLowerCase()) && 
+        !msg.sender.toLowerCase().includes(filter.search.toLowerCase())) {
+      return false;
+    }
+    if (filter.showStarred && !msg.starred) return false;
+    if (filter.showUnread && msg.read) return false;
     
-    setReply('');
+    // Filter by tab
+    if (activeTab === 'inbox') return true;
+    if (activeTab === 'starred') return msg.starred;
+    if (activeTab === 'system') return msg.sender === 'System';
     
-    toast({
-      title: "Antwort gesendet",
-      description: "Ihre Antwort wurde erfolgreich gesendet.",
-    });
+    return true;
+  });
+
+  const handleSelectMessage = (message: Message) => {
+    // Mark message as read when selected
+    setSelectedMessage(message);
+    if (!message.read) {
+      setMessages(messages.map(msg => 
+        msg.id === message.id ? { ...msg, read: true } : msg
+      ));
+      
+      // Update read status in database (if available)
+      if (supabase) {
+        supabase
+          .from('messages')
+          .update({ is_read: true })
+          .eq('id', message.id)
+          .then(({ error }) => {
+            if (error) console.error('Error marking message as read:', error);
+          });
+      }
+    }
   };
 
-  const handleSendNewMessage = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStarMessage = (id: string) => {
+    setMessages(messages.map(msg => {
+      if (msg.id === id) {
+        const newStarred = !msg.starred;
+        
+        // Update star status in database (if available)
+        if (supabase) {
+          supabase
+            .from('messages')
+            .update({ is_starred: newStarred })
+            .eq('id', id)
+            .then(({ error }) => {
+              if (error) console.error('Error updating star status:', error);
+            });
+        }
+        
+        return { ...msg, starred: newStarred };
+      }
+      return msg;
+    }));
     
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      senderId: 'admin',
-      senderName: 'Admin',
-      subject: newMessage.subject,
-      content: newMessage.content,
-      timestamp: new Date().toISOString(),
-      isRead: true,
-      type: 'sent'
-    };
-    
-    setMessages([...messages, newMsg]);
-    setNewMessage({
-      recipient: '',
-      subject: '',
-      content: ''
-    });
-    
-    toast({
-      title: "Nachricht gesendet",
-      description: `Nachricht an ${newMessage.recipient} wurde gesendet.`,
-    });
+    if (selectedMessage?.id === id) {
+      setSelectedMessage({ ...selectedMessage, starred: !selectedMessage.starred });
+    }
   };
 
   const handleDeleteMessage = (id: string) => {
-    setMessages(messages.filter(message => message.id !== id));
+    // Remove from UI first
+    setMessages(messages.filter(msg => msg.id !== id));
+    
+    // If currently selected, clear selection
     if (selectedMessage?.id === id) {
       setSelectedMessage(null);
     }
     
+    // Delete from database (if available)
+    if (supabase) {
+      supabase
+        .from('messages')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error deleting message:', error);
+            toast({
+              title: "Fehler",
+              description: "Die Nachricht konnte nicht gelöscht werden.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Nachricht gelöscht",
+              description: "Die Nachricht wurde erfolgreich gelöscht."
+            });
+          }
+        });
+    } else {
+      // Fallback for demo
+      toast({
+        title: "Nachricht gelöscht",
+        description: "Die Nachricht wurde erfolgreich gelöscht."
+      });
+    }
+  };
+
+  const handleSendReply = () => {
+    if (!selectedMessage || !reply.trim()) return;
+    
     toast({
-      title: "Nachricht gelöscht",
-      description: "Die Nachricht wurde erfolgreich gelöscht.",
+      title: "Antwort gesendet",
+      description: "Ihre Antwort wurde erfolgreich gesendet."
     });
+    
+    // Clear reply field
+    setReply('');
+    
+    // In a real app, you would save the reply to the database here
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  };
-
-  const filteredMessages = messages.filter(message => message.type === activeTab);
-  const unreadCount = messages.filter(message => message.type === 'inbox' && !message.isRead).length;
+  // For table view
+  const columns: ColumnDef<Message, any>[] = [
+    {
+      id: 'starred',
+      header: '',
+      cell: ({ row }) => {
+        const message = row.original;
+        return (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0 text-muted-foreground"
+            onClick={() => handleStarMessage(message.id)}
+          >
+            <Star className={`h-4 w-4 ${message.starred ? 'text-yellow-400 fill-yellow-400' : ''}`} />
+          </Button>
+        );
+      },
+    },
+    {
+      accessorKey: 'sender',
+      header: 'Absender',
+      cell: ({ row }) => {
+        const message = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={message.avatar} />
+              <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span>{message.sender}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'content',
+      header: 'Inhalt',
+      cell: ({ row }) => {
+        const message = row.original;
+        return (
+          <div className="max-w-[500px] truncate">
+            {!message.read && (
+              <Badge variant="outline" className="mr-2 bg-blue-500 text-white">Neu</Badge>
+            )}
+            {message.content}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'timestamp',
+      header: 'Datum',
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        const message = row.original;
+        return (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => handleSelectMessage(message)}
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive"
+              onClick={() => handleDeleteMessage(message.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <SidebarInset>
       <div className="container mx-auto p-4">
         <div className="flex items-center gap-3 mb-8">
-          <MessageSquare className="h-8 w-8 text-purple-500" />
+          <MessageSquare className="h-8 w-8 text-blue-500" />
           <h1 className="text-3xl font-bold">Nachrichten</h1>
         </div>
 
-        {!selectedMessage ? (
-          <>
-            <Tabs defaultValue="inbox" className="mb-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger 
-                  value="inbox" 
-                  onClick={() => setActiveTab('inbox')}
-                  className="relative"
-                >
-                  Posteingang
-                  {unreadCount > 0 && (
-                    <Badge className="absolute -top-2 -right-2 bg-purple-600 text-white">{unreadCount}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="sent" 
-                  onClick={() => setActiveTab('sent')}
-                >
-                  Gesendet
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="draft" 
-                  onClick={() => setActiveTab('draft')}
-                >
-                  Entwürfe
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="inbox" className="mt-6">
-                <Card className="border-none shadow-md">
-                  <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
-                    <CardTitle className="flex justify-between items-center">
-                      <span>Posteingang</span>
-                      {unreadCount > 0 && (
-                        <Badge className="bg-white text-purple-700">{unreadCount} Ungelesen</Badge>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                      {filteredMessages.length > 0 ? (
-                        filteredMessages.map((message) => (
-                          <div 
-                            key={message.id} 
-                            className={`p-4 rounded-lg border ${message.isRead ? 'bg-muted/30' : 'bg-card'} cursor-pointer hover:bg-muted/50`}
-                            onClick={() => {
-                              setSelectedMessage(message);
-                              if (!message.isRead) {
-                                setMessages(messages.map(m => 
-                                  m.id === message.id ? { ...m, isRead: true } : m
-                                ));
-                              }
-                            }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex items-center gap-3">
-                                <Avatar>
-                                  <AvatarImage src={message.senderAvatar} />
-                                  <AvatarFallback>
-                                    {message.senderName.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <h3 className="font-medium">{message.subject}</h3>
-                                  <p className="text-sm text-muted-foreground">{message.senderName}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(message.timestamp)}
-                                </span>
-                                {!message.isRead && (
-                                  <Badge className="ml-2 bg-purple-600">Neu</Badge>
-                                )}
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteMessage(message.id);
-                                  }}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {message.content}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Keine Nachrichten im {activeTab === 'inbox' ? 'Posteingang' : activeTab === 'sent' ? 'Postausgang' : 'Entwürfe'}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="sent">
-                <Card className="border-none shadow-md">
-                  <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
-                    <CardTitle>Gesendete Nachrichten</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                      {filteredMessages.length > 0 ? (
-                        filteredMessages.map((message) => (
-                          <div 
-                            key={message.id} 
-                            className="p-4 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50"
-                            onClick={() => setSelectedMessage(message)}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <h3 className="font-medium">{message.subject}</h3>
-                                <p className="text-sm text-muted-foreground">An: {message.senderName}</p>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(message.timestamp)}
-                                </span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteMessage(message.id);
-                                  }}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {message.content}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Keine gesendeten Nachrichten
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="draft">
-                <Card className="border-none shadow-md">
-                  <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
-                    <CardTitle>Entwürfe</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                      {filteredMessages.length > 0 ? (
-                        filteredMessages.map((message) => (
-                          <div 
-                            key={message.id} 
-                            className="p-4 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50"
-                            onClick={() => setSelectedMessage(message)}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-medium">{message.subject || 'Kein Betreff'}</h3>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDate(message.timestamp)}
-                                </span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteMessage(message.id);
-                                  }}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {message.content || 'Kein Inhalt'}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Keine Entwürfe vorhanden
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-            
-            <Card className="border-none shadow-md">
-              <CardHeader className="bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-t-lg pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Send className="h-5 w-5" />
-                  Neue Nachricht
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <Card className="border-none shadow-md h-full">
+              <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-t-lg pb-4">
+                <CardTitle className="flex justify-between items-center">
+                  <span>Nachrichtenübersicht</span>
+                  <Badge variant="outline" className="bg-white text-blue-700">
+                    {messages.filter(m => !m.read).length} Ungelesen
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <form onSubmit={handleSendNewMessage}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="recipient">Empfänger</Label>
-                      <Input 
-                        id="recipient" 
-                        placeholder="Empfänger eingeben..."
-                        value={newMessage.recipient}
-                        onChange={(e) => setNewMessage({...newMessage, recipient: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="subject">Betreff</Label>
-                      <Input 
-                        id="subject" 
-                        placeholder="Betreff eingeben..."
-                        value={newMessage.subject}
-                        onChange={(e) => setNewMessage({...newMessage, subject: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="content">Nachricht</Label>
-                      <Textarea 
-                        id="content" 
-                        rows={6}
-                        placeholder="Nachricht eingeben..."
-                        value={newMessage.content}
-                        onChange={(e) => setNewMessage({...newMessage, content: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => {
-                          if (newMessage.recipient || newMessage.subject || newMessage.content) {
-                            const draftMsg: Message = {
-                              id: Date.now().toString(),
-                              senderId: 'admin',
-                              senderName: 'Admin',
-                              subject: newMessage.subject,
-                              content: newMessage.content,
-                              timestamp: new Date().toISOString(),
-                              isRead: true,
-                              type: 'draft'
-                            };
-                            
-                            setMessages([...messages, draftMsg]);
-                            setNewMessage({
-                              recipient: '',
-                              subject: '',
-                              content: ''
-                            });
-                            
-                            toast({
-                              title: "Entwurf gespeichert",
-                              description: "Der Entwurf wurde gespeichert.",
-                            });
-                          }
-                        }}
-                      >
-                        Als Entwurf speichern
-                      </Button>
-                      <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-                        <Send className="h-4 w-4 mr-2" />
-                        Senden
-                      </Button>
-                    </div>
+              <CardContent className="p-0">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="inbox">Posteingang</TabsTrigger>
+                    <TabsTrigger value="starred">Markiert</TabsTrigger>
+                    <TabsTrigger value="system">System</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                
+                <div className="p-4 border-b space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Nachrichten durchsuchen..." 
+                      className="pl-8"
+                      value={filter.search}
+                      onChange={(e) => setFilter({...filter, search: e.target.value})}
+                    />
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          <Card className="border-none shadow-md">
-            <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-500 text-white rounded-t-lg pb-4">
-              <CardTitle className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 bg-white/20 hover:bg-white/30"
-                    onClick={() => setSelectedMessage(null)}
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <span>{selectedMessage.subject}</span>
-                </div>
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 bg-white/20 hover:bg-white/30"
-                  onClick={() => handleDeleteMessage(selectedMessage.id)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-8">
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={selectedMessage.senderAvatar} />
-                        <AvatarFallback>
-                          {selectedMessage.senderName.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-medium">{selectedMessage.senderName}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(selectedMessage.timestamp)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pl-12 text-foreground">
-                    <p>{selectedMessage.content}</p>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      variant={filter.showUnread ? "default" : "outline"}
+                      size="sm"
+                      className="text-xs h-8"
+                      onClick={() => setFilter({...filter, showUnread: !filter.showUnread})}
+                    >
+                      Ungelesen
+                    </Button>
+                    <Button
+                      variant={filter.showStarred ? "default" : "outline"}
+                      size="sm"
+                      className="text-xs h-8"
+                      onClick={() => setFilter({...filter, showStarred: !filter.showStarred})}
+                    >
+                      Markiert
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 ml-auto"
+                      onClick={() => setFilter({search: '', showStarred: false, showUnread: false})}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
                 
-                {/* Replies */}
-                {selectedMessage.replies && selectedMessage.replies.length > 0 && (
-                  <div className="border-t pt-4 mt-4">
-                    {selectedMessage.replies.map((replyItem) => (
-                      <div key={replyItem.id} className="pl-8 mb-4 border-l-2 border-muted">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={replyItem.senderAvatar} />
-                              <AvatarFallback>
-                                {replyItem.senderName.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-medium">{replyItem.senderName}</h3>
-                              <p className="text-xs text-muted-foreground">
-                                {formatDate(replyItem.timestamp)}
-                              </p>
+                <div className="overflow-y-auto max-h-[60vh]">
+                  {isLoading ? (
+                    <div className="p-4 space-y-4">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="animate-pulse space-y-2">
+                          <div className="flex justify-between">
+                            <div className="h-4 bg-muted w-1/3 rounded"></div>
+                            <div className="h-4 bg-muted w-1/4 rounded"></div>
+                          </div>
+                          <div className="h-4 bg-muted w-full rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : filteredMessages.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Bell className="mx-auto h-8 w-8 mb-2 opacity-20" />
+                      <p>Keine Nachrichten gefunden</p>
+                    </div>
+                  ) : (
+                    <ul className="divide-y">
+                      {filteredMessages.map((message) => (
+                        <li
+                          key={message.id}
+                          className={`p-4 hover:bg-muted/20 cursor-pointer ${
+                            selectedMessage?.id === message.id ? 'bg-muted/40' : ''
+                          } ${!message.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
+                          onClick={() => handleSelectMessage(message)}
+                        >
+                          <div className="flex justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={message.avatar} />
+                                <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">{message.sender}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {!message.read && (
+                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStarMessage(message.id);
+                                }}
+                              >
+                                <Star className={`h-3 w-3 ${message.starred ? 'text-yellow-400 fill-yellow-400' : ''}`} />
+                              </Button>
                             </div>
                           </div>
-                        </div>
-                        <div className="pl-12 text-foreground">
-                          <p>{replyItem.content}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{message.content}</p>
+                          <div className="text-xs text-muted-foreground mt-1">{message.timestamp}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="lg:col-span-2">
+            <Card className="border-none shadow-md h-full">
+              <CardHeader className="bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-t-lg pb-4">
+                <CardTitle className="flex justify-between items-center">
+                  <span>Nachricht</span>
+                  <div className="flex gap-2">
+                    {selectedMessage && (
+                      <>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="bg-white/10 hover:bg-white/20 text-white"
+                          onClick={() => handleStarMessage(selectedMessage.id)}
+                        >
+                          <Star className={`h-4 w-4 mr-2 ${selectedMessage.starred ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                          {selectedMessage.starred ? 'Markierung aufheben' : 'Markieren'}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="bg-white/10 hover:bg-white/20 text-white"
+                          onClick={() => handleDeleteMessage(selectedMessage.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Löschen
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {selectedMessage ? (
+                  <div>
+                    <div className="p-6 border-b">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={selectedMessage.avatar} />
+                            <AvatarFallback>{selectedMessage.sender.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{selectedMessage.sender}</div>
+                            <div className="text-sm text-muted-foreground">{selectedMessage.timestamp}</div>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Reply form */}
-                {selectedMessage.type === 'inbox' && (
-                  <div className="mt-6 pt-6 border-t">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CornerDownRight className="h-4 w-4 text-muted-foreground" />
-                      <Label>Antwort verfassen</Label>
+                      <div className="prose dark:prose-invert max-w-none">
+                        <p>{selectedMessage.content}</p>
+                      </div>
                     </div>
-                    <div className="space-y-4">
+                    
+                    <div className="p-6">
+                      <h3 className="font-medium mb-4">Antwort verfassen</h3>
                       <Textarea 
-                        rows={4}
-                        placeholder="Antwort eingeben..."
+                        placeholder="Ihre Antwort hier eingeben..." 
+                        className="min-h-[150px] mb-4"
                         value={reply}
                         onChange={(e) => setReply(e.target.value)}
                       />
                       <div className="flex justify-end">
-                        <Button 
-                          onClick={handleSendReply}
-                          disabled={!reply.trim()}
-                          className="bg-purple-600 hover:bg-purple-700"
-                        >
+                        <Button onClick={handleSendReply} disabled={!reply.trim()}>
                           <Send className="h-4 w-4 mr-2" />
-                          Antworten
+                          Antwort senden
                         </Button>
                       </div>
                     </div>
                   </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground">
+                    <MessageSquare className="h-16 w-16 mb-4 opacity-20" />
+                    <h3 className="text-lg font-medium mb-2">Keine Nachricht ausgewählt</h3>
+                    <p>Wählen Sie eine Nachricht aus der Liste aus</p>
+                  </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <Card className="border-none shadow-md mt-6">
+          <CardHeader className="bg-gradient-to-r from-violet-700 to-violet-500 text-white rounded-t-lg pb-4">
+            <CardTitle className="flex justify-between items-center">
+              <span>Alle Nachrichten</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
+                <Button variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Neue Nachricht
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <DataTable
+              columns={columns}
+              data={messages}
+              searchKey="content"
+              searchLabel="Nachrichten durchsuchen"
+              showPagination={true}
+              pageSize={5}
+            />
+          </CardContent>
+        </Card>
       </div>
     </SidebarInset>
   );

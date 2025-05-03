@@ -198,7 +198,7 @@ function App() {
                   } 
                 />
                 
-                {/* New Admin Pages */}
+                {/* Admin Pages */}
                 <Route 
                   path="/admin/settings" 
                   element={
@@ -272,6 +272,70 @@ function App() {
                           <div className="flex min-h-screen w-full">
                             <AdminSidebar />
                             <AdminUsers />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/server" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <Status />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/podcasts" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <Podcasts />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/news" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <News />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/radio" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <ModeratorRadio />
                           </div>
                         </SidebarProvider>
                       } 

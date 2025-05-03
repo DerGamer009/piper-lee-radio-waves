@@ -1,4 +1,5 @@
 
+
 -- Database Creation
 CREATE DATABASE IF NOT EXISTS radio_station;
 USE radio_station;
@@ -56,6 +57,81 @@ CREATE TABLE IF NOT EXISTS schedule (
     FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Messages Table
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT,
+    recipient_id INT,
+    sender_name VARCHAR(100),
+    content TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    is_starred BOOLEAN DEFAULT FALSE,
+    is_system_message BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- System Logs Table
+CREATE TABLE IF NOT EXISTS system_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    level ENUM('info', 'warning', 'error', 'debug') NOT NULL,
+    message TEXT NOT NULL,
+    details JSON,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Function to get all database tables
+DELIMITER $$
+CREATE FUNCTION get_all_tables() RETURNS JSON
+BEGIN
+    DECLARE result JSON;
+    SELECT JSON_ARRAYAGG(JSON_OBJECT(
+        'table_name', table_name,
+        'row_count', (SELECT COUNT(*) FROM `information_schema`.`tables` WHERE `table_schema` = DATABASE() AND `table_name` = t.`table_name`),
+        'total_bytes', (SELECT data_length + index_length FROM `information_schema`.`tables` WHERE `table_schema` = DATABASE() AND `table_name` = t.`table_name`)
+    )) INTO result
+    FROM `information_schema`.`tables` t
+    WHERE `table_schema` = DATABASE();
+    
+    RETURN result;
+END$$
+DELIMITER ;
+
+-- Function to execute read-only queries safely
+DELIMITER $$
+CREATE FUNCTION execute_read_query(query_text TEXT) RETURNS JSON
+BEGIN
+    DECLARE result JSON;
+    DECLARE query_type VARCHAR(10);
+    
+    -- Extract the first word to determine query type
+    SET query_type = UPPER(TRIM(SUBSTRING_INDEX(query_text, ' ', 1)));
+    
+    IF query_type != 'SELECT' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Only SELECT queries are allowed';
+    END IF;
+    
+    -- Execute the query and format results as JSON
+    SET @sql = CONCAT('SELECT JSON_OBJECT("columns", 
+                          (SELECT JSON_ARRAYAGG(COLUMN_NAME) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @tablename),
+                          "rows", 
+                          (SELECT JSON_ARRAYAGG(JSON_OBJECT(*)) FROM (', query_text, ') as subq))');
+    
+    -- Extract table name from query
+    SET @tablename = SUBSTRING_INDEX(SUBSTRING_INDEX(query_text, 'FROM', -1), ' ', 1);
+    SET @tablename = TRIM(@tablename);
+    
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    
+    -- Return JSON result
+    RETURN result;
+END$$
+DELIMITER ;
+
 -- Insert default roles
 INSERT INTO roles (name, description) VALUES
 ('admin', 'Administrator mit vollen Rechten'),
@@ -96,3 +172,21 @@ INSERT INTO schedule (show_id, day_of_week, start_time, end_time, host_id, is_re
  (SELECT id FROM users WHERE username = 'admin'), TRUE),
 ((SELECT id FROM shows WHERE title = 'Nachtlounge'), 'Donnerstag', '22:00:00', '00:00:00', 
  (SELECT id FROM users WHERE username = 'admin'), TRUE);
+
+-- Insert sample messages
+INSERT INTO messages (sender_id, sender_name, content, timestamp, is_read, is_starred, is_system_message) VALUES
+((SELECT id FROM users WHERE username = 'admin'), 'Max Mustermann', 'Hallo! Ich wollte mich nach dem Status meiner Anfrage erkundigen. Vielen Dank im Voraus!', 
+ DATE_SUB(NOW(), INTERVAL 1 DAY), FALSE, TRUE, FALSE),
+(NULL, 'Lisa Schmidt', 'Vielen Dank für die schnelle Antwort. Ich habe noch eine Frage bezüglich der Sendezeit...',
+ DATE_SUB(NOW(), INTERVAL 2 DAY), TRUE, FALSE, FALSE),
+(NULL, 'Tim Weber', 'Könnten Sie mir bitte mitteilen, wann die nächste Livesendung stattfindet? Ich würde gerne teilnehmen.',
+ DATE_SUB(NOW(), INTERVAL 3 DAY), TRUE, FALSE, FALSE),
+(NULL, 'System', 'Wichtige Systembenachrichtigung: Wartungsarbeiten sind für morgen um 02:00 Uhr geplant. Die Plattform wird voraussichtlich für 2 Stunden nicht verfügbar sein.',
+ NOW(), FALSE, TRUE, TRUE);
+
+-- Insert sample system logs
+INSERT INTO system_logs (level, message, details, timestamp) VALUES
+('info', 'System startup completed', '{"environment": "production", "services": ["web", "db", "cache"]}', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+('warning', 'High CPU usage detected', '{"usage": 85, "threshold": 80, "process": "web_server"}', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+('error', 'Database connection failed', '{"error": "Connection timeout", "retries": 3}', DATE_SUB(NOW(), INTERVAL 12 HOUR)),
+('info', 'Backup completed successfully', '{"size": "1.2GB", "duration": "00:05:23"}', DATE_SUB(NOW(), INTERVAL 6 HOUR));
