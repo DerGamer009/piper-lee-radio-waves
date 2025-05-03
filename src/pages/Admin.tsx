@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart2, Users, Radio, FileAudio, CalendarDays, Activity, Database, Server, ShieldCheck, Lock, HardDrive, Bell, AlertTriangle, Cloud, Refresh, Download, Terminal, CheckCircle, XCircle, Power } from 'lucide-react';
+import { BarChart2, Users, Radio, FileAudio, CalendarDays, Activity, Database, Server, ShieldCheck, Lock, HardDrive, Bell, AlertTriangle, Cloud, RefreshCw, Download, Terminal, CheckCircle, XCircle, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from '@/components/ui/progress';
@@ -327,7 +326,7 @@ const Admin = () => {
                       <span>Statistiken</span>
                     </h2>
                     <Button variant="outline" size="sm" onClick={handleRefreshStats}>
-                      <Refresh className="mr-1 h-4 w-4" /> Aktualisieren
+                      <RefreshCw className="mr-1 h-4 w-4" /> Aktualisieren
                     </Button>
                   </div>
                   <div className="h-80">
@@ -442,7 +441,7 @@ const Admin = () => {
                     Server Status
                   </h2>
                   <Button variant="outline" size="sm" onClick={refreshSystemStats}>
-                    <Refresh className="h-4 w-4 mr-1" /> Aktualisieren
+                    <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
                   </Button>
                 </div>
                 <div className="space-y-4">
@@ -826,7 +825,7 @@ const Admin = () => {
                       <Download className="mr-2 h-4 w-4" /> Logs exportieren
                     </Button>
                     <Button variant="outline" size="sm">
-                      <Refresh className="h-4 w-4" />
+                      <RefreshCw className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -891,4 +890,3 @@ const Admin = () => {
 };
 
 export default Admin;
-
