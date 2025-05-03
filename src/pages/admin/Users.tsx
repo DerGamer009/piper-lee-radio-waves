@@ -58,7 +58,7 @@ const UsersPage = () => {
           roles = user.user_roles.map((r: any) => r.role);
         } 
         
-        // Format for the UI
+        // Format for the UI - using registered_at instead of last_sign_in_at
         return {
           id: user.id,
           username: user.username || 'No Username',
