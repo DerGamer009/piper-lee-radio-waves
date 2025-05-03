@@ -1,16 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart2, Users, Radio, FileAudio, CalendarDays, Activity, Database, Server, ShieldCheck, Lock, HardDrive, Bell, AlertTriangle } from 'lucide-react';
+import { BarChart2, Users, Radio, FileAudio, CalendarDays, Activity, Database, Server, ShieldCheck, Lock, HardDrive, Bell, AlertTriangle, Cloud, Refresh, Download, Terminal, CheckCircle, XCircle, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from '@/components/ui/progress';
 import AdminStatusPanel from '@/components/admin/AdminStatusPanel';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Admin = () => {
   const { user, isAdmin } = useAuth();
@@ -18,6 +20,22 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [backupProgress, setBackupProgress] = useState(0);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [serverStatus, setServerStatus] = useState({
+    cpu: 24,
+    ram: 42,
+    disk: 78,
+    network: 16,
+    uptime: '5d 14h 32m'
+  });
+  const [backupType, setBackupType] = useState('full');
+  const [isScanningSystem, setIsScanningSystem] = useState(false);
+  const [services, setServices] = useState([
+    { name: 'Webserver', status: 'online' },
+    { name: 'Datenbank', status: 'online' },
+    { name: 'Stream Server', status: 'online' },
+    { name: 'Cache Server', status: 'online' },
+    { name: 'Media Storage', status: 'warning', message: 'Fast voll (92%)' }
+  ]);
 
   // Sample stats data - in a real app, this would come from an API
   const statsData = {
@@ -45,9 +63,41 @@ const Admin = () => {
     { id: 3, name: "Audio-Dateien", date: "30.04.2025", size: "3.8 GB", status: "Abgeschlossen" }
   ];
 
+  // Sample system logs
+  const systemLogs = [
+    { time: '09:45:22', level: 'info', message: 'Nutzer admin hat sich angemeldet' },
+    { time: '09:32:16', level: 'warning', message: 'Festplattenspeicher fast voll (92%)' },
+    { time: '08:15:03', level: 'info', message: 'Tägliches Backup erfolgreich abgeschlossen' },
+    { time: '07:30:00', level: 'info', message: 'System-Update verfügbar' },
+    { time: '23:15:45', level: 'error', message: 'Fehlgeschlagener Login-Versuch für Nutzer admin (IP: 82.45.128.65)' },
+    { time: '22:30:12', level: 'info', message: 'Datenbank-Optimierung durchgeführt' },
+    { time: '21:45:30', level: 'info', message: 'Cache geleert' },
+    { time: '20:10:05', level: 'warning', message: 'Hohe CPU-Auslastung (85%)' }
+  ];
+
+  // Check if the user is authenticated and is an admin
   if (!user || !isAdmin) {
     return <Navigate to="/login" replace />;
   }
+
+  // Refresh stats for CPU, RAM, etc.
+  const refreshSystemStats = () => {
+    // Here you would typically fetch real data from an API
+    toast({
+      title: "System-Status aktualisiert",
+      description: "Die System-Statistiken wurden aktualisiert.",
+      duration: 3000,
+    });
+    
+    // Simulate updated stats
+    setServerStatus({
+      cpu: Math.floor(Math.random() * 40) + 10,
+      ram: Math.floor(Math.random() * 40) + 30,
+      disk: 78,
+      network: Math.floor(Math.random() * 30) + 5,
+      uptime: '5d 14h 32m'
+    });
+  };
 
   const handleRefreshStats = () => {
     toast({
@@ -63,9 +113,16 @@ const Admin = () => {
     setIsBackingUp(true);
     setBackupProgress(0);
     
+    const backupTypes = {
+      'full': 'Vollständiges Backup',
+      'users': 'Nur Benutzerdaten',
+      'media': 'Nur Medien-Dateien',
+      'config': 'Nur Konfiguration'
+    };
+    
     toast({
       title: "Backup gestartet",
-      description: "Das Backup wurde gestartet. Dies kann einige Minuten dauern.",
+      description: `${backupTypes[backupType]} wurde gestartet. Dies kann einige Minuten dauern.`,
       duration: 5000,
     });
     
@@ -78,9 +135,22 @@ const Admin = () => {
           
           toast({
             title: "Backup abgeschlossen",
-            description: "Das Backup wurde erfolgreich erstellt.",
+            description: `${backupTypes[backupType]} wurde erfolgreich erstellt.`,
             duration: 5000,
           });
+          
+          // Add the new backup to the list
+          const newBackup = {
+            id: backupData.length + 1,
+            name: backupTypes[backupType],
+            date: new Date().toLocaleDateString('de-DE'),
+            size: backupType === 'full' ? '1.4 GB' : 
+                  backupType === 'media' ? '850 MB' : 
+                  backupType === 'users' ? '120 MB' : '35 MB',
+            status: 'Abgeschlossen'
+          };
+          
+          // In a real app, you would update this through an API or state management
           
           return 100;
         }
@@ -97,6 +167,92 @@ const Admin = () => {
     });
   };
 
+  const handleSystemDiagnostic = () => {
+    setIsScanningSystem(true);
+    
+    toast({
+      title: "Diagnose gestartet",
+      description: "Die System-Diagnose wurde gestartet. Dies kann einige Sekunden dauern.",
+      duration: 3000,
+    });
+    
+    // Simulate system scan
+    setTimeout(() => {
+      setIsScanningSystem(false);
+      
+      // Update services with simulated results
+      const updatedServices = [...services];
+      const randomIndex = Math.floor(Math.random() * services.length);
+      
+      if (Math.random() > 0.7) {
+        // Simulate finding an issue
+        updatedServices[randomIndex].status = 'warning';
+        updatedServices[randomIndex].message = 'Latenz über Schwellenwert';
+        
+        toast({
+          title: "Diagnose abgeschlossen",
+          description: `Probleme gefunden bei: ${updatedServices[randomIndex].name}`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        // All systems normal
+        setServices(services.map(service => ({...service, status: service.name === 'Media Storage' ? 'warning' : 'online'})));
+        
+        toast({
+          title: "Diagnose abgeschlossen",
+          description: "Alle Systeme funktionieren normal.",
+          duration: 3000,
+        });
+      }
+    }, 3000);
+  };
+
+  const handleServiceToggle = (serviceName) => {
+    // In a real application, this would send a request to restart the service
+    toast({
+      title: "Service wird neu gestartet",
+      description: `Der Dienst "${serviceName}" wird neu gestartet. Dies kann einige Momente dauern.`,
+      duration: 3000,
+    });
+    
+    // Simulate service restart
+    const updatedServices = services.map(service => 
+      service.name === serviceName 
+        ? {...service, status: 'restarting'} 
+        : service
+    );
+    
+    setServices(updatedServices);
+    
+    // Simulate completion of restart after a delay
+    setTimeout(() => {
+      const finalServices = services.map(service => 
+        service.name === serviceName 
+          ? {...service, status: 'online', message: service.name === 'Media Storage' ? 'Fast voll (92%)' : undefined} 
+          : service
+      );
+      
+      setServices(finalServices);
+      
+      toast({
+        title: "Service neu gestartet",
+        description: `Der Dienst "${serviceName}" wurde erfolgreich neu gestartet.`,
+        duration: 3000,
+      });
+    }, 2500);
+  };
+
+  const downloadLog = () => {
+    toast({
+      title: "Log-Dateien werden heruntergeladen",
+      description: "Die Log-Dateien werden als ZIP-Archiv heruntergeladen.",
+      duration: 3000,
+    });
+    
+    // In a real app, this would trigger a file download
+  };
+
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-background to-background/95 p-6">
       <div className="container mx-auto">
@@ -111,6 +267,7 @@ const Admin = () => {
             <TabsTrigger value="system">System</TabsTrigger>
             <TabsTrigger value="security">Sicherheit</TabsTrigger>
             <TabsTrigger value="backup">Backup</TabsTrigger>
+            <TabsTrigger value="logs">Logs</TabsTrigger>
           </TabsList>
         
           <TabsContent value="overview" className="space-y-6">
@@ -170,7 +327,7 @@ const Admin = () => {
                       <span>Statistiken</span>
                     </h2>
                     <Button variant="outline" size="sm" onClick={handleRefreshStats}>
-                      Aktualisieren
+                      <Refresh className="mr-1 h-4 w-4" /> Aktualisieren
                     </Button>
                   </div>
                   <div className="h-80">
@@ -222,11 +379,14 @@ const Admin = () => {
                 </Card>
                 
                 <Card className="p-6 glass-card hover-lift">
-                  <h2 className="text-xl font-semibold mb-4">System Info</h2>
+                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Server className="h-5 w-5 text-primary" />
+                    System Info
+                  </h2>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Version:</span>
-                      <span className="font-medium">2.5.3</span>
+                      <Badge variant="outline" className="bg-primary/5">2.5.3</Badge>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Letztes Update:</span>
@@ -234,19 +394,37 @@ const Admin = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Server Status:</span>
-                      <span className="font-medium text-green-500">Online</span>
+                      <Badge variant="success">Online</Badge>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Datenbank Status:</span>
-                      <span className="font-medium text-green-500">Online</span>
+                      <span className="text-muted-foreground">Datenbank:</span>
+                      <Badge variant="success">Online</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Uptime:</span>
+                      <span className="font-medium">{serverStatus.uptime}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Caching:</span>
-                      <span className="font-medium text-green-500">Aktiv</span>
+                      <Badge variant="success">Aktiv</Badge>
                     </div>
                     <div className="mt-4 pt-4 border-t">
-                      <Button variant="outline" size="sm" className="w-full">
-                        System-Diagnose ausführen
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={handleSystemDiagnostic}
+                        disabled={isScanningSystem}
+                      >
+                        {isScanningSystem ? (
+                          <>
+                            <span className="animate-spin mr-2">⟳</span> Diagnose läuft...
+                          </>
+                        ) : (
+                          <>
+                            <Terminal className="mr-2 h-4 w-4" /> System-Diagnose ausführen
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -258,53 +436,58 @@ const Admin = () => {
           <TabsContent value="system" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="p-6 glass-card">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Server className="h-5 w-5 text-primary" />
-                  Server Status
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Server className="h-5 w-5 text-primary" />
+                    Server Status
+                  </h2>
+                  <Button variant="outline" size="sm" onClick={refreshSystemStats}>
+                    <Refresh className="h-4 w-4 mr-1" /> Aktualisieren
+                  </Button>
+                </div>
                 <div className="space-y-4">
                   <div className="system-status-item p-3 rounded-lg">
                     <div className="flex justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                        <div className={`h-2 w-2 rounded-full ${serverStatus.cpu < 30 ? 'bg-green-500' : serverStatus.cpu < 70 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
                         <span>CPU-Auslastung</span>
                       </div>
-                      <span className="font-medium">24%</span>
+                      <span className="font-medium">{serverStatus.cpu}%</span>
                     </div>
-                    <Progress value={24} className="h-1.5 mt-2" />
+                    <Progress value={serverStatus.cpu} className={`h-1.5 mt-2 ${serverStatus.cpu < 30 ? 'bg-green-200 [&>div]:bg-green-500' : serverStatus.cpu < 70 ? 'bg-yellow-200 [&>div]:bg-yellow-500' : 'bg-red-200 [&>div]:bg-red-500'}`} />
                   </div>
                   
                   <div className="system-status-item p-3 rounded-lg">
                     <div className="flex justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                        <div className={`h-2 w-2 rounded-full ${serverStatus.ram < 50 ? 'bg-green-500' : serverStatus.ram < 80 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
                         <span>RAM-Auslastung</span>
                       </div>
-                      <span className="font-medium">42%</span>
+                      <span className="font-medium">{serverStatus.ram}%</span>
                     </div>
-                    <Progress value={42} className="h-1.5 mt-2" />
+                    <Progress value={serverStatus.ram} className={`h-1.5 mt-2 ${serverStatus.ram < 50 ? 'bg-green-200 [&>div]:bg-green-500' : serverStatus.ram < 80 ? 'bg-yellow-200 [&>div]:bg-yellow-500' : 'bg-red-200 [&>div]:bg-red-500'}`} />
                   </div>
                   
                   <div className="system-status-item p-3 rounded-lg">
                     <div className="flex justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
+                        <div className={`h-2 w-2 rounded-full ${serverStatus.disk < 70 ? 'bg-green-500' : serverStatus.disk < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
                         <span>Festplattenspeicher</span>
                       </div>
-                      <span className="font-medium">78%</span>
+                      <span className="font-medium">{serverStatus.disk}%</span>
                     </div>
-                    <Progress value={78} className="h-1.5 mt-2" />
+                    <Progress value={serverStatus.disk} className={`h-1.5 mt-2 ${serverStatus.disk < 70 ? 'bg-green-200 [&>div]:bg-green-500' : serverStatus.disk < 90 ? 'bg-yellow-200 [&>div]:bg-yellow-500' : 'bg-red-200 [&>div]:bg-red-500'}`} />
                   </div>
                   
                   <div className="system-status-item p-3 rounded-lg">
                     <div className="flex justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                        <div className={`h-2 w-2 rounded-full ${serverStatus.network < 30 ? 'bg-green-500' : serverStatus.network < 70 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
                         <span>Netzwerkauslastung</span>
                       </div>
-                      <span className="font-medium">16%</span>
+                      <span className="font-medium">{serverStatus.network}%</span>
                     </div>
-                    <Progress value={16} className="h-1.5 mt-2" />
+                    <Progress value={serverStatus.network} className={`h-1.5 mt-2 ${serverStatus.network < 30 ? 'bg-green-200 [&>div]:bg-green-500' : serverStatus.network < 70 ? 'bg-yellow-200 [&>div]:bg-yellow-500' : 'bg-red-200 [&>div]:bg-red-500'}`} />
                   </div>
                 </div>
               </Card>
@@ -345,7 +528,42 @@ const Admin = () => {
                 </div>
               </Card>
               
-              <Card className="p-6 glass-card md:col-span-2">
+              <Card className="p-6 glass-card">
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Cloud className="h-5 w-5 text-primary" />
+                  Dienste
+                </h2>
+                <div className="space-y-3">
+                  {services.map((service, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-card/60">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-3 w-3 rounded-full ${
+                          service.status === 'online' ? 'bg-green-500' : 
+                          service.status === 'warning' ? 'bg-yellow-500' : 
+                          service.status === 'restarting' ? 'bg-blue-500 animate-pulse' : 
+                          'bg-red-500'
+                        }`}></div>
+                        <div>
+                          <div className="font-medium">{service.name}</div>
+                          {service.message && (
+                            <div className="text-xs text-muted-foreground">{service.message}</div>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        disabled={service.status === 'restarting'}
+                        onClick={() => handleServiceToggle(service.name)}
+                      >
+                        <Power className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              
+              <Card className="p-6 glass-card">
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />
                   System Benachrichtigungen
@@ -365,6 +583,12 @@ const Admin = () => {
                       <h4 className="font-medium">Sicherung erfolgreich</h4>
                       <p className="text-sm text-muted-foreground">Die automatische tägliche Sicherung wurde erfolgreich abgeschlossen.</p>
                     </div>
+                  </div>
+                  
+                  <div className="mt-2 flex justify-end">
+                    <Button variant="outline" size="sm">
+                      Alle anzeigen
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -431,31 +655,49 @@ const Admin = () => {
                   
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Kürzliche Aktivitäten</h3>
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                      <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">Login erfolgt</p>
-                          <p className="text-sm text-muted-foreground">Administrator, 03.05.2025 09:45</p>
+                    <ScrollArea className="h-64 pr-4">
+                      <div className="space-y-2">
+                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
+                          <div>
+                            <p className="font-medium">Login erfolgt</p>
+                            <p className="text-sm text-muted-foreground">Administrator, 03.05.2025 09:45</p>
+                          </div>
+                          <Badge variant="outline">192.168.1.45</Badge>
                         </div>
-                        <Badge variant="outline">192.168.1.45</Badge>
-                      </div>
-                      
-                      <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">Fehlgeschlagener Login</p>
-                          <p className="text-sm text-muted-foreground">Benutzer: admin, 02.05.2025 22:32</p>
+                        
+                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
+                          <div>
+                            <p className="font-medium">Fehlgeschlagener Login</p>
+                            <p className="text-sm text-muted-foreground">Benutzer: admin, 02.05.2025 22:32</p>
+                          </div>
+                          <Badge variant="destructive">82.45.128.65</Badge>
                         </div>
-                        <Badge variant="destructive">82.45.128.65</Badge>
-                      </div>
-                      
-                      <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">Sicherheitsupdate installiert</p>
-                          <p className="text-sm text-muted-foreground">System, 02.05.2025 08:15</p>
+                        
+                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
+                          <div>
+                            <p className="font-medium">Sicherheitsupdate installiert</p>
+                            <p className="text-sm text-muted-foreground">System, 02.05.2025 08:15</p>
+                          </div>
+                          <Badge variant="outline">Automatisch</Badge>
                         </div>
-                        <Badge variant="outline">Automatisch</Badge>
+                        
+                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
+                          <div>
+                            <p className="font-medium">Neue Firewall-Regel hinzugefügt</p>
+                            <p className="text-sm text-muted-foreground">Administrator, 01.05.2025 14:22</p>
+                          </div>
+                          <Badge variant="outline">Manuell</Badge>
+                        </div>
+                        
+                        <div className="p-3 border rounded-lg bg-card/60 flex items-start justify-between">
+                          <div>
+                            <p className="font-medium">Verdächtige Aktivität blockiert</p>
+                            <p className="text-sm text-muted-foreground">Firewall, 01.05.2025 03:15</p>
+                          </div>
+                          <Badge variant="destructive">118.25.67.94</Badge>
+                        </div>
                       </div>
-                    </div>
+                    </ScrollArea>
                   </div>
                 </div>
               </Card>
@@ -480,6 +722,26 @@ const Admin = () => {
                     <p className="text-sm text-muted-foreground text-center mt-1">
                       Letztes Backup: 03.05.2025, 02:30
                     </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <label htmlFor="backup-type" className="text-sm font-medium">Backup-Typ</label>
+                      <Select
+                        value={backupType}
+                        onValueChange={setBackupType}
+                      >
+                        <SelectTrigger id="backup-type" className="w-full">
+                          <SelectValue placeholder="Backup-Typ wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="full">Vollständiges Backup</SelectItem>
+                          <SelectItem value="users">Nur Benutzerdaten</SelectItem>
+                          <SelectItem value="media">Nur Medien-Dateien</SelectItem>
+                          <SelectItem value="config">Nur Konfiguration</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   {isBackingUp && (
@@ -510,33 +772,114 @@ const Admin = () => {
                   <Activity className="h-5 w-5 text-primary" />
                   Backup-Verlauf
                 </h2>
-                <div className="backup-list">
-                  {backupData.map((backup) => (
-                    <div key={backup.id} className="backup-item">
-                      <div>
-                        <p className="font-medium">{backup.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {backup.date} • {backup.size}
-                        </p>
+                <ScrollArea className="h-96 pr-4">
+                  <div className="space-y-3 mb-4">
+                    {backupData.map((backup) => (
+                      <div key={backup.id} className="p-4 border rounded-lg hover:bg-card/60 transition-all flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{backup.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {backup.date} • {backup.size}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500">
+                            {backup.status}
+                          </Badge>
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-green-500/10 text-green-500">
-                          {backup.status}
-                        </Badge>
-                        <Button size="icon" variant="ghost" className="h-8 w-8">
-                          <HardDrive className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div className="pt-4 border-t mt-4 flex justify-between gap-2">
+                  <div>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" /> Exportieren
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      Importieren
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600">
+                      Verwalten
+                    </Button>
+                  </div>
                 </div>
-                <div className="pt-4 border-t mt-4 flex justify-end gap-2">
-                  <Button variant="outline" size="sm">
-                    Importieren
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Exportieren
-                  </Button>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="logs" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="p-6 glass-card">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Terminal className="h-5 w-5 text-primary" />
+                    System-Logs
+                  </h2>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={downloadLog}>
+                      <Download className="mr-2 h-4 w-4" /> Logs exportieren
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Refresh className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <Badge className="cursor-pointer">Alle</Badge>
+                  <Badge variant="outline" className="cursor-pointer">Info</Badge>
+                  <Badge variant="outline" className="cursor-pointer">Warnung</Badge>
+                  <Badge variant="outline" className="cursor-pointer">Fehler</Badge>
+                  <Badge variant="outline" className="cursor-pointer">System</Badge>
+                  <Badge variant="outline" className="cursor-pointer">Benutzer</Badge>
+                  <Badge variant="outline" className="cursor-pointer">Sicherheit</Badge>
+                </div>
+                
+                <ScrollArea className="h-[500px] border rounded-lg bg-card/30 p-4">
+                  <div className="space-y-2 font-mono text-sm">
+                    {systemLogs.map((log, index) => (
+                      <div 
+                        key={index} 
+                        className={`p-2 rounded flex items-start ${
+                          log.level === 'error' ? 'bg-red-500/10 border border-red-500/20' : 
+                          log.level === 'warning' ? 'bg-yellow-500/10 border border-yellow-500/20' : 
+                          'bg-card/20 border border-border/30'
+                        }`}
+                      >
+                        <span className="text-muted-foreground mr-3">{log.time}</span>
+                        <div className="flex-1">
+                          <span className={`font-medium ${
+                            log.level === 'error' ? 'text-red-500' : 
+                            log.level === 'warning' ? 'text-yellow-500' : 
+                            'text-blue-500'
+                          } mr-2`}>
+                            [{log.level.toUpperCase()}]
+                          </span>
+                          <span>{log.message}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                
+                <div className="flex justify-between mt-4">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <span>Zeige 8 von 1,245 Einträgen</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled>
+                      Zurück
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Weiter
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </div>
@@ -548,3 +891,4 @@ const Admin = () => {
 };
 
 export default Admin;
+

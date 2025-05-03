@@ -225,3 +225,163 @@ button:focus:not(:active)::after {
 .nav-link.active::after {
   width: 100%;
 }
+
+/* Admin Dashboard specific styles */
+.backup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.backup-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.backup-item:hover {
+  background-color: rgba(var(--card), 0.8);
+  transform: translateY(-2px);
+}
+
+/* System logs styling */
+.log-row {
+  display: flex;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.25rem;
+  font-family: monospace;
+}
+
+.log-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid rgba(59, 130, 246, 0.7);
+}
+
+.log-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid rgba(245, 158, 11, 0.7);
+}
+
+.log-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid rgba(239, 68, 68, 0.7);
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.status-dot.green {
+  background-color: #10B981;
+  box-shadow: 0 0 6px 1px rgba(16, 185, 129, 0.4);
+}
+
+.status-dot.amber {
+  background-color: #F59E0B;
+  box-shadow: 0 0 6px 1px rgba(245, 158, 11, 0.4);
+}
+
+.status-dot.red {
+  background-color: #EF4444;
+  box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.4);
+}
+
+.status-dot.blue {
+  background-color: #3B82F6;
+  box-shadow: 0 0 6px 1px rgba(59, 130, 246, 0.4);
+}
+
+/* Animated border for glowing effects */
+.glow-border {
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.glow-border::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #8B5CF6, #3B82F6, #10B981, #F59E0B, #EF4444, #EC4899);
+  background-size: 400% 400%;
+  z-index: -1;
+  border-radius: 0.6rem;
+  animation: glowingBorder 10s ease infinite;
+}
+
+@keyframes glowingBorder {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Dashboard pattern background */
+.dashboard-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .dashboard-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+/* Beautiful scrolling terminal animation */
+.animated-terminal-text {
+  overflow: hidden;
+  border-right: 0.15em solid currentColor;
+  white-space: nowrap;
+  letter-spacing: 0.15em;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: currentColor; }
+}
+
+/* Service status pulsing effect */
+@keyframes pulse-status {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.pulse-status {
+  animation: pulse-status 2s infinite;
+}
+
