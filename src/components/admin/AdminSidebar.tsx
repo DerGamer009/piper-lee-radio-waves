@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Home, Database, Users, FileText, BarChart3, Settings, Shield, HardDrive, MessageSquare, Bell } from "lucide-react";
 import {
@@ -61,7 +62,7 @@ const adminMenuItems = [
   },
 ];
 
-export function AdminSidebar() {
+export default function AdminSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader>

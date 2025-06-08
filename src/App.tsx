@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,6 +42,9 @@ import AdminNotifications from './pages/admin/Notifications';
 import AdminMessages from './pages/admin/Messages';
 import AdminDatabase from './pages/admin/Database';
 import AdminUsers from './pages/admin/Users';
+import ContentManagement from './pages/admin/ContentManagement';
+import Analytics from './pages/admin/Analytics';
+import BackupManagement from './pages/admin/BackupManagement';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -199,6 +201,54 @@ function App() {
                 />
                 
                 {/* Admin Pages */}
+                <Route 
+                  path="/admin/content" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <ContentManagement />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/analytics" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <Analytics />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
+                <Route 
+                  path="/admin/backup" 
+                  element={
+                    <ProtectedRoute 
+                      element={
+                        <SidebarProvider>
+                          <div className="flex min-h-screen w-full">
+                            <AdminSidebar />
+                            <BackupManagement />
+                          </div>
+                        </SidebarProvider>
+                      } 
+                      requiredRoles={["admin"]} 
+                    />
+                  } 
+                />
                 <Route 
                   path="/admin/settings" 
                   element={
