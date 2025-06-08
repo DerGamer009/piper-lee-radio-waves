@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Baby, Music, Headphones, Calendar, Heart, Star, Gamepad2, Clock, Lightbulb, Palette, HelpCircle, Mic } from "lucide-react";
+import { Baby, Music, Headphones, Calendar, Heart, Star, Gamepad2, Clock, Lightbulb, Palette, HelpCircle, Mic, Shield } from "lucide-react";
 import KidsRadioPlayer from "@/components/KidsRadioPlayer";
 import KidsGameWidget from "@/components/KidsGameWidget";
 import KidsScheduleWidget from "@/components/KidsScheduleWidget";
@@ -82,6 +82,14 @@ const Kids = () => {
                   <strong>Für Kinder gemacht:</strong> Alle Inhalte sind kindgerecht und sicher für kleine Ohren!
                 </AlertDescription>
               </Alert>
+
+              {/* GEMA Information */}
+              <Alert className="mt-4 border-green-400 bg-green-400/10">
+                <Shield className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700 dark:text-green-300">
+                  <strong>GEMA-abgesichert:</strong> Alle Musik wird legal und sicher über die GEMA gespielt!
+                </AlertDescription>
+              </Alert>
             </div>
             
             <div className="lg:w-1/2 flex justify-center mt-8 lg:mt-0">
@@ -110,7 +118,6 @@ const Kids = () => {
         </div>
       </section>
 
-      {/* Neue Kreativ-Sektion */}
       <section className="py-16 bg-gradient-to-r from-purple-50/50 via-blue-50/50 to-green-50/50 dark:from-purple-900/10 dark:via-blue-900/10 dark:to-green-900/10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -128,7 +135,6 @@ const Kids = () => {
         </div>
       </section>
 
-      {/* Fun features for kids */}
       <section className="py-16 bg-gradient-to-r from-pink-50/50 via-purple-50/50 to-blue-50/50 dark:from-pink-900/10 dark:via-purple-900/10 dark:to-blue-900/10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -194,7 +200,6 @@ const Kids = () => {
         </div>
       </section>
 
-      {/* Safety notice for parents */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
@@ -206,7 +211,7 @@ const Kids = () => {
               <p className="text-foreground/70 mb-6">
                 Unsere Moderatoren sind geschult im Umgang mit jungen Hörern und sorgen für eine sichere, unterhaltsame Atmosphäre.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="flex items-center gap-2 justify-center">
                   <Heart className="h-5 w-5 text-red-500" />
                   <span className="text-sm">Kindgerechte Inhalte</span>
@@ -218,6 +223,10 @@ const Kids = () => {
                 <div className="flex items-center gap-2 justify-center">
                   <Baby className="h-5 w-5 text-pink-500" />
                   <span className="text-sm">Sicher für Kinder</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <Shield className="h-5 w-5 text-green-500" />
+                  <span className="text-sm">GEMA-abgesichert</span>
                 </div>
               </div>
               <div className="flex gap-4 justify-center">
