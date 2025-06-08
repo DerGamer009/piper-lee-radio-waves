@@ -1,8 +1,13 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Baby, Music, Headphones, Calendar, Heart, Star } from "lucide-react";
+import { Baby, Music, Headphones, Calendar, Heart, Star, Gamepad2, Clock, Lightbulb } from "lucide-react";
 import KidsRadioPlayer from "@/components/KidsRadioPlayer";
+import KidsGameWidget from "@/components/KidsGameWidget";
+import KidsScheduleWidget from "@/components/KidsScheduleWidget";
+import KidsFactWidget from "@/components/KidsFactWidget";
+import KidsSongRequestWidget from "@/components/KidsSongRequestWidget";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const KIDS_STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee_-_kids/radio.mp3";
@@ -83,6 +88,25 @@ const Kids = () => {
         </div>
       </section>
 
+      {/* Interactive Kids Section */}
+      <section className="py-16 bg-gradient-to-r from-orange-50/50 via-yellow-50/50 to-pink-50/50 dark:from-orange-900/10 dark:via-yellow-900/10 dark:to-pink-900/10">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Spiel und Spaß!</h2>
+            <p className="text-foreground/70 max-w-2xl mx-auto">
+              Entdecke coole Spiele und erfahre spannende Fakten während du Musik hörst!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <KidsGameWidget />
+            <KidsScheduleWidget />
+            <KidsFactWidget />
+            <KidsSongRequestWidget />
+          </div>
+        </div>
+      </section>
+
       {/* Fun features for kids */}
       <section className="py-16 bg-gradient-to-r from-pink-50/50 via-purple-50/50 to-blue-50/50 dark:from-pink-900/10 dark:via-purple-900/10 dark:to-blue-900/10">
         <div className="container mx-auto px-4">
@@ -108,9 +132,9 @@ const Kids = () => {
                 color: "text-purple-500"
               },
               {
-                icon: Star,
-                title: "Lernspiele",
-                description: "Spielerisch lernen mit Musik und Rätseln",
+                icon: Gamepad2,
+                title: "Spiele",
+                description: "Lustige Musik-Spiele und Rätsel zum Mitmachen",
                 color: "text-yellow-500"
               },
               {
@@ -126,10 +150,10 @@ const Kids = () => {
                 color: "text-green-500"
               },
               {
-                icon: Calendar,
-                title: "Veranstaltungen",
-                description: "Tolle Events und Mitmach-Aktionen",
-                color: "text-red-500"
+                icon: Star,
+                title: "Wissensspaß",
+                description: "Coole Fakten und spannende Geschichten",
+                color: "text-orange-500"
               }
             ].map((item, index) => (
               <div 
@@ -158,12 +182,29 @@ const Kids = () => {
               <p className="text-lg text-foreground/80 mb-4">
                 Piper Lee Kids Radio ist speziell für Kinder entwickelt. Alle Inhalte werden sorgfältig ausgewählt und sind altersgerecht.
               </p>
-              <p className="text-foreground/70">
+              <p className="text-foreground/70 mb-6">
                 Unsere Moderatoren sind geschult im Umgang mit jungen Hörern und sorgen für eine sichere, unterhaltsame Atmosphäre.
               </p>
-              <div className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="flex items-center gap-2 justify-center">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  <span className="text-sm">Kindgerechte Inhalte</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  <span className="text-sm">Pädagogisch wertvoll</span>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <Baby className="h-5 w-5 text-pink-500" />
+                  <span className="text-sm">Sicher für Kinder</span>
+                </div>
+              </div>
+              <div className="flex gap-4 justify-center">
                 <Button asChild variant="outline" className="rounded-full">
                   <Link to="/kontakt">Fragen? Kontaktieren Sie uns</Link>
+                </Button>
+                <Button asChild className="bg-pink-500 hover:bg-pink-600 rounded-full">
+                  <Link to="/sendeplan">Vollständiges Programm</Link>
                 </Button>
               </div>
             </div>
