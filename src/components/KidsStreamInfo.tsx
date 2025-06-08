@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface KidsStreamInfoData {
   title?: string;
   artist?: string;
-  listeners?: number;
+  listeners?: number | { total?: number; unique?: number; current?: number };
   current_song?: string;
   show_name?: string;
   show_host?: string;
@@ -88,6 +88,17 @@ const KidsStreamInfo = () => {
     artist = "Kids Radio";
   }
 
+  // Helper function to extract listener count
+  const getListenerCount = (listeners?: number | { total?: number; unique?: number; current?: number }): number => {
+    if (typeof listeners === 'number') {
+      return listeners;
+    }
+    if (typeof listeners === 'object' && listeners !== null) {
+      return listeners.current || listeners.total || listeners.unique || 0;
+    }
+    return 0;
+  };
+
   return (
     <div className="bg-gradient-to-br from-pink-100/50 to-purple-100/50 dark:from-pink-900/20 dark:to-purple-900/20 border border-pink-200/50 dark:border-pink-700/50 rounded-xl p-4 shadow-lg">
       {loading ? (
@@ -144,7 +155,7 @@ const KidsStreamInfo = () => {
           <div className="flex items-center gap-2 mt-2 bg-green-100/50 dark:bg-green-900/20 px-3 py-2 rounded-md">
             <Star className="h-4 w-4 text-green-500" />
             <span className="text-green-600 dark:text-green-400 text-sm">
-              {useFallbackData ? "89" : (streamInfo.listeners || 0)} kleine Hörer online
+              {useFallbackData ? "89" : getListenerCount(streamInfo.listeners)} kleine Hörer online
             </span>
           </div>
 
