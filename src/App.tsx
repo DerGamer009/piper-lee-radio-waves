@@ -35,6 +35,7 @@ import Status from './pages/Status';
 import UsersPage from './pages/UsersPage';
 import ModeratorSettings from './pages/ModeratorSettings';
 import ModeratorRadio from './pages/ModeratorRadio';
+import Kids from "./pages/Kids";
 
 // Import admin pages
 import AdminSettings from './pages/admin/Settings';
@@ -66,6 +67,7 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/kids" element={<Layout><Kids /></Layout>} />
                 <Route path="/login" element={<Layout><Auth /></Layout>} />
                 <Route path="/datenschutz" element={<Layout><Privacy /></Layout>} />
                 <Route path="/nutzungsbedingungen" element={<Layout><Terms /></Layout>} />
