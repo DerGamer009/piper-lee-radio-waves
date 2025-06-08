@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle } from "lucide-react";
+import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby } from "lucide-react";
 import RadioPlayer from "@/components/RadioPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -76,6 +76,16 @@ const Index = () => {
                   className="bg-radio-purple hover:bg-radio-purple/90 text-white rounded-full px-6"
                 >
                   <Link to="/sendeplan">Sendeplan</Link>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-pink-500 text-pink-500 hover:bg-pink-500/10 rounded-full px-6"
+                  asChild
+                >
+                  <Link to="/kids">
+                    <Baby className="h-4 w-4 mr-2" />
+                    Kids Radio
+                  </Link>
                 </Button>
                 <Button 
                   variant="outline" 

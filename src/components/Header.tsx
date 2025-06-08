@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Menu, X, User, LogOut, Radio, Search } from 'lucide-react';
+import { Menu, X, User, LogOut, Radio, Search, Baby } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,12 @@ const Header = () => {
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
             <NavLink to="/" isActive={isActive('/')} label="Startseite" />
+            <NavLink to="/kids" isActive={isActive('/kids')} label={
+              <div className="flex items-center gap-1">
+                <Baby className="h-3.5 w-3.5" />
+                <span>Kids</span>
+              </div>
+            } />
             <NavLink to="/sendeplan" isActive={isActive('/sendeplan')} label="Sendeplan" />
             <NavLink to="/podcasts" isActive={isActive('/podcasts')} label="Podcasts" />
             <NavLink to="/events" isActive={isActive('/events')} label="Events" />
@@ -197,6 +203,10 @@ const Header = () => {
               
               <Link to="/" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Startseite
+              </Link>
+              <Link to="/kids" className="flex items-center gap-2 px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
+                <Baby className="h-4 w-4" />
+                Kids Radio
               </Link>
               <Link to="/sendeplan" className="block px-3 py-2 text-gray-300 hover:text-white font-medium rounded-md hover:bg-gray-800/50" onClick={() => setIsMobileMenuOpen(false)}>
                 Sendeplan

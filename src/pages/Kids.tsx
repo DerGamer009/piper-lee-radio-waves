@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Baby, Music, Headphones, Calendar, Heart, Star, Gamepad2, Clock, Lightbulb } from "lucide-react";
+import { Baby, Music, Headphones, Calendar, Heart, Star, Gamepad2, Clock, Lightbulb, Palette, HelpCircle, Mic } from "lucide-react";
 import KidsRadioPlayer from "@/components/KidsRadioPlayer";
 import KidsGameWidget from "@/components/KidsGameWidget";
 import KidsScheduleWidget from "@/components/KidsScheduleWidget";
 import KidsFactWidget from "@/components/KidsFactWidget";
 import KidsSongRequestWidget from "@/components/KidsSongRequestWidget";
+import KidsDrawingWidget from "@/components/KidsDrawingWidget";
+import KidsQuizWidget from "@/components/KidsQuizWidget";
+import KidsVoiceMessageWidget from "@/components/KidsVoiceMessageWidget";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const KIDS_STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee_-_kids/radio.mp3";
@@ -107,6 +110,24 @@ const Kids = () => {
         </div>
       </section>
 
+      {/* Neue Kreativ-Sektion */}
+      <section className="py-16 bg-gradient-to-r from-purple-50/50 via-blue-50/50 to-green-50/50 dark:from-purple-900/10 dark:via-blue-900/10 dark:to-green-900/10">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Kreativ werden!</h2>
+            <p className="text-foreground/70 max-w-2xl mx-auto">
+              Male, spiele Quiz oder sende uns eine Sprachnachricht!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <KidsDrawingWidget />
+            <KidsQuizWidget />
+            <KidsVoiceMessageWidget />
+          </div>
+        </div>
+      </section>
+
       {/* Fun features for kids */}
       <section className="py-16 bg-gradient-to-r from-pink-50/50 via-purple-50/50 to-blue-50/50 dark:from-pink-900/10 dark:via-purple-900/10 dark:to-blue-900/10">
         <div className="container mx-auto px-4">
@@ -150,9 +171,9 @@ const Kids = () => {
                 color: "text-green-500"
               },
               {
-                icon: Star,
-                title: "Wissensspaß",
-                description: "Coole Fakten und spannende Geschichten",
+                icon: Palette,
+                title: "Kreativität",
+                description: "Male, bastle und werde kreativ mit uns",
                 color: "text-orange-500"
               }
             ].map((item, index) => (
