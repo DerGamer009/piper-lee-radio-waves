@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby } from "lucide-react";
+import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby, Shield } from "lucide-react";
 import RadioPlayer from "@/components/RadioPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -109,6 +109,15 @@ const Index = () => {
                   <Link to="/songwunsch">Song wünschen</Link>
                 </Button>
               </div>
+
+              {/* GEMA Information */}
+              <Alert className="mt-6 border-green-400 bg-green-400/10">
+                <Shield className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700 dark:text-green-300">
+                  <strong>GEMA-abgesichert:</strong> Alle Musik wird legal und sicher über die GEMA gespielt!
+                </AlertDescription>
+              </Alert>
+
               <div className="mt-4 flex justify-center lg:justify-start">
                 <DarkModeToggle />
               </div>
