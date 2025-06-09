@@ -127,7 +127,10 @@
 
   /* Enhanced glass effects */
   .glass-card {
-    @apply bg-card/60 backdrop-blur-md border border-white/5 shadow-md;
+    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   .glass-morphism {
@@ -140,7 +143,8 @@
 
   /* Enhanced gradient cards */
   .gradient-card {
-    @apply bg-gradient-to-br from-card to-card/80 border border-white/5;
+    background: linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--card) / 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .gradient-primary {
@@ -162,7 +166,8 @@
 
   /* System status styling */
   .system-status-indicator {
-    @apply p-4 rounded-lg border border-border bg-card/60 backdrop-blur-sm;
+    @apply p-4 rounded-lg border border-border backdrop-blur-sm;
+    background-color: hsl(var(--card) / 0.6);
   }
 
   .system-status-item {
@@ -234,7 +239,12 @@
   }
   
   .backup-item {
-    @apply p-3 rounded-md border border-border/50 bg-card/40 hover:bg-card/60 transition-all flex justify-between items-center;
+    @apply p-3 rounded-md border border-border/50 transition-all flex justify-between items-center;
+    background-color: hsl(var(--card) / 0.4);
+  }
+  
+  .backup-item:hover {
+    background-color: hsl(var(--card) / 0.6);
   }
   
   /* Custom scrollbar */
