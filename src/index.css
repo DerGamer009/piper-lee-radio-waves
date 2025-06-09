@@ -175,7 +175,7 @@
   }
 
   .system-status-item:hover {
-    @apply bg-muted/20;
+    background-color: hsl(var(--muted) / 0.2);
   }
 
   .system-status-icon {
@@ -225,7 +225,8 @@
   }
   
   .backup-progress-bar {
-    @apply relative h-1 w-full bg-muted/20 rounded-full overflow-hidden;
+    @apply relative h-1 w-full rounded-full overflow-hidden;
+    background-color: hsl(var(--muted) / 0.2);
   }
   
   .backup-progress-fill {
@@ -239,8 +240,9 @@
   }
   
   .backup-item {
-    @apply p-3 rounded-md border border-border/50 transition-all flex justify-between items-center;
+    @apply p-3 rounded-md border transition-all flex justify-between items-center;
     background-color: hsl(var(--card) / 0.4);
+    border-color: hsl(var(--border) / 0.5);
   }
   
   .backup-item:hover {
@@ -257,16 +259,18 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-muted/30 rounded-full;
+    @apply rounded-full;
+    background-color: hsl(var(--muted) / 0.3);
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted/50;
+    background-color: hsl(var(--muted) / 0.5);
   }
   
   /* File input styling */
   input[type="file"] {
-    @apply text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-radio-purple/20 file:text-radio-purple hover:file:bg-radio-purple/30 cursor-pointer border border-muted/30 rounded-md;
+    @apply text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-radio-purple/20 file:text-radio-purple hover:file:bg-radio-purple/30 cursor-pointer border rounded-md;
+    border-color: hsl(var(--muted) / 0.3);
   }
 
   /* Card enhancements */
