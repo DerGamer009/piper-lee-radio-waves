@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby, Shield, Award, Globe, Play, Download } from "lucide-react";
+import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby, Shield } from "lucide-react";
 import RadioPlayer from "@/components/RadioPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,8 +15,6 @@ import { EventsCalendar } from "@/components/EventsCalendar";
 import { LiveChat } from "@/components/LiveChat";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
-import TestimonialsWidget from "@/components/TestimonialsWidget";
-import StatsWidget from "@/components/StatsWidget";
 
 // Öffentlich verfügbarer Webradio-Stream als Beispiel
 const STREAM_URL = "https://streams.90s90s.de/90s90s/mp3-192/liveonlineradio/";
@@ -131,14 +130,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Statistiken Sektion */}
-      <section className="py-12 bg-card/20 border-y border-border/20">
-        <div className="container mx-auto px-4">
-          <StatsWidget />
-        </div>
-      </section>
-
-      {/* Live-Chat und Song-Historie */}
+      {/* Neue Sektion für Live-Chat und Song-Historie */}
       <section className="py-16 bg-card/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
@@ -168,57 +160,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Download App Sektion */}
-      <section className="py-16 bg-gradient-to-r from-radio-purple/5 via-radio-blue/5 to-radio-purple/5">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center gap-8 bg-card/40 backdrop-blur-md p-6 md:p-10 rounded-xl border border-white/10">
-            <div className="md:w-2/3">
-              <h2 className="text-3xl font-bold mb-4">Piper Lee Radio App</h2>
-              <p className="text-foreground/70 mb-6">
-                Laden Sie unsere App herunter und genießen Sie Piper Lee Radio unterwegs! Verfügbar für Android und iOS.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button className="bg-radio-purple hover:bg-radio-purple/90 rounded-full" asChild>
-                  <Link to="/download">
-                    <Download className="h-4 w-4 mr-2" />
-                    Jetzt herunterladen
-                  </Link>
-                </Button>
-                <Button variant="outline" className="rounded-full" asChild>
-                  <Link to="/features">Features entdecken</Link>
-                </Button>
-              </div>
-              <div className="flex items-center gap-6 mt-6">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-radio-blue" />
-                  <span className="text-sm text-foreground/70">Weltweit hören</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Play className="h-4 w-4 text-radio-purple" />
-                  <span className="text-sm text-foreground/70">Offline-Modus</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Award className="h-4 w-4 text-pink-500" />
-                  <span className="text-sm text-foreground/70">Keine Werbung</span>
-                </div>
-              </div>
-            </div>
-            <div className="md:w-1/3 flex justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-radio-purple/20 to-radio-blue/20 rounded-full blur-xl"></div>
-                <img
-                  src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?auto=format&fit=crop&w=300&h=500&q=80"
-                  alt="Piper Lee Radio App"
-                  className="relative z-10 h-72 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
       
-      {/* Feedback Sektion */}
       <section id="feedback" className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -228,41 +170,34 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="md:col-span-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {loadingPolls ? (
-                  // Zeige Ladezustand
-                  Array(2).fill(0).map((_, index) => (
-                    <div key={index} className="bg-card/30 backdrop-blur-sm p-6 rounded-lg animate-pulse">
-                      <div className="h-6 bg-radio-purple/20 rounded mb-4 w-3/4"></div>
-                      <div className="space-y-3">
-                        {Array(5).fill(0).map((_, i) => (
-                          <div key={i} className="h-10 bg-radio-purple/10 rounded"></div>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : polls.length > 0 ? (
-                  // Zeige dynamische Umfragen aus der Datenbank
-                  polls.map((poll) => (
-                    <DynamicPollWidget
-                      key={poll.id}
-                      question={poll.question}
-                      options={poll.options}
-                    />
-                  ))
-                ) : (
-                  // Zeige Nachricht, wenn keine Umfragen verfügbar sind
-                  <div className="md:col-span-2 text-center p-6 bg-card/30 backdrop-blur-sm rounded-lg">
-                    <p className="text-foreground/70">Derzeit sind keine aktiven Umfragen verfügbar.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {loadingPolls ? (
+              // Zeige Ladezustand
+              Array(2).fill(0).map((_, index) => (
+                <div key={index} className="bg-card/30 backdrop-blur-sm p-6 rounded-lg animate-pulse">
+                  <div className="h-6 bg-radio-purple/20 rounded mb-4 w-3/4"></div>
+                  <div className="space-y-3">
+                    {Array(5).fill(0).map((_, i) => (
+                      <div key={i} className="h-10 bg-radio-purple/10 rounded"></div>
+                    ))}
                   </div>
-                )}
+                </div>
+              ))
+            ) : polls.length > 0 ? (
+              // Zeige dynamische Umfragen aus der Datenbank
+              polls.map((poll) => (
+                <DynamicPollWidget
+                  key={poll.id}
+                  question={poll.question}
+                  options={poll.options}
+                />
+              ))
+            ) : (
+              // Zeige Nachricht, wenn keine Umfragen verfügbar sind
+              <div className="md:col-span-2 text-center p-6 bg-card/30 backdrop-blur-sm rounded-lg">
+                <p className="text-foreground/70">Derzeit sind keine aktiven Umfragen verfügbar.</p>
               </div>
-            </div>
-            <div>
-              <TestimonialsWidget />
-            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -288,7 +223,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* ... keep existing code (about section) */}
       <section id="about" className="py-16 bg-card/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -339,7 +273,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* ... keep existing code (schedule section) */}
       <section id="schedule" className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -383,7 +316,6 @@ const Index = () => {
         </div>
       </section>
       
-      {/* ... keep existing code (podcasts section and footer) */}
       <section id="podcasts-preview" className="py-16 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">

@@ -81,11 +81,11 @@
 
   /* Refined theme classes */
   .theme-dark {
-    @apply bg-background text-foreground;
+    @apply bg-radio-dark text-radio-light;
   }
   
   .theme-light {
-    @apply bg-background text-foreground;
+    @apply bg-gray-100 text-gray-900;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -121,16 +121,13 @@
 
   .audio-visualizer-bar {
     width: 0.25rem;
-    background-color: theme('colors.radio-purple');
+    background-color: theme('colors.radio.purple');
     border-radius: 0.125rem;
   }
 
   /* Enhanced glass effects */
   .glass-card {
-    background-color: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    @apply bg-card/60 backdrop-blur-md border border-white/5 shadow-md;
   }
 
   .glass-morphism {
@@ -143,8 +140,7 @@
 
   /* Enhanced gradient cards */
   .gradient-card {
-    background: linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--card) / 0.8));
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    @apply bg-gradient-to-br from-card to-card/80 border border-white/5;
   }
 
   .gradient-primary {
@@ -166,8 +162,7 @@
 
   /* System status styling */
   .system-status-indicator {
-    @apply p-4 rounded-lg border border-border backdrop-blur-sm;
-    background-color: hsl(var(--card) / 0.6);
+    @apply p-4 rounded-lg border border-border bg-card/60 backdrop-blur-sm;
   }
 
   .system-status-item {
@@ -175,7 +170,7 @@
   }
 
   .system-status-item:hover {
-    background-color: hsl(var(--muted) / 0.2);
+    @apply bg-muted/20;
   }
 
   .system-status-icon {
@@ -225,8 +220,7 @@
   }
   
   .backup-progress-bar {
-    @apply relative h-1 w-full rounded-full overflow-hidden;
-    background-color: hsl(var(--muted) / 0.2);
+    @apply relative h-1 w-full bg-muted/20 rounded-full overflow-hidden;
   }
   
   .backup-progress-fill {
@@ -240,13 +234,7 @@
   }
   
   .backup-item {
-    @apply p-3 rounded-md border transition-all flex justify-between items-center;
-    background-color: hsl(var(--card) / 0.4);
-    border-color: hsl(var(--border) / 0.5);
-  }
-  
-  .backup-item:hover {
-    background-color: hsl(var(--card) / 0.6);
+    @apply p-3 rounded-md border border-border/50 bg-card/40 hover:bg-card/60 transition-all flex justify-between items-center;
   }
   
   /* Custom scrollbar */
@@ -259,18 +247,16 @@
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply rounded-full;
-    background-color: hsl(var(--muted) / 0.3);
+    @apply bg-muted/30 rounded-full;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted) / 0.5);
+    @apply bg-muted/50;
   }
   
   /* File input styling */
   input[type="file"] {
-    @apply text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-radio-purple/20 file:text-radio-purple hover:file:bg-radio-purple/30 cursor-pointer border rounded-md;
-    border-color: hsl(var(--muted) / 0.3);
+    @apply text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-radio-purple/20 file:text-radio-purple hover:file:bg-radio-purple/30 cursor-pointer border border-muted/30 rounded-md;
   }
 
   /* Card enhancements */

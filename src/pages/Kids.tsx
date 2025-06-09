@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,6 @@ import KidsSongRequestWidget from "@/components/KidsSongRequestWidget";
 import KidsDrawingWidget from "@/components/KidsDrawingWidget";
 import KidsQuizWidget from "@/components/KidsQuizWidget";
 import KidsVoiceMessageWidget from "@/components/KidsVoiceMessageWidget";
-import KidsActivitiesWidget from "@/components/KidsActivitiesWidget";
-import KidsChartsWidget from "@/components/KidsChartsWidget";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const KIDS_STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee_-_kids/radio.mp3";
@@ -84,6 +83,7 @@ const Kids = () => {
                 </AlertDescription>
               </Alert>
 
+              {/* GEMA Information */}
               <Alert className="mt-4 border-green-400 bg-green-400/10">
                 <Shield className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700 dark:text-green-300">
@@ -99,28 +99,25 @@ const Kids = () => {
         </div>
       </section>
 
-      {/* Interactive Kids Section - Erweitert */}
+      {/* Interactive Kids Section */}
       <section className="py-16 bg-gradient-to-r from-orange-50/50 via-yellow-50/50 to-pink-50/50 dark:from-orange-900/10 dark:via-yellow-900/10 dark:to-pink-900/10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Spiel und Spaß!</h2>
             <p className="text-foreground/70 max-w-2xl mx-auto">
-              Entdecke coole Spiele, höre die besten Kinderlieder und erfahre spannende Fakten!
+              Entdecke coole Spiele und erfahre spannende Fakten während du Musik hörst!
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KidsGameWidget />
             <KidsScheduleWidget />
             <KidsFactWidget />
             <KidsSongRequestWidget />
-            <KidsActivitiesWidget />
-            <KidsChartsWidget />
           </div>
         </div>
       </section>
 
-      {/* Creative Section */}
       <section className="py-16 bg-gradient-to-r from-purple-50/50 via-blue-50/50 to-green-50/50 dark:from-purple-900/10 dark:via-blue-900/10 dark:to-green-900/10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -138,7 +135,6 @@ const Kids = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-16 bg-gradient-to-r from-pink-50/50 via-purple-50/50 to-blue-50/50 dark:from-pink-900/10 dark:via-purple-900/10 dark:to-blue-900/10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -204,7 +200,6 @@ const Kids = () => {
         </div>
       </section>
 
-      {/* Parent Section */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
