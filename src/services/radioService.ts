@@ -87,7 +87,7 @@ interface RestartStatus {
   timestamp: string;
 }
 
-const API_URL = "https://backend.piper-lee.net/api/";
+const API_URL = "https://backend.moonfm.de/api/";
 
 export const fetchStreamInfo = async (): Promise<StreamInfo> => {
   try {

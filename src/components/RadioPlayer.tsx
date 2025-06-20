@@ -23,7 +23,7 @@ const RadioPlayer = ({ streamUrl, stationName, compact = false }: RadioPlayerPro
   const { toast } = useToast();
 
   // Set correct stream URL
-  const CORRECTED_STREAM_URL = "https://backend.piper-lee.net/listen/piper-lee/radio.mp3";
+  const CORRECTED_STREAM_URL = "https://backend.moonfm.de/listen/piper-lee/radio.mp3";
 
   useEffect(() => {
     // Create a new audio element or reset the existing one
