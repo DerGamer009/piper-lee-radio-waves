@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby, Shield } from "lucide-react";
+import { Radio, Music, Headphones, Calendar, MessageCircle, AlertTriangle, Baby, Shield, Clock } from "lucide-react";
 import RadioPlayer from "@/components/RadioPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -115,6 +115,14 @@ const Index = () => {
                 <Shield className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700 dark:text-green-300">
                   <strong>GEMA-abgesichert:</strong> Alle Musik wird legal und sicher über die GEMA gespielt!
+                </AlertDescription>
+              </Alert>
+
+              {/* Closure Information */}
+              <Alert className="mt-4 border-red-400 bg-red-400/10">
+                <Clock className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-700 dark:text-red-300">
+                  <strong>Wichtige Information:</strong> Piper Lee Radio wird zum 30.06.2025 seinen Sendebetrieb einstellen.
                 </AlertDescription>
               </Alert>
 
